@@ -3,3 +3,6 @@
 *.o
 *.pyx
 *.so
+*.raw
+*.wav
+*.log
