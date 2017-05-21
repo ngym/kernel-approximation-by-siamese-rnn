@@ -130,6 +130,7 @@ if __name__ == "__main__":
                 gak_logger.write(f1 + ", " + f2 + ", " + str(value) + "\n")
             num_finished_jobs += 1
             print(num_finished_jobs, end=" ")
+            sys.stdout.flush()
                 
     similarities = []
     for i in gram.gram.values():
