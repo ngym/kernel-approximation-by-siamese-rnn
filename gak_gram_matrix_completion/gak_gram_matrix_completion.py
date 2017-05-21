@@ -92,7 +92,7 @@ if __name__ == "__main__":
     files = []
     for df in data_files:
         files += glob.glob(df)
-    #print(files)
+    print(files)
 
     read_mats_and_build_seqs(files)
     
