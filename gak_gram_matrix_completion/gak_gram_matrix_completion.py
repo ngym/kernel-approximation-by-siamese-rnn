@@ -119,7 +119,7 @@ if __name__ == "__main__":
                            files[f1index]
                            for f1index in range(file_num)}
         print(str(future_to_files.__len__()) + " jobs are submitted.")
-        jobs = 0
+        num_finished_jobs = 0
         for future in concurrent.futures.as_completed(future_to_files):
             f1 = future_to_files[future]
             ret_dict = future.result()
@@ -128,7 +128,8 @@ if __name__ == "__main__":
                 value = ret_dict[f2]
                 gram.register(f1, f2, value)
                 gak_logger.write(f1 + ", " + f2 + ", " + str(value) + "\n")
-            print(jobs, end=" ")
+            num_finished_jobs += 1
+            print(num_finished_jobs, end=" ")
                 
     similarities = []
     for i in gram.gram.values():
