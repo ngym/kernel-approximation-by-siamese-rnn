@@ -104,11 +104,12 @@ if __name__ == "__main__":
     futures = []
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_thread) as executor:
+        print("Start submitting jobs.")
         future_to_files = {executor.submit(gak, seqs[files[f1index]], seqs[files[f2index]]):
                            (files[f1index], files[f2index])
                            for f1index in range(file_num)
                            for f2index in range(f1index, file_num)}
-        print(future_to_files.__len__())
+        print(str(future_to_files.__len__()) + " jobs are submitted.")
         for future in concurrent.futures.as_completed(future_to_files):
             f1, f2 = future_to_files[future]
             value = future.result()
