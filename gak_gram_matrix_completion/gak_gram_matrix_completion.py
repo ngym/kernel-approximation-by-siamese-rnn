@@ -103,18 +103,30 @@ if __name__ == "__main__":
 
     futures = []
 
+    def worker_for_f1(f1index, f2indices):
+        f1 = files[f1index]
+        seq1 = seqs[f1]
+        ret_dict = {}
+        for f2index in f2indices:
+            f2 = files[f2index]
+            seq2 = seqs[f2]
+            ret_dict[f2] = gak(seq1, seq2)
+        return ret_dict
+    #seqs[files[f2index]]
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_thread) as executor:
         print("Start submitting jobs.")
-        future_to_files = {executor.submit(gak, seqs[files[f1index]], seqs[files[f2index]]):
-                           (files[f1index], files[f2index])
-                           for f1index in range(file_num)
-                           for f2index in range(f1index, file_num)}
+        future_to_files = {executor.submit(worker_for_f1, f1index, range(f1index, file_num)):
+                           files[f1index]
+                           for f1index in range(file_num)}
         print(str(future_to_files.__len__()) + " jobs are submitted.")
         for future in concurrent.futures.as_completed(future_to_files):
-            f1, f2 = future_to_files[future]
-            value = future.result()
-            gram.register(f1, f2, value)
-            gak_logger.write(f1 + ", " + f2 + ", " + str(value) + "\n")
+            f1 = future_to_files[future]
+            ret_dict = future.result()
+            ret_dict_keys = list(ret_dict.keys())
+            for f2 in ret_dict_keys:
+                value = ret_dict[f2]
+                gram.register(f1, f2, value)
+                gak_logger.write(f1 + ", " + f2 + ", " + str(value) + "\n")
                 
     similarities = []
     for i in gram.gram.values():
