@@ -118,7 +118,8 @@ if __name__ == "__main__":
         future_to_files = {executor.submit(worker_for_f1, f1index, range(f1index, file_num)):
                            files[f1index]
                            for f1index in range(file_num)}
-        print(str(future_to_files.__len__()) + " jobs are submitted.")
+        num_futures = future_to_files.__len__()
+        print(str(num_futures) + " jobs are submitted.")
         num_finished_jobs = 0
         for future in concurrent.futures.as_completed(future_to_files):
             f1 = future_to_files[future]
@@ -129,7 +130,7 @@ if __name__ == "__main__":
                 gram.register(f1, f2, value)
                 gak_logger.write(f1 + ", " + f2 + ", " + str(value) + "\n")
             num_finished_jobs += 1
-            print(num_finished_jobs, end=" ")
+            print(str(num_finished_jobs) + "/" + str(num_futures) , end=" ")
             sys.stdout.flush()
                 
     similarities = []
