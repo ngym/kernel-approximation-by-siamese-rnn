@@ -48,9 +48,9 @@ seqs = {}
 def read_mats_and_build_seqs(files):
     for f in files:
         mat = sio.loadmat(f)
-        seqs[f] = map_twice(np.float64, mat['gest'].transpose())
+        seqs[f] = second_map(np.float64, mat['gest'].transpose())
 
-def map_twice(func, ll):
+def second_map(func, ll):
     retval = []
     for l in ll:
         retval.append(list(map(func, l[:3])))
