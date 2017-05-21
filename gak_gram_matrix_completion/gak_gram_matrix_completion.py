@@ -2,7 +2,7 @@ import numpy as np
 import TGA_python3_wrapper.global_align as ga
 import scipy.io as sio
 
-import subprocess, functools, sys, threading, glob
+import subprocess, functools, sys, threading, glob, json
 import concurrent.futures
 
 import plotly.offline as po
@@ -58,18 +58,15 @@ def map_twice(func, ll):
 
 DATA_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset/6DMG_mat_112712/matR_char/"
 
-def gak_from_files(f1, f2):
+def gak(seq1, seq2):
     #print(threading.get_ident())
     
-    seq1 = seqs[f1]
-    seq2 = seqs[f2]
-
     T1 = seq1.__len__()
     T2 = seq2.__len__()
 
-    #sigma = 0.5*(T1+T2)/2*np.sqrt((T1+T2)/2)
+    sigma = 0.5*(T1+T2)/2*np.sqrt((T1+T2)/2) * 5
     #print("sigma: " + repr(sigma), end="  ")
-    sigma = 3000
+    #sigma = 3000
     Ts = range(10)
     diff_t = np.abs(T1-T2)
 
@@ -82,19 +79,20 @@ def gak_from_files(f1, f2):
     return kval
 
 if __name__ == "__main__":
-    file_out = sys.argv[1]
-    num_thread = int(sys.argv[2])
+    config_json_file = sys.argv[1]
+    config_dict = json.load(open(config_json_file, 'r'))
+    
+    file_out = config_dict['output_html']
+    num_thread = config_dict['num_thread']
+    gak_logfile = config_dict['gak_logfile']
+    data_files = config_dict['data_mat_files']
 
-    gak_logger = Logger("gak_memo.ac")
+    gak_logger = Logger(gak_logfile)
 
-    files_raw = subprocess.check_output(["ls " + DATA_DIR + "num_4*" + " " + DATA_DIR + "upper_F*"],
-                                        universal_newlines=True, shell=True)
-    files = files_raw.split('\n')[:-1]
+    files = []
+    for df in data_files:
+        files += glob.glob(df)
     #print(files)
-    """
-    files = glob.glob(DATA_DIR + "*.mat")
-    print(files)
-    """
 
     read_mats_and_build_seqs(files)
     
@@ -106,10 +104,11 @@ if __name__ == "__main__":
     futures = []
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_thread) as executor:
-        future_to_files = {executor.submit(gak_from_files, files[f1index], files[f2index]):
+        future_to_files = {executor.submit(gak, seqs[files[f1index]], seqs[files[f2index]]):
                            (files[f1index], files[f2index])
                            for f1index in range(file_num)
                            for f2index in range(f1index, file_num)}
+        print(future_to_files.__len__())
         for future in concurrent.futures.as_completed(future_to_files):
             f1, f2 = future_to_files[future]
             value = future.result()
