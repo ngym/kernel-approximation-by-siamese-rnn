@@ -124,4 +124,4 @@ if __name__ == "__main__":
                         y=files
     )
     data=[trace]
-    po.plot(data, filename=file_out)
+    po.plot(data, filename=file_out, auto_open=False)
