@@ -55,24 +55,25 @@ def read_mats_and_build_seqs(files):
 def second_map(func, ll):
     retval = []
     for l in ll:
-        retval.append(list(map(func, l[:3])))
+        retval.append(list(map(func, l[1:4])))
     return np.array(retval)
 
 DATA_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset/6DMG_mat_112712/matR_char/"
 
 def gak(seq1, seq2):
     #print(threading.get_ident())
-    randval = random.randint(0, 9)
-    if randval == 0:
-        return np.nan
+    if matrix_completion != "NO_COMPLETION":
+        randval = random.randint(0, 9)
+        if randval == 0:
+            return np.nan
     
     T1 = seq1.__len__()
     T2 = seq2.__len__()
 
-    sigma = 0.5*(T1+T2)/2*np.sqrt((T1+T2)/2) * 5
+    #sigma = 0.5*(T1+T2)/2*np.sqrt((T1+T2)/2) * 5
+    sigma = 2 ** 0
     #print("sigma: " + repr(sigma), end="  ")
-    #sigma = 3000
-    Ts = range(10)
+    
     diff_t = np.abs(T1-T2)
 
     triangular = 0
@@ -82,6 +83,8 @@ def gak(seq1, seq2):
     if 0 < triangular <= diff_t:
         assert kval == 0
     return kval
+
+matrix_completion = "NO_COMPLETION"
 
 if __name__ == "__main__":
     config_json_file = sys.argv[1]
@@ -173,10 +176,14 @@ if __name__ == "__main__":
     else:
         print("Invalid completion option")
         assert False
+
+    # To fix the direction of the matrix as the diagonal line is from top-left to bottom-right.
+    processed_similarities_ = processed_similarities[::-1]
+    files_ = files[::-1]
         
-    trace = pgo.Heatmap(z=processed_similarities,
+    trace = pgo.Heatmap(z=processed_similarities_,
                         x=files,
-                        y=files
+                        y=files_
     )
     data=[trace]
     po.plot(data, filename=file_out, auto_open=False)
