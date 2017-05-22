@@ -113,6 +113,7 @@ if __name__ == "__main__":
         print("...")
         print(files_[-3:])
         files += files_
+    files = sorted(files)
 
     read_mats_and_build_seqs(files)
     
