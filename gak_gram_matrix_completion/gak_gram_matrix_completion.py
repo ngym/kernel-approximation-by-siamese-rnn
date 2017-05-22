@@ -70,7 +70,7 @@ def gak(seq1, seq2):
     T1 = seq1.__len__()
     T2 = seq2.__len__()
 
-    #sigma = 0.5*(T1+T2)/2*np.sqrt((T1+T2)/2) * 5
+    #sigma = 0.5*(T1+T2)/2*np.sqrt((T1+T2)/2)
     sigma = 2 ** 0
     #print("sigma: " + repr(sigma), end="  ")
     
@@ -179,11 +179,14 @@ if __name__ == "__main__":
 
     # To fix the direction of the matrix as the diagonal line is from top-left to bottom-right.
     processed_similarities_ = processed_similarities[::-1]
-    files_ = files[::-1]
+    files_to_show = []
+    for f in files:
+        files_to_show.append(f.split('/')[-1])
+    files_to_show_ = files_to_show[::-1]
         
     trace = pgo.Heatmap(z=processed_similarities_,
-                        x=files,
-                        y=files_
+                        x=files_to_show,
+                        y=files_to_show_
     )
     data=[trace]
     po.plot(data, filename=file_out, auto_open=False)
