@@ -2,11 +2,13 @@ import numpy as np
 import TGA_python3_wrapper.global_align as ga
 import scipy.io as sio
 
-import subprocess, functools, sys, threading, glob, json
+import subprocess, functools, sys, threading, glob, json, random
 import concurrent.futures
 
 import plotly.offline as po
 import plotly.graph_objs as pgo
+
+from fancyimpute import BiScaler, KNN, NuclearNormMinimization, SoftImpute
 
 class Logger:
     def __init__(self, log_file):
@@ -60,6 +62,9 @@ DATA_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification
 
 def gak(seq1, seq2):
     #print(threading.get_ident())
+    randval = random.randint(0, 9)
+    if randval == 0:
+        return np.nan
     
     T1 = seq1.__len__()
     T2 = seq2.__len__()
@@ -86,13 +91,25 @@ if __name__ == "__main__":
     num_thread = config_dict['num_thread']
     gak_logfile = config_dict['gak_logfile']
     data_files = config_dict['data_mat_files']
+    matrix_completion = config_dict['matrix_completion']
+    print(matrix_completion)
+    if matrix_completion in {"NO_COMPLETION", "NUCLEAR_NORM_MINIMIZATION", "SOFT_IMPUTE"}:
+        print(matrix_completion + " is selected")
+    else:
+        print("Invalid completion option")
+        assert False
 
+    random.seed(1)
+        
     gak_logger = Logger(gak_logfile)
 
     files = []
     for df in data_files:
-        files += glob.glob(df)
-    print(files)
+        files_ = glob.glob(df)
+        print(files_[:3])
+        print("...")
+        print(files_[-3:])
+        files += files_
 
     read_mats_and_build_seqs(files)
     
@@ -132,12 +149,32 @@ if __name__ == "__main__":
             num_finished_jobs += 1
             print(str(num_finished_jobs) + "/" + str(num_futures) , end=" ")
             sys.stdout.flush()
-                
+
+    print(" ")
+    
     similarities = []
     for i in gram.gram.values():
         similarities.append(list(i.values()))
 
-    trace = pgo.Heatmap(z=similarities,
+    matrix_incomplete = np.array(similarities)
+
+    if matrix_completion == "NO_COMPLETION":
+        processed_similarities = similarities
+    elif matrix_completion == "NUCLEAR_NORM_MINIMIZATION":
+        # matrix completion using convex optimization to find low-rank solution
+        # that still matches observed values. Slow!
+        X_filled = NuclearNormMinimization().complete(matrix_incomplete)
+        processed_similarities = X_filled
+    elif matrix_completion == "SOFT_IMPUTE":
+        # Instead of solving the nuclear norm objective directly, instead
+        # induce sparsity using singular value thresholding
+        X_filled = SoftImpute().complete(matrix_incomplete)
+        processed_similarities = X_filled
+    else:
+        print("Invalid completion option")
+        assert False
+        
+    trace = pgo.Heatmap(z=processed_similarities,
                         x=files,
                         y=files
     )
