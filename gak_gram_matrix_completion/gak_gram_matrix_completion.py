@@ -62,6 +62,8 @@ DATA_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification
 
 def gak(seq1, seq2):
     #print(threading.get_ident())
+    if seq1 is seq2:
+        return 1
     if matrix_completion != "NO_COMPLETION":
         randval = random.randint(0, 9)
         if randval == 0:
@@ -102,7 +104,7 @@ if __name__ == "__main__":
         print("Invalid completion option")
         assert False
 
-    random.seed(1)
+    random.seed(2)
         
     gak_logger = Logger(gak_logfile)
 
@@ -187,7 +189,9 @@ if __name__ == "__main__":
         
     trace = pgo.Heatmap(z=processed_similarities_,
                         x=files_to_show,
-                        y=files_to_show_
+                        y=files_to_show_,
+                        zmin=0, zmax=1
     )
     data=[trace]
     po.plot(data, filename=file_out, auto_open=False)
+
