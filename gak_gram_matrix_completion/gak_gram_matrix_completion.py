@@ -124,23 +124,32 @@ if __name__ == "__main__":
     config_json_file = sys.argv[1]
     config_dict = json.load(open(config_json_file, 'r'))
     
-    html_out_no_completion = config_dict['output_html']['NO_COMPLETION']
-    html_out_nuclear_norm_minimization = config_dict['output_html']['NUCLEAR_NORM_MINIMIZATION']
-    html_out_soft_impute = config_dict['output_html']['SOFT_IMPUTE']
-    
-    mat_out_no_completion = config_dict['output_mat']['NO_COMPLETION']
-    mat_out_nuclear_norm_minimization = config_dict['output_mat']['NUCLEAR_NORM_MINIMIZATION']
-    mat_out_soft_impute = config_dict['output_mat']['SOFT_IMPUTE']
-
-    attribute_type = config_dict['data_attribute_type']
-
     num_thread = config_dict['num_thread']
-    gak_logfile = config_dict['gak_logfile']
-    data_files = config_dict['data_mat_files']
-    gak_sigma = config_dict['gak_sigma']
-    random_seed = config_dict['random_seed']
-    incomplete_persentage = config_dict['incomplete_persentage']
 
+    dataset_type = config_dict['dataset_type']
+    data_attribute_type = config_dict['data_attribute_type']
+    
+    data_files = config_dict['data_mat_files']
+    gak_sigma = np.float64(config_dict['gak_sigma'])
+    random_seed = int(config_dict['random_seed'])
+    incomplete_persentage = int(config_dict['incomplete_persentage'])
+
+    output_dir = config_dict['output_dir']
+    
+    output_filename_format = config_dict['output_filename_format'].replace("${dataset_type}", dataset_type)\
+                                                                  .replace("${data_attribute_type}", data_attribute_type)\
+                                                                  .replace("${gak_sigma}", ("%.3f" % gak_sigma))\
+                                                                  .replace("${incomplete_persentage}", str(incomplete_persentage))
+
+    gak_logfile = output_dir + output_filename_format.replace("_${completion_alg}", "") + ".log"
+    
+    html_out_no_completion = output_dir + output_filename_format.replace("${completion_alg}", "NoCompletion") + ".html" 
+    html_out_nuclear_norm_minimization = output_dir + output_filename_format.replace("${completion_alg}", "NuclearNormMinimization") + ".html"
+    html_out_soft_impute = output_dir + output_filename_format.replace("${completion_alg}", "SoftImpute") + ".html"
+    mat_out_no_completion = output_dir + output_filename_format.replace("${completion_alg}", "NoCompletion") + ".mat" 
+    mat_out_nuclear_norm_minimization = output_dir + output_filename_format.replace("${completion_alg}", "NuclearNormMinimization") + ".mat"
+    mat_out_soft_impute = output_dir + output_filename_format.replace("${completion_alg}", "SoftImpute") + ".mat"
+    
     random.seed(random_seed)
         
     gak_logger = Logger(gak_logfile)
@@ -154,7 +163,7 @@ if __name__ == "__main__":
         files += files_
     files = sorted(files)
 
-    read_mats_and_build_seqs(files, attribute_type)
+    read_mats_and_build_seqs(files, data_attribute_type)
     
     gram = GRAMmatrix(files)
 
