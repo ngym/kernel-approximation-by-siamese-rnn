@@ -59,9 +59,9 @@ def pick_attribute(ll, attribute_type):
             retval.append(l[1:4])
     elif attribute_type == "velocity":
         for i in range(ll.__len__() - 1):
-            retval.append([(ll[i+1][1] - ll[i][1])/(ll[i+1][0] - ll[i][0]),
-                           (ll[i+1][2] - ll[i][2])/(ll[i+1][0] - ll[i][0]),
-                           (ll[i+1][3] - ll[i][3])/(ll[i+1][0] - ll[i][0])])
+            retval.append([(ll[i+1][1] - ll[i][1])/((ll[i+1][0] - ll[i][0])/1000),
+                           (ll[i+1][2] - ll[i][2])/((ll[i+1][0] - ll[i][0])/1000),
+                           (ll[i+1][3] - ll[i][3])/((ll[i+1][0] - ll[i][0])/1000)])
     elif attribute_type == "acceleration":
         for l in ll:
             retval.append(l[8:11])
