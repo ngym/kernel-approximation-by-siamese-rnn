@@ -4,7 +4,7 @@
 	  "output_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/OUTPUT/",
 	  "output_filename_format": "gram_${dataset_type}_${data_attribute_type}_sigma${gak_sigma}_loss${incomplete_persentage}_${completion_alg}",
 	  "dataset_type": "upperChar",
-	  "data_mat_files": ["/home/ngym/NFSshare/Lorincz_Lab/6DMG_mat_112712/matR_char/num_*mat"],
+	  "data_mat_files": ["/home/ngym/NFSshare/Lorincz_Lab/6DMG_mat_112712/matR_char/upper_*mat"],
 	  "random_seed": 1
     },
     "iterate": {
