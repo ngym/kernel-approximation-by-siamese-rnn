@@ -233,11 +233,23 @@ if __name__ == "__main__":
                 is_row.append(s)
         incomplete_similarities.append(is_row)
 
-    def check_and_modify_eigenvalues_to_positive_definite(matrix):
+    def check_and_modify_eigenvalues_to_positive_definite(A):
+        epsilon=0
+        n = A.shape[0]
+        eigval, eigvec = np.linalg.eig(A)
+        val = np.matrix(np.maximum(eigval,epsilon))
+        vec = np.matrix(eigvec)
+        T = 1/(np.multiply(vec,vec) * val.T)
+        T = np.matrix(np.sqrt(np.diag(np.array(T).reshape((n)) )))
+        B = T * vec * np.diag(np.array(np.sqrt(val)).reshape((n)))
+        out = B*B.T
+        return(np.real(out))
+    """
         w, v = np.linalg.eig(matrix)
         new_w = np.array([max(0, e) for e in w])
         new_matrix = np.dot(v, np.dot(np.diag(w), np.linalg.inv(v)))
-        return new_matrix
+        return np.real(new_matrix)
+    """
     
     # "NUCLEAR_NORM_MINIMIZATION":
     """
