@@ -14,8 +14,8 @@ if __name__ == "__main__":
     output_dir = config_dict['fixed']['output_dir']
     output_filename_format = config_dict['fixed']['output_filename_format']
     dataset_type = config_dict['fixed']['dataset_type']
+    data_mat_files = config_dict['fixed']['data_mat_files']
     random_seed = config_dict['fixed']['random_seed']
-
 
     for data_attribute_type in config_dict['iterate']['data_attribute_type']:
         for gak_sigma in config_dict['iterate']['gak_sigma']:
@@ -27,7 +27,8 @@ if __name__ == "__main__":
                                 random_seeed=random_seed,
                                 data_attribute_type=data_attribute_type,
                                 gak_sigma=gak_sigma,
-                                incomplete_persentage=incomplete_persentage)
+                                incomplete_persentage=incomplete_persentage,
+                )
                 output_filename_format_ = config_dict['fixed']['output_filename_format']
                 output_filename_format_ = output_filename_format.replace("${dataset_type}",
                                                                          dataset_type)\
