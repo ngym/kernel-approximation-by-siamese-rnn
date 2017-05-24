@@ -8,7 +8,7 @@
 	  "random_seed": 1
     },
     "iterate": {
-	  "data_attribute_type": ["position", "velocity", "acceleration", "angular velocity", "orientation"],
+	  "data_attribute_type": ["position", "velocity", "acceleration", "angularvelocity", "orientation"],
 	  "gak_sigma": [0.4, 1, 2, 5, 10, 20],
 	  "incomplete_persentage": [10, 20, 50]
     }

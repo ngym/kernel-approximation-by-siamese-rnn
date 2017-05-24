@@ -65,7 +65,7 @@ def pick_attribute(ll, attribute_type):
     elif attribute_type == "acceleration":
         for l in ll:
             retval.append(l[8:11])
-    elif attribute_type == "angular velocity":
+    elif attribute_type == "angularvelocity":
         for l in ll:
             retval.append(l[11:14])
     elif attribute_type == "orientation":
