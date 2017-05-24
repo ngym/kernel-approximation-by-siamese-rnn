@@ -21,7 +21,7 @@ if __name__ == "__main__":
         for gak_sigma in config_dict['iterate']['gak_sigma']:
             for incomplete_persentage in config_dict['iterate']['incomplete_persentage']:
                 job_dict = dict(num_thread=num_thread,
-                                outpout_dir=output_dir,
+                                output_dir=output_dir,
                                 output_filename_format=output_filename_format,
                                 dataset_type=dataset_type,
                                 data_mat_files=data_mat_files,
