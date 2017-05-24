@@ -150,8 +150,6 @@ if __name__ == "__main__":
     mat_out_nuclear_norm_minimization = output_dir + output_filename_format.replace("${completion_alg}", "NuclearNormMinimization") + ".mat"
     mat_out_soft_impute = output_dir + output_filename_format.replace("${completion_alg}", "SoftImpute") + ".mat"
     
-    random.seed(random_seed)
-        
     gak_logger = Logger(gak_logfile)
 
     files = []
@@ -164,7 +162,7 @@ if __name__ == "__main__":
     files = sorted(files)
 
     read_mats_and_build_seqs(files, data_attribute_type)
-    
+
     gram = GRAMmatrix(files)
 
     similarities = []
@@ -184,7 +182,8 @@ if __name__ == "__main__":
     #seqs[files[f2index]]
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_thread) as executor:
         print("Start submitting jobs.")
-        future_to_files = {executor.submit(worker_for_f1, f1index, range(f1index, file_num), gak_sigma):
+        future_to_files = {executor.submit(worker_for_f1, f1index,
+                                           range(f1index, file_num), gak_sigma):
                            files[f1index]
                            for f1index in range(file_num)}
         num_futures = future_to_files.__len__()
@@ -199,15 +198,27 @@ if __name__ == "__main__":
                 gram.register(f1, f2, value)
                 gak_logger.write(f1 + ", " + f2 + ", " + str(value) + "\n")
             num_finished_jobs += 1
-            print(str(num_finished_jobs) + "/" + str(num_futures) , end=" ")
+            print(str(num_finished_jobs) + "/" + str(num_futures), end=" ")
             sys.stdout.flush()
 
     print(" ")
-    
+
     similarities = []
     for i in gram.gram.values():
         similarities.append(list(i.values()))
 
+    # "NO_COMPLETION"
+    plot(html_out_no_completion,
+         similarities, files)
+    sio.savemat(mat_out_no_completion, dict(gram=similarities, indices=files))
+
+
+    ###################################
+    ###### completed GRAM matrix ######
+    ###################################
+    
+    random.seed(random_seed)
+        
     incomplete_similarities = []
     for s_row in similarities:
         is_row = []
@@ -221,11 +232,12 @@ if __name__ == "__main__":
             else:
                 is_row.append(s)
         incomplete_similarities.append(is_row)
-                
-    # "NO_COMPLETION"
-    plot(html_out_no_completion,
-         similarities, files)
-    sio.savemat(mat_out_no_completion, dict(gram=similarities, indices=files))
+
+    def check_and_modify_eigenvalues_to_positive_definite(matrix):
+        w, v = np.linalg.eig(matrix)
+        new_w = np.array([max(0, e) for e in w])
+        new_matrix = np.dot(v, np.dot(np.diag(w), np.linalg.inv(v)))
+        return new_matrix
     
     # "NUCLEAR_NORM_MINIMIZATION":
     """
@@ -233,8 +245,10 @@ if __name__ == "__main__":
     that still matches observed values. Slow!
     """
     completed_similarities = NuclearNormMinimization().complete(incomplete_similarities)
+    # eigenvalue check
+    positive_definite_completed_similarities = check_and_modify_eigenvalues_to_positive_definite(completed_similarities)
     plot(html_out_nuclear_norm_minimization,
-         completed_similarities, files)
+         positive_definite_completed_similarities, files)
     sio.savemat(mat_out_nuclear_norm_minimization, dict(gram=completed_similarities, indices=files))
 
     # "SOFT_IMPUTE"
@@ -243,8 +257,10 @@ if __name__ == "__main__":
     induce sparsity using singular value thresholding
     """
     completed_similarities = SoftImpute().complete(incomplete_similarities)
+    # eigenvalue check
+    positive_definite_completed_similarities = check_and_modify_eigenvalues_to_positive_definite(completed_similarities)
     plot(html_out_soft_impute,
-         completed_similarities, files)
+         positive_definite_completed_similarities, files)
     sio.savemat(mat_out_soft_impute, dict(gram=completed_similarities, indices=files))
  
 
