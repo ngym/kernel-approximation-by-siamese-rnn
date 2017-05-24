@@ -1,0 +1,15 @@
+{
+    "fixed":{
+	  "num_thread": 12,
+	  "output_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/OUTPUT/",
+	  "output_filename_format": "gram_${dataset_type}_${data_attribute_type}_sigma${gak_sigma}_loss${incomplete_persentage}_${completion_alg}",
+	  "dataset_type": "gram",
+	  "data_mat_files": ["/home/ngym/NFSshare/Lorincz_Lab/6DMG_mat_112712/matR_char/num_*mat"],
+	  "random_seed": 1
+    },
+    "iterate": {
+	  "data_attribute_type": ["position", "velocity", "acceleration", "angular velocity", "orientation"],
+	  "gak_sigma": [0.4, 1, 2, 5, 10, 20],
+	  "incomplete_persentage": [10, 20, 50]
+    }
+}
