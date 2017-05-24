@@ -25,7 +25,7 @@ if __name__ == "__main__":
                                 output_filename_format=output_filename_format,
                                 dataset_type=dataset_type,
                                 data_mat_files=data_mat_files,
-                                random_seeed=random_seed,
+                                random_seed=random_seed,
                                 data_attribute_type=data_attribute_type,
                                 gak_sigma=gak_sigma,
                                 incomplete_persentage=incomplete_persentage,
