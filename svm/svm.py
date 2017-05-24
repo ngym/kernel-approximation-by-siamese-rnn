@@ -1,6 +1,10 @@
+import sys, json
+
 from sklearn.svm import SVC
+import sklearn.metrics as metrics
 import scipy.io as sio
 import numpy as np
+import functools
 
 dataset_type = None
 attribute_type = None
@@ -9,6 +13,7 @@ data_dir = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification
 
 def mat_file_name(sigma, completion_alg):
     # gram_dataset_completionalg_sigma.mat
+    #print("loss:" + str(loss_persentage))
     return data_dir + \
         "gram_" + \
         dataset_type + "_" + \
@@ -53,9 +58,19 @@ def tryout1hyperparameter(cost, train, train_gtruths, validation_or_test, v_or_t
    # indices in the gram matrix is passed to the function to indicate the split. 
    clf = SVC(C=cost, kernel='precomputed')
    clf.fit(np.array(train), np.array(train_gtruths))
-   pred = clf.predict(validation_or_test)
-   matches = [z[0] == z[1] for z in zip(pred, v_or_t_gtruths)]
-   return [m for m in matches if m is False].__len__() / matches.__len__()
+   pred = clf.predict(validation_or_test) # to check
+   #matches = [z[0] == z[1] for z in zip(pred, v_or_t_gtruths)]
+   #score = [m for m in matches if m is False].__len__() / matches.__len__()
+   print("l2regularization_costs: " + repr(cost))
+   print("prediction & groud truth")
+   print([int(n) for n in list(pred)])
+   print([int(n) for n in v_or_t_gtruths])
+   print(" " + functools.reduce(lambda a,b: a + "  " + b, ["!" if z[0] != z[1] else " " for z in zip(list(pred), v_or_t_gtruths)]))
+   print("---")
+   #fpr, tpr, thresholds = metrics.roc_curve(v_or_t_gtruths, pred)
+   #score = metrics.auc(fpr, tpr)
+   score = metrics.accuracy_score(v_or_t_gtruths, pred)
+   return score
 
 def optimizehyperparameter(completion_alg,
                            sigmas, # [sigma]
@@ -64,8 +79,7 @@ def optimizehyperparameter(completion_alg,
                            validation, # person ID/k_group
                            test # person ID/k_group
 ):
-    error_to_hyperparameters = {}
-    for sigma in sigmas:
+    def train_validation_test_split(sigma):
         # sigma and completion_alg determines gram matrix file
         mat_file = mat_file_name(sigma, completion_alg) 
         mat = sio.loadmat(mat_file)
@@ -87,13 +101,24 @@ def optimizehyperparameter(completion_alg,
         validation_gtruths = [d['ground_truth'] for d in data_attributes if d['k_group'] == validation]
         train_validation_gtruths = [d['ground_truth'] for d in data_attributes if d['k_group'] != test]
         test_gtruths = [d['ground_truth'] for d in data_attributes if d['k_group'] == test]
+        return test_matrix, train_validation_matrix, validation_matrix, train_matrix,\
+    train_gtruths, validation_gtruths, train_validation_gtruths, test_gtruths
         
+    error_to_hyperparameters = {}
+    for sigma in sigmas:
+        test_matrix, train_validation_matrix, validation_matrix, train_matrix,\
+    train_gtruths, validation_gtruths, train_validation_gtruths, test_gtruths\
+    = train_validation_test_split(sigma)
         for cost in costs:
             error_to_hyperparameters[tryout1hyperparameter(cost, train_matrix, train_gtruths,
                                                            validation_matrix, validation_gtruths)] = (sigma, cost)
             #/* indices in the gram matrix is passed to the function to indicate the split. */
-        best_sigma, best_cost = error_to_hyperparameters[min(list(error_to_hyperparameters.keys()))]
-    return tryout1hyperparameter(cost, train_validation_matrix, train_validation_gtruths, test_matrix, test_gtruths)
+    best_sigma, best_cost = error_to_hyperparameters[min(list(error_to_hyperparameters.keys()))]
+    test_matrix, train_validation_matrix, validation_matrix, train_matrix,\
+    train_gtruths, validation_gtruths, train_validation_gtruths, test_gtruths\
+    = train_validation_test_split(best_sigma)
+    print("test")
+    return tryout1hyperparameter(best_cost, train_validation_matrix, train_validation_gtruths, test_matrix, test_gtruths)
 
 def crossvalidation(completion_alg, sigmas, costs):
     #for each split of gram into train/validation/test (for loop for 22 test subjects):
@@ -123,10 +148,13 @@ def compare_completion_algorithms(sigmas, costs):
     print("SoftImpute: " + repr(result_soft_impute))
 
 if __name__ == "__main__":
-    dataset_type = "num"
-    attribute_type = "velocity"
-    loss_persentage = 10
-    sigmas_ = [6.0]
-    costs_ = [0.5,1,2,3]
+    config_json_file = sys.argv[1]
+    config_dict = json.load(open(config_json_file, 'r'))
 
-    compare_completion_algorithms(sigmas_, costs_)
+    dataset_type = config_dict['dataset_type']
+    attribute_type = config_dict['attribute_type']
+    loss_persentage = config_dict['loss_persentage']
+    sigmas_ = config_dict['gak_sigmas']
+    l2regularization_costs = config_dict['l2regularization_costs']
+
+    compare_completion_algorithms(sigmas_, l2regularization_costs)
