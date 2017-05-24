@@ -28,22 +28,22 @@ if __name__ == "__main__":
                                 data_attribute_type=data_attribute_type,
                                 gak_sigma=gak_sigma,
                                 incomplete_persentage=incomplete_persentage)
-                output_filename_format = config_dict['fixed']['output_filename_format']
-                output_filename_format = output_filename_format.replace("${dataset_type}",
-                                                                        dataset_type)\
-                                                               .replace("${data_attribute_type}",
-                                                                        data_attribute_type)\
-                                                               .replace("${gak_sigma}",
-                                                                        ("%.3f" % gak_sigma))\
-                                                               .replace("${incomplete_persentage}",
-                                                                        str(incomplete_persentage))\
-                                                               .replace("_${completion_alg}", "")
-                json_file_name = JSON_DIR + output_filename_format + ".json"
+                output_filename_format_ = config_dict['fixed']['output_filename_format']
+                output_filename_format_ = output_filename_format.replace("${dataset_type}",
+                                                                         dataset_type)\
+                                                                .replace("${data_attribute_type}",
+                                                                         data_attribute_type)\
+                                                                .replace("${gak_sigma}",
+                                                                         ("%.3f" % gak_sigma))\
+                                                                .replace("${incomplete_persentage}",
+                                                                         str(incomplete_persentage))\
+                                                                .replace("_${completion_alg}", "")
+                json_file_name = JSON_DIR + output_filename_format_ + ".json"
                 fd = open(json_file_name, "w")
                 json.dump(job_dict, fd)
                 fd.close()
 
-                job_file_name = JOB_DIR + output_filename_format + ".job"
+                job_file_name = JOB_DIR + output_filename_format_ + ".job"
                 fd = open(job_file_name, "w")
                 fd.write(PYTHON + " " + PROGRAM + " " + json_file_name + "\n")
                 fd.close()
