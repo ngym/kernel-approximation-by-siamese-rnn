@@ -196,7 +196,7 @@ if __name__ == "__main__":
             for f2 in ret_dict_keys:
                 value = ret_dict[f2]
                 gram.register(f1, f2, value)
-                gak_logger.write(f1 + ", " + f2 + ", " + str(value) + "\n")
+                #gak_logger.write(f1 + ", " + f2 + ", " + str(value) + "\n")
             num_finished_jobs += 1
             print(str(num_finished_jobs) + "/" + str(num_futures), end=" ")
             sys.stdout.flush()
