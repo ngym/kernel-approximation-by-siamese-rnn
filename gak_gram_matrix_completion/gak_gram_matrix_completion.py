@@ -250,6 +250,9 @@ if __name__ == "__main__":
         new_matrix = np.dot(v, np.dot(np.diag(w), np.linalg.inv(v)))
         return np.real(new_matrix)
     """
+    # reduce memory usage
+    gram = None
+    similarities = None
     
     # "SOFT_IMPUTE"
     """
@@ -259,7 +262,7 @@ if __name__ == "__main__":
     completed_similarities = SoftImpute().complete(incomplete_similarities)
     # eigenvalue check
     positive_definite_completed_similarities = check_and_modify_eigenvalues_to_positive_definite(completed_similarities)
-    sio.savemat(mat_out_soft_impute, dict(gram=completed_similarities, indices=files))
+    sio.savemat(mat_out_soft_impute, dict(gram=positive_definite_completed_similarities, indices=files))
     plot(html_out_soft_impute,
          positive_definite_completed_similarities, files)
     print("SoftImpute is output")
@@ -272,7 +275,7 @@ if __name__ == "__main__":
     completed_similarities = NuclearNormMinimization().complete(incomplete_similarities)
     # eigenvalue check
     positive_definite_completed_similarities = check_and_modify_eigenvalues_to_positive_definite(completed_similarities)
-    sio.savemat(mat_out_nuclear_norm_minimization, dict(gram=completed_similarities, indices=files))
+    sio.savemat(mat_out_nuclear_norm_minimization, dict(gram=positive_definite_completed_similarities, indices=files))
     plot(html_out_nuclear_norm_minimization,
          positive_definite_completed_similarities, files)
     print("NuclearNormMinimization is output")
