@@ -233,7 +233,13 @@ if __name__ == "__main__":
                 is_row.append(s)
         incomplete_similarities.append(is_row)
     print("Incomplete matrix is provided.")
-    def check_and_modify_eigenvalues_to_positive_definite(A):
+    def nearest_positive_semidefinite(matrix):
+        sym_matrix = (matrix + matrix.T) * 0.5
+        w, v = np.linalg.eig(sym_matrix)
+        psd_w = np.array([max(0, e) for e in w])
+        psd_matrix = np.dot(v, np.dot(np.diag(psd_w), np.linalg.inv(v)))
+        return np.real(psd_matrix)
+    """
         epsilon=0
         n = A.shape[0]
         eigval, eigvec = np.linalg.eig(A)
@@ -245,11 +251,7 @@ if __name__ == "__main__":
         out = B*B.T
         return(np.real(out))
     """
-        w, v = np.linalg.eig(matrix)
-        new_w = np.array([max(0, e) for e in w])
-        new_matrix = np.dot(v, np.dot(np.diag(w), np.linalg.inv(v)))
-        return np.real(new_matrix)
-    """
+
     # reduce memory usage
     gram = None
     similarities = None
@@ -261,10 +263,10 @@ if __name__ == "__main__":
     """
     completed_similarities = SoftImpute().complete(incomplete_similarities)
     # eigenvalue check
-    positive_definite_completed_similarities = check_and_modify_eigenvalues_to_positive_definite(completed_similarities)
-    sio.savemat(mat_out_soft_impute, dict(gram=positive_definite_completed_similarities, indices=files))
+    psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
+    sio.savemat(mat_out_soft_impute, dict(gram=psd_completed_similarities, indices=files))
     plot(html_out_soft_impute,
-         positive_definite_completed_similarities, files)
+         psd_completed_similarities, files)
     print("SoftImpute is output")
 
     # "NUCLEAR_NORM_MINIMIZATION":
@@ -274,12 +276,12 @@ if __name__ == "__main__":
     """
     completed_similarities = NuclearNormMinimization().complete(incomplete_similarities)
     # eigenvalue check
-    positive_definite_completed_similarities = check_and_modify_eigenvalues_to_positive_definite(completed_similarities)
-    sio.savemat(mat_out_nuclear_norm_minimization, dict(gram=positive_definite_completed_similarities, indices=files))
+    psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
+    sio.savemat(mat_out_nuclear_norm_minimization, dict(gram=psd_completed_similarities, indices=files))
     plot(html_out_nuclear_norm_minimization,
-         positive_definite_completed_similarities, files)
+         psd_completed_similarities, files)
     print("NuclearNormMinimization is output")
-
+    
     """
     loaded_mat = sio.loadmat(mat_out_nuclear_norm_minimization)
     print(loaded_mat['gram'])
