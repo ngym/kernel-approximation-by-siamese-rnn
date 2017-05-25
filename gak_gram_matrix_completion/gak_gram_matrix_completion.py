@@ -71,6 +71,9 @@ def pick_attribute(ll, attribute_type):
     elif attribute_type == "orientation":
         for l in ll:
             retval.append(l[4:8])
+    elif attribute_type == "all":
+        for l in ll:
+            retval.append(l[1:14])
     else:
         print("attribute type error.")
         assert False

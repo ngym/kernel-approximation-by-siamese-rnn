@@ -1,14 +1,17 @@
 {
     "fixed":{
 	  "num_thread": 12,
+	  "random_seed": 1
 	  "output_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/OUTPUT/",
 	  "output_filename_format": "gram_${dataset_type}_${data_attribute_type}_sigma${gak_sigma}_loss${incomplete_persentage}_${completion_alg}",
 	  "dataset_type": "upperChar",
-	  "data_mat_files": ["/home/ngym/NFSshare/Lorincz_Lab/6DMG_mat_112712/matR_char/upper_*mat"],
-	  "random_seed": 1
+	  "data_mat_files": ["/home/ngym/NFSshare/Lorincz_Lab/6DMG_mat_112712/matR_char/upper_*t01.mat",
+                           "/home/ngym/NFSshare/Lorincz_Lab/6DMG_mat_112712/matR_char/upper_*t02.mat",
+                           "/home/ngym/NFSshare/Lorincz_Lab/6DMG_mat_112712/matR_char/upper_*t03.mat"
+                          ],
     },
     "iterate": {
-	  "data_attribute_type": ["position", "velocity", "acceleration", "angularvelocity", "orientation"],
+	  "data_attribute_type": ["all"],
 	  "gak_sigma": [0.4, 1, 2, 5, 10, 20],
 	  "incomplete_persentage": [10, 20, 50]
     }
