@@ -211,7 +211,7 @@ if __name__ == "__main__":
     plot(html_out_no_completion,
          similarities, files)
     sio.savemat(mat_out_no_completion, dict(gram=similarities, indices=files))
-
+    print("NoCompletion files are output.")
 
     ###################################
     ###### completed GRAM matrix ######
@@ -232,7 +232,7 @@ if __name__ == "__main__":
             else:
                 is_row.append(s)
         incomplete_similarities.append(is_row)
-
+    print("Incomplete matrix is provided.")
     def check_and_modify_eigenvalues_to_positive_definite(A):
         epsilon=0
         n = A.shape[0]
@@ -251,18 +251,6 @@ if __name__ == "__main__":
         return np.real(new_matrix)
     """
     
-    # "NUCLEAR_NORM_MINIMIZATION":
-    """
-    matrix completion using convex optimization to find low-rank solution
-    that still matches observed values. Slow!
-    """
-    completed_similarities = NuclearNormMinimization().complete(incomplete_similarities)
-    # eigenvalue check
-    positive_definite_completed_similarities = check_and_modify_eigenvalues_to_positive_definite(completed_similarities)
-    plot(html_out_nuclear_norm_minimization,
-         positive_definite_completed_similarities, files)
-    sio.savemat(mat_out_nuclear_norm_minimization, dict(gram=completed_similarities, indices=files))
-
     # "SOFT_IMPUTE"
     """
     Instead of solving the nuclear norm objective directly, instead
@@ -271,10 +259,23 @@ if __name__ == "__main__":
     completed_similarities = SoftImpute().complete(incomplete_similarities)
     # eigenvalue check
     positive_definite_completed_similarities = check_and_modify_eigenvalues_to_positive_definite(completed_similarities)
+    sio.savemat(mat_out_soft_impute, dict(gram=completed_similarities, indices=files))
     plot(html_out_soft_impute,
          positive_definite_completed_similarities, files)
-    sio.savemat(mat_out_soft_impute, dict(gram=completed_similarities, indices=files))
- 
+    print("SoftImpute is output")
+
+    # "NUCLEAR_NORM_MINIMIZATION":
+    """
+    matrix completion using convex optimization to find low-rank solution
+    that still matches observed values. Slow!
+    """
+    completed_similarities = NuclearNormMinimization().complete(incomplete_similarities)
+    # eigenvalue check
+    positive_definite_completed_similarities = check_and_modify_eigenvalues_to_positive_definite(completed_similarities)
+    sio.savemat(mat_out_nuclear_norm_minimization, dict(gram=completed_similarities, indices=files))
+    plot(html_out_nuclear_norm_minimization,
+         positive_definite_completed_similarities, files)
+    print("NuclearNormMinimization is output")
 
     """
     loaded_mat = sio.loadmat(mat_out_nuclear_norm_minimization)
