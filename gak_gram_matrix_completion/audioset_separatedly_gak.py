@@ -179,6 +179,8 @@ if __name__ == "__main__":
         files += files_
     files = sorted(files)
 
+    audioset_resampling_frequency = config_dict['audioset_resampling_frequency']
+    
     if dataset_type in {"num", "upperChar"}:
         # 6DMG
         SixDMG_read_mats_and_build_seqs(files, data_attribute_type)
@@ -200,7 +202,6 @@ if __name__ == "__main__":
     second_part_start  = ((9 - separated_part) * file_num//10) # <=
     second_part_finish = ((10- separated_part) * file_num//10) # <
 
-    audioset_resampling_frequency = config_dict['audioset_resampling_frequency']
     output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
         dict(dataset_type=dataset_type,
              audioset_resampling_frequency=audioset_resampling_frequency,
