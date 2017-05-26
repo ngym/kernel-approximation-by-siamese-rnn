@@ -1,6 +1,10 @@
 import numpy as np
 import TGA_python3_wrapper.global_align as ga
-import scipy.io as sio
+
+import scipy as sp
+from scipy import io
+from scipy.io import wavfile
+from scipy import signal
 
 import subprocess, functools, sys, threading, glob, json, random
 import concurrent.futures
@@ -9,6 +13,10 @@ import plotly.offline as po
 import plotly.graph_objs as pgo
 
 from fancyimpute import BiScaler, KNN, NuclearNormMinimization, SoftImpute
+
+from string import Template
+
+from robust_matrix_completion import robust_matrix_completion
 
 class Logger:
     def __init__(self, log_file):
@@ -47,12 +55,38 @@ gram = None
 
 seqs = {}
 
-def read_mats_and_build_seqs(files, attribute_type):
-    for f in files:
-        mat = sio.loadmat(f)
-        seqs[f] = second_map(np.float64, pick_attribute(mat['gest'].transpose(), attribute_type))
+def read_and_resample_worder(f, frequency):
+    rate, data = io.wavfile.read(f)
+    length = frequency * data.__len__() // rate
+    resampled_data = signal.resample(data, length)
+    return resampled_data
 
-def pick_attribute(ll, attribute_type):
+def audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency):
+    with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:
+        future_to_file = {executor.submit(read_and_resample_worder, f, audioset_resampling_frequency): f
+                           for f in files}
+        print("reading %d files." % future_to_file.__len__())
+        for future in concurrent.futures.as_completed(future_to_file):
+            f = future_to_file[future]
+            resampled_data = future.result()
+            if resampled_data.ndim > 1:
+                # stereo
+                # convert stereo to mono
+                # https://librosa.github.io/librosa/_modules/librosa/core/audio.html          
+                seqs[f] = np.array([[np.mean([np.float64(elem) for elem in sample], axis=0)] for sample in resampled_data])
+            else:
+                # mono
+                seqs[f] = np.array([[np.float64(sample)] for sample in resampled_data])
+            #print(seqs[f])
+            print(str(seqs.__len__()) + " " + f)
+            sys.stdout.flush()
+
+def SixDMG_read_mats_and_build_seqs(files, attribute_type):
+    for f in files:
+        mat = io.loadmat(f)
+        seqs[f] = second_map(np.float64, SixDMG_pick_attribute(mat['gest'].transpose(), attribute_type))
+
+def SixDMG_pick_attribute(ll, attribute_type):
     retval = []
     if attribute_type == "position":
         for l in ll:
@@ -130,8 +164,7 @@ if __name__ == "__main__":
     num_thread = config_dict['num_thread']
 
     dataset_type = config_dict['dataset_type']
-    data_attribute_type = config_dict['data_attribute_type']
-    
+
     data_files = config_dict['data_mat_files']
     gak_sigma = np.float64(config_dict['gak_sigma'])
     random_seed = int(config_dict['random_seed'])
@@ -139,20 +172,38 @@ if __name__ == "__main__":
 
     output_dir = config_dict['output_dir']
     
-    output_filename_format = config_dict['output_filename_format'].replace("${dataset_type}", dataset_type)\
-                                                                  .replace("${data_attribute_type}", data_attribute_type)\
-                                                                  .replace("${gak_sigma}", ("%.3f" % gak_sigma))\
-                                                                  .replace("${incomplete_persentage}", str(incomplete_persentage))
+    if dataset_type in {"num", "upperChar"}:
+        # 6DMG
+        data_attribute_type = config_dict['data_attribute_type']
+        output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
+            dict(dataset_type=dataset_type,
+                 data_attribute_type=data_attribute_type,
+                 gak_sigma=("%.3f" % gak_sigma),
+                 incomplete_persentage=str(incomplete_persentage)))
+    else:
+        # audioset
+        audioset_resampling_frequency = config_dict['audioset_resampling_frequency']
+        output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
+            dict(dataset_type=dataset_type,
+                 audioset_resampling_frequency=audioset_resampling_frequency,
+                 gak_sigma=("%.3f" % gak_sigma),
+                 incomplete_persentage=str(incomplete_persentage)))
 
-    gak_logfile = output_dir + output_filename_format.replace("_${completion_alg}", "") + ".log"
-    
     html_out_no_completion = output_dir + output_filename_format.replace("${completion_alg}", "NoCompletion") + ".html" 
-    html_out_nuclear_norm_minimization = output_dir + output_filename_format.replace("${completion_alg}", "NuclearNormMinimization") + ".html"
+    html_out_nuclear_norm_minimization = output_dir + output_filename_format.replace("${completion_alg}",
+                                                                                     "NuclearNormMinimization") + ".html"
     html_out_soft_impute = output_dir + output_filename_format.replace("${completion_alg}", "SoftImpute") + ".html"
-    mat_out_no_completion = output_dir + output_filename_format.replace("${completion_alg}", "NoCompletion") + ".mat" 
-    mat_out_nuclear_norm_minimization = output_dir + output_filename_format.replace("${completion_alg}", "NuclearNormMinimization") + ".mat"
-    mat_out_soft_impute = output_dir + output_filename_format.replace("${completion_alg}", "SoftImpute") + ".mat"
+    html_out_robust_matrix_completion = output_dir + output_filename_format.replace("${completion_alg}",
+                                                                                    "RobustMatrixCompletion") + ".html"
     
+    mat_out_no_completion = output_dir + output_filename_format.replace("${completion_alg}", "NoCompletion") + ".mat" 
+    mat_out_nuclear_norm_minimization = output_dir + output_filename_format.replace("${completion_alg}",
+                                                                                    "NuclearNormMinimization") + ".mat"
+    mat_out_soft_impute = output_dir + output_filename_format.replace("${completion_alg}", "SoftImpute") + ".mat"
+    mat_out_robust_matrix_completion = output_dir + output_filename_format.replace("${completion_alg}",
+                                                                                    "RobustMatrixCompletion") + ".mat"
+    
+    gak_logfile = output_dir + output_filename_format.replace("_${completion_alg}", "") + ".log"
     gak_logger = Logger(gak_logfile)
 
     files = []
@@ -164,8 +215,14 @@ if __name__ == "__main__":
         files += files_
     files = sorted(files)
 
-    read_mats_and_build_seqs(files, data_attribute_type)
+    if dataset_type in {"num", "upperChar"}:
+        # 6DMG
+        SixDMG_read_mats_and_build_seqs(files, data_attribute_type)
+    else:
+        # audioset
+        audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency)
 
+    
     gram = GRAMmatrix(files)
 
     similarities = []
@@ -213,7 +270,7 @@ if __name__ == "__main__":
     # "NO_COMPLETION"
     plot(html_out_no_completion,
          similarities, files)
-    sio.savemat(mat_out_no_completion, dict(gram=similarities, indices=files))
+    io.savemat(mat_out_no_completion, dict(gram=similarities, indices=files))
     print("NoCompletion files are output.")
 
     ###################################
@@ -267,11 +324,22 @@ if __name__ == "__main__":
     completed_similarities = SoftImpute().complete(incomplete_similarities)
     # eigenvalue check
     psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
-    sio.savemat(mat_out_soft_impute, dict(gram=psd_completed_similarities, indices=files))
+    io.savemat(mat_out_soft_impute, dict(gram=psd_completed_similarities, indices=files))
     plot(html_out_soft_impute,
          psd_completed_similarities, files)
     print("SoftImpute is output")
 
+    # "Robust Matrix Completion"
+    """
+    """
+    completed_similarities, _ = robust_matrix_completion(np.array(incomplete_similarities))
+    # eigenvalue check
+    psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
+    io.savemat(mat_out_robust_matrix_completion, dict(gram=psd_completed_similarities, indices=files))
+    plot(html_out_robust_matrix_completion,
+         psd_completed_similarities, files)
+    print("RobustMatrixCompletion is output")
+   
     # "NUCLEAR_NORM_MINIMIZATION":
     """
     matrix completion using convex optimization to find low-rank solution
@@ -280,13 +348,13 @@ if __name__ == "__main__":
     completed_similarities = NuclearNormMinimization().complete(incomplete_similarities)
     # eigenvalue check
     psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
-    sio.savemat(mat_out_nuclear_norm_minimization, dict(gram=psd_completed_similarities, indices=files))
+    io.savemat(mat_out_nuclear_norm_minimization, dict(gram=psd_completed_similarities, indices=files))
     plot(html_out_nuclear_norm_minimization,
          psd_completed_similarities, files)
     print("NuclearNormMinimization is output")
     
     """
-    loaded_mat = sio.loadmat(mat_out_nuclear_norm_minimization)
+    loaded_mat = io.loadmat(mat_out_nuclear_norm_minimization)
     print(loaded_mat['gram'])
     mat = second_map(np.float64, loaded_mat['gram'])
     print(mat)
