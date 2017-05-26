@@ -1,7 +1,5 @@
 import sys, json, subprocess
 
-JSON_DIR = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/JSON/"
-JOB_DIR = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/JOB/"
 PYTHON = "/usr/bin/python3"
 PROGRAM = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/audioset_separatedly_gak.py"
 
@@ -14,6 +12,9 @@ if __name__ == "__main__":
     config_json_file = sys.argv[1]
     config_dict = json.load(open(config_json_file, 'r'))
 
+    json_dir = config_dict['env']['json_dir']
+    job_dir = config_dict['env']['job_dir']
+    
     num_thread = config_dict['fixed']['num_thread']
     output_dir = config_dict['fixed']['output_dir']
     output_filename_format = config_dict['fixed']['output_filename_format']
@@ -46,12 +47,12 @@ if __name__ == "__main__":
                                                                     .replace("${incomplete_persentage}",
                                                                              str(incomplete_persentage))\
                                                                     .replace("_${completion_alg}", "")
-                    json_file_name = JSON_DIR + output_filename_format_ + "_part" + str(part) + ".json"
+                    json_file_name = json_dir + output_filename_format_ + "_part" + str(part) + ".json"
                     fd = open(json_file_name, "w")
                     json.dump(job_dict, fd)
                     fd.close()
                     
-                    job_file_name = JOB_DIR + output_filename_format_ + "_part" + str(part) + ".job"
+                    job_file_name = job_dir + output_filename_format_ + "_part" + str(part) + ".job"
                     fd = open(job_file_name, "w")
                     fd.write(PYTHON + " " + PROGRAM + " " + json_file_name + "\n")
                     fd.close()
