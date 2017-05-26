@@ -16,8 +16,6 @@ from fancyimpute import BiScaler, KNN, NuclearNormMinimization, SoftImpute
 
 from string import Template
 
-from robust_matrix_completion import robust_matrix_completion
-
 class Logger:
     def __init__(self, log_file):
         self.__lock = threading.Lock()
