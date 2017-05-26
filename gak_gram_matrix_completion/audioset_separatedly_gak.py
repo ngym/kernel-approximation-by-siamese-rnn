@@ -76,7 +76,7 @@ def audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency):
                 # mono
                 seqs[f] = np.array([[np.float64(sample)] for sample in resampled_data])
             #print(seqs[f])
-            print(str(seqs.__len__()) + " " + f + "length: " + str(resampled_data.__len__()))
+            print(str(seqs.__len__()) + " " + f + " length: " + str(resampled_data.__len__()))
             sys.stdout.flush()
 
 def SixDMG_read_mats_and_build_seqs(files, attribute_type):
