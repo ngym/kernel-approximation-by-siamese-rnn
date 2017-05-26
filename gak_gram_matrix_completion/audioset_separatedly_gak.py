@@ -195,7 +195,7 @@ if __name__ == "__main__":
 
     futures = []
 
-    separated_part = int(sys.argv[2])
+    separated_part = config_dict['part']
     assert 0 <= separated_part and separated_part < 5
     first_part_start   = (separated_part       * file_num//10) # <=
     first_part_finish  = ((separated_part + 1) * file_num//10) # <

@@ -1,0 +1,16 @@
+{
+    "fixed":{
+	  "num_thread": 12,
+	  "output_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/OUTPUT/",
+	  "output_filename_format": "gram_${dataset_type}_audiosetresamplingfrequency${audioset_resampling_frequency}_sigma${gak_sigma}_loss${incomplete_persentage}_${completion_alg}",
+	  "dataset_type": "gram",
+	  "data_mat_files": ["/home/ngym/NFSshare/Lorincz_Lab/audioset/segments/Bark/Bark*wav",
+				   "/home/ngym/NFSshare/Lorincz_Lab/audioset/segments/Meow/Meow*wav"],
+	  "random_seed": 1
+    },
+    "iterate": {
+	  "audioset_resampling_frequency": [100],
+	  "gak_sigma": [10, 100, 1000],
+	  "incomplete_persentage": [10]
+    }
+}
