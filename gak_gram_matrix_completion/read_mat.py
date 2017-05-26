@@ -10,3 +10,4 @@ for v in mat['gest'].transpose():
     for val in v[:num_to_show]:
         print("%10f" % val, end=" ")
     print("]")
+print(mat['gest'].T.__len__())
