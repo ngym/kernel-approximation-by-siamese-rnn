@@ -59,11 +59,12 @@ class TableIndexDisplaynameMID:
             self.displayname_to_mid[displayname] = mid
 
 class YouTubeDownloader():
-    def __init__(self, seg_meta, out_dir):
+    def __init__(self, seg_meta, out_dir, displayname):
         self.out_dir = out_dir
         self.downloaded_file = None
         self.meta_data = seg_meta
         self.YTID, self.start, self.end, self.positive_labels = seg_meta
+        self.displayname = displayname
     def download_audio(self, data_type):
         audio_url = self.__get_audio_url()
         if audio_url is None:
@@ -97,7 +98,7 @@ class YouTubeDownloader():
                   "-ss", self.start,
                   "-to", self.end,
                   "-loglevel", "quiet",
-                  self.out_dir + "YTID" + self.YTID + "." + data_type]
+                  self.out_dir + self.displayname + "_YTID" + self.YTID + "." + data_type]
         #print(dl_cmd)
         for i in range(100):
             try:
@@ -108,7 +109,7 @@ class YouTubeDownloader():
                 import traceback
                 traceback.print_exc()
             else:
-                self.downloaded_file = self.out_dir + "YTID" + self.YTID + "." + data_type
+                self.downloaded_file = self.out_dir + self.displayname + "_YTID" + self.YTID + "." + data_type
                 return 0
         ffmpeg_wav_logger.write(self.YTID + ", " + error_cause)
         print("failed downloading " + repr(data_type) + ":" + self.YTID)
@@ -123,7 +124,7 @@ class YouTubeDownloader():
                    "-loglevel", "quiet",
                    "-f", "u16le",
                    "-acodec", "pcm_u16le",
-                   self.out_dir + "YTID" + self.YTID + ".raw"]
+                   self.out_dir + self.displayname + "_YTID" + self.YTID + ".raw"]
         for i in range(100):
             try:
                 subprocess.check_output(raw_cmd)
@@ -137,14 +138,14 @@ class YouTubeDownloader():
         ffmpeg_raw_logger.write(self.YTID)
         return -1
 
-def worker(meta_data, data_type, out_dir):
-    dloader = YouTubeDownloader(meta_data, out_dir)
+def worker(meta_data, data_type, out_dir, displayname):
+    dloader = YouTubeDownloader(meta_data, out_dir, displayname)
     dloader.download_audio(data_type)
     dloader.generate_audio_raw()
     print("work finish: " + repr(meta_data))
         
 if __name__ == "__main__":
-    # python3 segments_downloader.py ../eval_segments.csv 2 wav Bark
+    # python3 segments_downloader.py ../../dataset/audioset/dataset_split_csv/eval_segments.csv 2 wav Bark
     filename = sys.argv[1]
     num_thread = int(sys.argv[2])
     data_type = sys.argv[3]
@@ -163,6 +164,6 @@ if __name__ == "__main__":
             YTID, start, end, positive_MIDs_raw = meta_data
             positive_MIDs = next(csv.reader([positive_MIDs_raw]))
             if mid in positive_MIDs:
-                executor.submit(worker, meta_data, data_type, OUTPUT_DIRECTORY)
+                executor.submit(worker, meta_data, data_type, OUTPUT_DIRECTORY, displayname)
 
 #a=`youtube-dl -x -g "https://www.youtube.com/watch?v=-1iKLvsRBbE"`; ffmpeg -i "$a" -ss 10 -to 20 -f u16le -acodec pcm_u16le asdf.raw    
