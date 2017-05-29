@@ -55,16 +55,33 @@ seqs = {}
 
 def read_and_resample_worder(f, frequency):
     mat_filename = f.replace(".wav", ("_freq" + str(frequency) + ".mat"))
+    print(mat_filename)
     try:
         mat = io.loadmat(mat_filename)
         resampled_data = mat['resampled_data']
+        print("read from mat")
     except:
         rate, data = io.wavfile.read(f)
         length = frequency * data.__len__() // rate
+        print("read from wav")
         resampled_data = signal.resample(data, length)
     return resampled_data
 
 def audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency, num_thread):
+    for f in files:
+        resampled_data = read_and_resample_worder(f, audioset_resampling_frequency)
+        if resampled_data.ndim > 1:
+            # stereo
+            # convert stereo to mono
+            # https://librosa.github.io/librosa/_modules/librosa/core/audio.html
+            seqs[f] = np.array([[np.mean([np.float64(elem) for elem in sample], axis=0)] for sample in resampled_data])
+        else:
+            # mono
+            seqs[f] = np.array(resampled_data).astype('float64')
+        #print(seqs[f])
+        print(str(seqs.__len__()) + " " + f + " length: " + str(resampled_data.__len__()))
+        sys.stdout.flush()
+    """
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_thread) as executor:
         future_to_file = {executor.submit(read_and_resample_worder, f, audioset_resampling_frequency): f
                            for f in files}
@@ -83,7 +100,7 @@ def audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency, num_
             #print(seqs[f])
             print(str(seqs.__len__()) + " " + f + " length: " + str(resampled_data.__len__()))
             sys.stdout.flush()
-
+    """
 def SixDMG_read_mats_and_build_seqs(files, attribute_type):
     for f in files:
         mat = io.loadmat(f)
@@ -160,6 +177,16 @@ def plot(file_name, similarities, files):
     data=[trace]
     po.plot(data, filename=file_name, auto_open=False)
 
+def worker_for_f1(f1index, file_num, gak_sigma):
+    f1 = files[f1index]
+    seq1 = seqs[f1]
+    ret_dict = {}
+    for f2index in range(f1index, file_num):
+        f2 = files[f2index]
+        seq2 = seqs[f2]
+        ret_dict[f2] = gak(seq1, seq2, gak_sigma)
+    return ret_dict
+
 if __name__ == "__main__":
     config_json_file = sys.argv[1]
     config_dict = json.load(open(config_json_file, 'r'))
@@ -185,7 +212,7 @@ if __name__ == "__main__":
     files = sorted(files)
 
     audioset_resampling_frequency = config_dict['audioset_resampling_frequency']
-    #audioset_resampling_frequency = 10
+    audioset_resampling_frequency = 10
     
     if dataset_type in {"num", "upperChar"}:
         # 6DMG
@@ -223,19 +250,10 @@ if __name__ == "__main__":
                   "_part" + str(separated_part) + ".log"
     gak_logger = Logger(gak_logfile)
 
-    def worker_for_f1(f1index, gak_sigma):
-        f1 = files[f1index]
-        seq1 = seqs[f1]
-        ret_dict = {}
-        for f2index in range(f1index, file_num):
-            f2 = files[f2index]
-            seq2 = seqs[f2]
-            ret_dict[f2] = gak(seq1, seq2, gak_sigma)
-        return ret_dict
     #seqs[files[f2index]]
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_thread) as executor:
         print("Start submitting jobs.")
-        future_to_files = {executor.submit(worker_for_f1, f1index, gak_sigma):
+        future_to_files = {executor.submit(worker_for_f1, f1index, file_num, gak_sigma):
                            f1index
                            for f1index in range(file_num)
                            if (first_part_start  <= f1index and f1index < first_part_finish ) or
