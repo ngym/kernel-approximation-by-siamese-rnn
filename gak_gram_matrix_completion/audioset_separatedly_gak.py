@@ -39,7 +39,7 @@ class GRAMmatrix:
         self.__lock = threading.Lock()
         self.gram = OrderedDict()
         for seq_id1 in seq_ids:
-            self.gram[seq_id1] = {}
+            self.gram[seq_id1] = OrderedDict()
             for seq_id2 in seq_ids:
                 self.gram[seq_id1][seq_id2] = -1
     def register(self, seq_id1, seq_id2, value):
