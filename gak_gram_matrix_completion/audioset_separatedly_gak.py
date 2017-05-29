@@ -54,13 +54,18 @@ gram = None
 seqs = {}
 
 def read_and_resample_worder(f, frequency):
-    rate, data = io.wavfile.read(f)
-    length = frequency * data.__len__() // rate
-    resampled_data = signal.resample(data, length)
+    mat_filename = f.replace(".wav", ("_freq" + str(frequency) + ".mat"))
+    try:
+        mat = io.loadmat(mat_filename)
+        resampled_data = mat['resampled_data']
+    except:
+        rate, data = io.wavfile.read(f)
+        length = frequency * data.__len__() // rate
+        resampled_data = signal.resample(data, length)
     return resampled_data
 
-def audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency):
-    with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:
+def audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency, num_thread):
+    with concurrent.futures.ProcessPoolExecutor(max_workers=num_thread) as executor:
         future_to_file = {executor.submit(read_and_resample_worder, f, audioset_resampling_frequency): f
                            for f in files}
         print("reading %d files." % future_to_file.__len__())
@@ -74,7 +79,7 @@ def audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency):
                 seqs[f] = np.array([[np.mean([np.float64(elem) for elem in sample], axis=0)] for sample in resampled_data])
             else:
                 # mono
-                seqs[f] = np.array([[np.float64(sample)] for sample in resampled_data])
+                seqs[f] = np.array(resampled_data).astype(float64)
             #print(seqs[f])
             print(str(seqs.__len__()) + " " + f + " length: " + str(resampled_data.__len__()))
             sys.stdout.flush()
@@ -139,7 +144,7 @@ def gak(seq1, seq2, sigma):
         assert kval == 0
     return kval
 
-def plot(file_name, similarities, files_to_show):
+def plot(file_name, similarities, files):
     # To fix the direction of the matrix as the diagonal line is from top-left to bottom-right.
     similarities_ = similarities[::-1]
     files_to_show = []
@@ -150,7 +155,7 @@ def plot(file_name, similarities, files_to_show):
     trace = pgo.Heatmap(z=similarities_,
                         x=files_to_show,
                         y=files_to_show_,
-                        zmin=0, zmax=1
+                        zmin=-1, zmax=1
     )
     data=[trace]
     po.plot(data, filename=file_name, auto_open=False)
@@ -180,13 +185,14 @@ if __name__ == "__main__":
     files = sorted(files)
 
     audioset_resampling_frequency = config_dict['audioset_resampling_frequency']
+    #audioset_resampling_frequency = 10
     
     if dataset_type in {"num", "upperChar"}:
         # 6DMG
         SixDMG_read_mats_and_build_seqs(files, data_attribute_type)
     else:
         # audioset
-        audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency)
+        audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency, num_thread)
 
     gram = GRAMmatrix(files)
 
@@ -217,11 +223,11 @@ if __name__ == "__main__":
                   "_part" + str(separated_part) + ".log"
     gak_logger = Logger(gak_logfile)
 
-    def worker_for_f1(f1index, f2indices, gak_sigma):
+    def worker_for_f1(f1index, gak_sigma):
         f1 = files[f1index]
         seq1 = seqs[f1]
         ret_dict = {}
-        for f2index in f2indices:
+        for f2index in range(f1index, file_num):
             f2 = files[f2index]
             seq2 = seqs[f2]
             ret_dict[f2] = gak(seq1, seq2, gak_sigma)
@@ -229,9 +235,8 @@ if __name__ == "__main__":
     #seqs[files[f2index]]
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_thread) as executor:
         print("Start submitting jobs.")
-        future_to_files = {executor.submit(worker_for_f1, f1index,
-                                           range(f1index, file_num), gak_sigma):
-                           files[f1index]
+        future_to_files = {executor.submit(worker_for_f1, f1index, gak_sigma):
+                           f1index
                            for f1index in range(file_num)
                            if (first_part_start  <= f1index and f1index < first_part_finish ) or
                               (second_part_start <= f1index and f1index < second_part_finish)}
@@ -239,13 +244,14 @@ if __name__ == "__main__":
         print(str(num_futures) + " jobs are submitted.")
         num_finished_jobs = 0
         for future in concurrent.futures.as_completed(future_to_files):
-            f1 = future_to_files[future]
+            f1index = future_to_files[future]
+            f1 = files[f1index]
             ret_dict = future.result()
             ret_dict_keys = list(ret_dict.keys())
             for f2 in ret_dict_keys:
                 value = ret_dict[f2]
                 gram.register(f1, f2, value)
-                #gak_logger.write(f1 + ", " + f2 + ", " + str(value) + "\n")
+                gak_logger.write(f1 + ", " + f2 + ", " + str(value) + "\n")
             num_finished_jobs += 1
             print(str(num_finished_jobs) + "/" + str(num_futures), end=" ")
             sys.stdout.flush()
