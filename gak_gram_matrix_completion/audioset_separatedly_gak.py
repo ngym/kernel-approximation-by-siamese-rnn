@@ -1,4 +1,5 @@
 import numpy as np
+from collections import OrderedDict
 import TGA_python3_wrapper.global_align as ga
 
 import scipy as sp
@@ -36,7 +37,7 @@ gak_logger = None
 class GRAMmatrix:
     def __init__(self, seq_ids):
         self.__lock = threading.Lock()
-        self.gram = {}
+        self.gram = OrderedDict()
         for seq_id1 in seq_ids:
             self.gram[seq_id1] = {}
             for seq_id2 in seq_ids:
@@ -177,7 +178,7 @@ def plot(file_name, similarities, files):
     data=[trace]
     po.plot(data, filename=file_name, auto_open=False)
 
-def worker_for_f1(f1index, file_num, gak_sigma):
+def worker_for_f1(files, f1index, file_num, gak_sigma):
     f1 = files[f1index]
     seq1 = seqs[f1]
     ret_dict = {}
@@ -253,7 +254,7 @@ if __name__ == "__main__":
     #seqs[files[f2index]]
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_thread) as executor:
         print("Start submitting jobs.")
-        future_to_files = {executor.submit(worker_for_f1, f1index, file_num, gak_sigma):
+        future_to_files = {executor.submit(worker_for_f1, files, f1index, file_num, gak_sigma):
                            f1index
                            for f1index in range(file_num)
                            if (first_part_start  <= f1index and f1index < first_part_finish ) or
