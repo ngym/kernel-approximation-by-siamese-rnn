@@ -6,15 +6,14 @@
     },
     "fixed":{
 	  "num_thread": 12,
-	  "output_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/OUTPUT/",
+	  "output_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/OUTPUTaudioset/",
 	  "output_filename_format": "gram_${dataset_type}_resamplingfrequency${audioset_resampling_frequency}_sigma${gak_sigma}",
 	  "dataset_type": "audioset",
 	  "data_mat_files": ["/home/ngym/NFSshare/Lorincz_Lab/audioset/segments/Bark/Bark*wav",
 				   "/home/ngym/NFSshare/Lorincz_Lab/audioset/segments/Meow/Meow*wav"],
-	  "random_seed": 1
     },
     "iterate": {
 	  "audioset_resampling_frequency": [100],
-	  "gak_sigma": [10, 100, 1000]
+	  "gak_sigma": [0.4, 1, 2, 5, 10, 20, 100, 1000]
     }
 }

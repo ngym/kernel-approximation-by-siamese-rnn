@@ -1,13 +1,8 @@
-import sys, json, subprocess
+import sys, json
 
 PYTHON = "/usr/bin/python3"
 PROGRAM = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/audioset_separatedly_gak.py"
 TIME = "/usr/bin/time"
-
-#JSON_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/JSON/"
-#JOB_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/JOB/"
-#PYTHON = "/usr/bin/python3"
-#PROGRAM = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/audioset_separatedly_gak.py"
 
 if __name__ == "__main__":
     config_json_file = sys.argv[1]
@@ -22,7 +17,6 @@ if __name__ == "__main__":
     output_filename_format = config_dict['fixed']['output_filename_format']
     dataset_type = config_dict['fixed']['dataset_type']
     data_mat_files = config_dict['fixed']['data_mat_files']
-    random_seed = config_dict['fixed']['random_seed']
 
     for audioset_resampling_frequency in config_dict['iterate']['audioset_resampling_frequency']:
         for gak_sigma in config_dict['iterate']['gak_sigma']:
@@ -32,7 +26,6 @@ if __name__ == "__main__":
                                 output_filename_format=output_filename_format,
                                 dataset_type=dataset_type,
                                 data_mat_files=data_mat_files,
-                                random_seed=random_seed,
                                 audioset_resampling_frequency=audioset_resampling_frequency,
                                 gak_sigma=gak_sigma,
                                 part=part

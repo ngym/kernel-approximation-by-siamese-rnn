@@ -130,7 +130,6 @@ def main():
 
     data_files = config_dict['data_mat_files']
     gak_sigma = np.float64(config_dict['gak_sigma'])
-    random_seed = int(config_dict['random_seed'])
 
     output_dir = config_dict['output_dir']
     
