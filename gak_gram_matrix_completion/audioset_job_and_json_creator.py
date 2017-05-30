@@ -2,6 +2,7 @@ import sys, json, subprocess
 
 PYTHON = "/usr/bin/python3"
 PROGRAM = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/audioset_separatedly_gak.py"
+TIME = "/usr/bin/time"
 
 #JSON_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/JSON/"
 #JOB_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/JOB/"
@@ -14,6 +15,7 @@ if __name__ == "__main__":
 
     json_dir = config_dict['env']['json_dir']
     job_dir = config_dict['env']['job_dir']
+    time_dir = config_dict['env']['time_dir']
     
     num_thread = config_dict['fixed']['num_thread']
     output_dir = config_dict['fixed']['output_dir']
@@ -45,8 +47,7 @@ if __name__ == "__main__":
                                                                     .replace("${gak_sigma}",
                                                                              ("%.3f" % gak_sigma))\
                                                                     .replace("${incomplete_persentage}",
-                                                                             str(incomplete_persentage))\
-                                                                    .replace("_${completion_alg}", "")
+                                                                             str(incomplete_persentage))
                     json_file_name = json_dir + output_filename_format_ + "_part" + str(part) + ".json"
                     fd = open(json_file_name, "w")
                     json.dump(job_dict, fd)
@@ -54,7 +55,8 @@ if __name__ == "__main__":
                     
                     job_file_name = job_dir + output_filename_format_ + "_part" + str(part) + ".job"
                     fd = open(job_file_name, "w")
-                    fd.write(PYTHON + " " + PROGRAM + " " + json_file_name + "\n")
+                    fd.write(TIME + " -v -o " + time_dir + output_filename_format_ + "_part" + str(part) + ".time " +\
+                             PYTHON + " " + PROGRAM + " " + json_file_name + "\n")
                     fd.close()
                 
 
