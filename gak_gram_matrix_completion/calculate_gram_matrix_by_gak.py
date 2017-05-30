@@ -131,7 +131,6 @@ def main():
     data_files = config_dict['data_mat_files']
     gak_sigma = np.float64(config_dict['gak_sigma'])
     random_seed = int(config_dict['random_seed'])
-    incomplete_persentage = int(config_dict['incomplete_persentage'])
 
     output_dir = config_dict['output_dir']
     
@@ -141,16 +140,14 @@ def main():
         output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
             dict(dataset_type=dataset_type,
                  data_attribute_type=data_attribute_type,
-                 gak_sigma=("%.3f" % gak_sigma),
-                 incomplete_persentage=str(incomplete_persentage)))
+                 gak_sigma=("%.3f" % gak_sigma))
     else:
         # audioset
         audioset_resampling_frequency = config_dict['audioset_resampling_frequency']
         output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
             dict(dataset_type=dataset_type,
                  audioset_resampling_frequency=audioset_resampling_frequency,
-                 gak_sigma=("%.3f" % gak_sigma),
-                 incomplete_persentage=str(incomplete_persentage)))
+                 gak_sigma=("%.3f" % gak_sigma))
 
     html_out_full_gak = output_dir + output_filename_format.replace("${completion_alg}", "FullGAK") + ".html" 
     mat_out_full_gak = output_dir + output_filename_format.replace("${completion_alg}", "FullGAK") + ".mat" 
