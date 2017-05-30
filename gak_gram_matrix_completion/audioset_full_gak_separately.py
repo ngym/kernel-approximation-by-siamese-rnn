@@ -10,10 +10,7 @@ from scipy import signal
 import subprocess, functools, sys, threading, glob, json, random
 import concurrent.futures
 
-import plotly.offline as po
-import plotly.graph_objs as pgo
-
-from fancyimpute import BiScaler, KNN, NuclearNormMinimization, SoftImpute
+from plot_gram_matrix import plot
 
 from string import Template
 
@@ -141,7 +138,6 @@ def second_map(func, ll):
     return np.array(retval)
 
 def gak(seq1, seq2, sigma):
-    #print(threading.get_ident())
     if seq1 is seq2:
         return 1
     
@@ -152,31 +148,11 @@ def gak(seq1, seq2, sigma):
     #sigma = 2 ** 0
     #print("sigma: " + repr(sigma), end="  ")
     
-    diff_t = np.abs(T1-T2)
-
-    triangular = 0
+    triangular = np.abs(T1-T2) * 0.5
 
     val = ga.tga_dissimilarity(seq1, seq2, sigma, triangular)
     kval = np.exp(-val)
-    if 0 < triangular <= diff_t:
-        assert kval == 0
     return kval
-
-def plot(file_name, similarities, files):
-    # To fix the direction of the matrix as the diagonal line is from top-left to bottom-right.
-    similarities_ = similarities[::-1]
-    files_to_show = []
-    for f in files:
-        files_to_show.append(f.split('/')[-1].split('.')[0])
-    files_to_show_ = files_to_show[::-1]
-    
-    trace = pgo.Heatmap(z=similarities_,
-                        x=files_to_show,
-                        y=files_to_show_,
-                        zmin=-1, zmax=1
-    )
-    data=[trace]
-    po.plot(data, filename=file_name, auto_open=False)
 
 def worker_for_f1(files, f1index, file_num, gak_sigma):
     f1 = files[f1index]
@@ -242,10 +218,10 @@ if __name__ == "__main__":
              gak_sigma=("%.3f" % gak_sigma),
              incomplete_persentage=str(incomplete_persentage)))
 
-    html_out_no_completion = output_dir + output_filename_format.replace("${completion_alg}", "NoCompletion") + \
-                             "_part" + str(separated_part) + ".html"
-    mat_out_no_completion = output_dir + output_filename_format.replace("${completion_alg}", "NoCompletion") + \
-                            "_part" + str(separated_part) + ".mat"
+    html_out_full_gak = output_dir + output_filename_format.replace("${completion_alg}", "FullGAK") + \
+                        "_part" + str(separated_part) + ".html"
+    mat_out_full_gak = output_dir + output_filename_format.replace("${completion_alg}", "FullGAK") + \
+                       "_part" + str(separated_part) + ".mat"
 
     gak_logfile = output_dir + output_filename_format.replace("_${completion_alg}", "") + \
                   "_part" + str(separated_part) + ".log"
@@ -281,9 +257,9 @@ if __name__ == "__main__":
     for i in gram.gram.values():
         similarities.append(list(i.values()))
 
-    # "NO_COMPLETION"
-    plot(html_out_no_completion,
+    # "FullGAK separately"
+    plot(html_out_full_gak,
          similarities, files)
-    io.savemat(mat_out_no_completion, dict(gram=similarities, indices=files))
-    print("NoCompletion files are output.")
+    io.savemat(mat_out_full_gak, dict(gram=similarities, indices=files))
+    print("Separated FullGAK files are output.")
 

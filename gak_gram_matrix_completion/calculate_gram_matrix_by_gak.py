@@ -1,4 +1,5 @@
 import numpy as np
+from collections import OrderedDict
 import TGA_python3_wrapper.global_align as ga
 
 import scipy as sp
@@ -9,8 +10,7 @@ from scipy import signal
 import subprocess, functools, sys, threading, glob, json, random
 import concurrent.futures
 
-import plotly.offline as po
-import plotly.graph_objs as pgo
+from plot_gram_matrix import plot
 
 from string import Template
 
@@ -36,9 +36,9 @@ gak_logger = None
 class GRAMmatrix:
     def __init__(self, seq_ids):
         self.__lock = threading.Lock()
-        self.gram = {}
+        self.gram = OrderedDict()
         for seq_id1 in seq_ids:
-            self.gram[seq_id1] = {}
+            self.gram[seq_id1] = OrderedDict()
             for seq_id2 in seq_ids:
                 self.gram[seq_id1][seq_id2] = -1
     def register(self, seq_id1, seq_id2, value):
@@ -129,14 +129,10 @@ def gak(seq1, seq2, sigma):
     #sigma = 2 ** 0
     #print("sigma: " + repr(sigma), end="  ")
     
-    diff_t = np.abs(T1-T2)
-
-    triangular = 0
+    triangular = np.abs(T1-T2) * 0.5
 
     val = ga.tga_dissimilarity(seq1, seq2, sigma, triangular)
     kval = np.exp(-val)
-    if 0 < triangular <= diff_t:
-        assert kval == 0
     return kval
 
 def worker_for_f1(files, f1index, f2indices, gak_sigma):
@@ -149,22 +145,6 @@ def worker_for_f1(files, f1index, f2indices, gak_sigma):
         ret_dict[f2] = gak(seq1, seq2, gak_sigma)
     return ret_dict
     
-def plot(file_name, similarities, files):
-    # To fix the direction of the matrix as the diagonal line is from top-left to bottom-right.
-    similarities_ = similarities[::-1]
-    files_to_show = []
-    for f in files:
-        files_to_show.append(f.split('/')[-1].split('.')[0])
-    files_to_show_ = files_to_show[::-1]
-    
-    trace = pgo.Heatmap(z=similarities_,
-                        x=files_to_show,
-                        y=files_to_show_,
-                        zmin=0, zmax=1
-    )
-    data=[trace]
-    po.plot(data, filename=file_name, auto_open=False)
-
 def main():
     config_json_file = sys.argv[1]
     config_dict = json.load(open(config_json_file, 'r'))
