@@ -10,7 +10,7 @@
 	  "output_filename_format": "gram_${dataset_type}_resamplingfrequency${audioset_resampling_frequency}_sigma${gak_sigma}",
 	  "dataset_type": "audioset",
 	  "data_mat_files": ["/home/ngym/NFSshare/Lorincz_Lab/audioset/segments/Bark/Bark*wav",
-				   "/home/ngym/NFSshare/Lorincz_Lab/audioset/segments/Meow/Meow*wav"],
+				   "/home/ngym/NFSshare/Lorincz_Lab/audioset/segments/Meow/Meow*wav"]
     },
     "iterate": {
 	  "audioset_resampling_frequency": [100],
