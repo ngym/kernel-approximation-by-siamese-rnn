@@ -139,7 +139,7 @@ def main():
         output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
             dict(dataset_type=dataset_type,
                  data_attribute_type=data_attribute_type,
-                 gak_sigma=("%.3f" % gak_sigma))
+                 gak_sigma=("%.3f" % gak_sigma)))
     else:
         # audioset
         audioset_resampling_frequency = config_dict['audioset_resampling_frequency']

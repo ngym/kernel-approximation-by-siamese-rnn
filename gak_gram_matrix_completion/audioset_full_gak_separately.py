@@ -193,7 +193,7 @@ if __name__ == "__main__":
     output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
         dict(dataset_type=dataset_type,
              audioset_resampling_frequency=audioset_resampling_frequency,
-             gak_sigma=("%.3f" % gak_sigma))
+             gak_sigma=("%.3f" % gak_sigma)))
 
     html_out_full_gak = output_dir + output_filename_format.replace("${completion_alg}", "FullGAK") + \
                         "_part" + str(separated_part) + ".html"
