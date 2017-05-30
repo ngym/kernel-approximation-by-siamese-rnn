@@ -1,7 +1,7 @@
 {
     "env":{
 	  "json_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/JSONaudioset/",
-	  "job_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/JOBaudioset/"
+	  "job_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/JOBaudioset/",
 	  "time_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/TIMEaudioset/"
     },
     "fixed":{
