@@ -213,7 +213,7 @@ if __name__ == "__main__":
     files = sorted(files)
 
     audioset_resampling_frequency = config_dict['audioset_resampling_frequency']
-    audioset_resampling_frequency = 10
+    #audioset_resampling_frequency = 10
     
     if dataset_type in {"num", "upperChar"}:
         # 6DMG
