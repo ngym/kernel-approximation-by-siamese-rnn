@@ -10,6 +10,7 @@ from scipy.io import wavfile
 from scipy import signal
 
 from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.metrics import mean_squared_error
 
 from keras.datasets import mnist
 from keras.models import Sequential, Model
@@ -20,6 +21,15 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.regularizers import l2
 from keras.callbacks import ModelCheckpoint, EarlyStopping, History
 
+    
+def mean_squared_error_of_dropped_elements(m1, m2, elements):
+    m1 = np.array(m1)
+    m2 = np.array(m2)
+    assert m1.shape == m2.shape
+    sum_squared_error = 0
+    for i, j in elements:
+        sum_squared_error += (m1[i][j] - m2[i][j]) ** 2
+    return sum_squared_error / elements.__len__()
 
 def batch_dot(vects):
     x, y = vects
@@ -35,14 +45,14 @@ def create_base_network(input_shape, mask_value):
     #seq.add(Dropout(0.1))
     seq.add(LSTM(128, return_sequences=False))
     seq.add(Dropout(0.1))
-    seq.add(Dense(128, activation='sigmoid', kernel_regularizer=l2(0.01)))
+    seq.add(Dense(128, activation='linear', kernel_regularizer=l2(0.01)))
     return seq
 
 def rnn_matrix_completion(incomplete_matrix_, seqs_, files):
     incomplete_matrix = np.array(incomplete_matrix_)
     time_dim = max([seq_.shape[0] for seq_ in seqs_.values()])
 
-    pad_value = np.inf #np.nan # 0 #np.NINF #np.inf
+    pad_value =  -123456789 # np.inf #np.nan # 0 #np.NINF #np.inf
     seqs = pad_sequences([s.tolist() for s in seqs_.values()],
                          maxlen=time_dim, dtype='float32',
                          padding='post', value=pad_value)
@@ -59,10 +69,12 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files):
                 # test
                 te_pairs += [[seqs[i], seqs[j]]]
                 te_pairs_index += [[i, j]]
-            else:
-                # train and validate
-                tr_pairs += [[seqs[i], seqs[j]]]
-                tr_y.append(incomplete_matrix[i][j])
+    while len(tr_pairs) < 50000:
+        i = random.randint(0, len(files)-1)
+        j = random.randint(0, len(files)-1)
+        if not np.isnan(incomplete_matrix[i][j]):
+            tr_pairs += [[seqs[i], seqs[j]]]
+            tr_y.append(incomplete_matrix[i][j])
 
     #tr_pairs = np.array(tr_pairs)
     #te_pairs = np.array(te_pairs)
@@ -97,7 +109,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files):
                np.array(tr_pairs)[:, 1, :, :]],
               tr_y,
               batch_size=128,
-              epochs=300, # 3 is enough for test, 300 would be proper for actual usage
+              epochs=1, # 3 is enough for test, 300 would be proper for actual usage
               callbacks=[model_checkpoint, early_stopping, history],
               validation_split=0.1,
               shuffle=True)
@@ -158,6 +170,7 @@ if __name__ == "__main__":
     random.seed(1)
         
     incomplete_similarities = []
+    dropped_elements = []
     for i in range(similarities.__len__()):
         s_row = similarities[i]
         is_row = []
@@ -169,6 +182,7 @@ if __name__ == "__main__":
                     continue
             if random.randint(0, 99) < incomplete_percentage:
                 is_row.append(np.nan)
+                dropped_elements.append((i, j))
             else:
                 is_row.append(s)
         incomplete_similarities.append(is_row)
@@ -187,6 +201,9 @@ if __name__ == "__main__":
     plot(html_out_rnn,
          psd_completed_similarities, files)
     io.savemat(mat_out_rnn, dict(gram=psd_completed_similarities, indices=files))
-    print("NoCompletion files are output.")
+    print("RnnCompletion files are output.")
 
-    
+    mse = mean_squared_error(similarities, psd_completed_similarities)
+    print("Mean squared error: " + str(mse))
+    msede = mean_squared_error_of_dropped_elements(similarities, psd_completed_similarities, dropped_elements)
+    print("Mean squared error of dropped elements: " + str(msede))

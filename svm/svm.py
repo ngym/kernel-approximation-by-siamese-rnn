@@ -69,7 +69,7 @@ def tryout1hyperparameter(cost, train, train_gtruths, validation_or_test, v_or_t
    print("---")
    #fpr, tpr, thresholds = metrics.roc_curve(v_or_t_gtruths, pred)
    #score = metrics.auc(fpr, tpr)
-   score = metrics.accuracy_score(v_or_t_gtruths, pred)
+   score = metrics.f1_score(v_or_t_gtruths, pred, average='weighted')
    return score
 
 def optimizehyperparameter(completion_alg,

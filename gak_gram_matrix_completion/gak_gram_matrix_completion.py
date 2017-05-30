@@ -141,7 +141,7 @@ def gak(seq1, seq2, sigma):
         assert kval == 0
     return kval
 
-def plot(file_name, similarities, files_to_show):
+def plot(file_name, similarities, files):
     # To fix the direction of the matrix as the diagonal line is from top-left to bottom-right.
     similarities_ = similarities[::-1]
     files_to_show = []
