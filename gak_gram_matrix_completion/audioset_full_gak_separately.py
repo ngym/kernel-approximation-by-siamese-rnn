@@ -1,6 +1,5 @@
 import numpy as np
 from collections import OrderedDict
-import TGA_python3_wrapper.global_align as ga
 
 import scipy as sp
 from scipy import io
@@ -13,6 +12,8 @@ import concurrent.futures
 from plot_gram_matrix import plot
 
 from string import Template
+
+from gak import gak
 
 class Logger:
     def __init__(self, log_file):
@@ -102,7 +103,7 @@ def audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency, num_
 def SixDMG_read_mats_and_build_seqs(files, attribute_type):
     for f in files:
         mat = io.loadmat(f)
-        seqs[f] = second_map(np.float64, SixDMG_pick_attribute(mat['gest'].transpose(), attribute_type))
+        seqs[f] = np.array(SixDMG_pick_attribute(mat['gest'].transpose(), attribute_type)).astype('float64')
 
 def SixDMG_pick_attribute(ll, attribute_type):
     retval = []
@@ -131,37 +132,14 @@ def SixDMG_pick_attribute(ll, attribute_type):
         assert False
     return retval
         
-def second_map(func, ll):
-    retval = []
-    for l in ll:
-        retval.append(list(map(func, l)))
-    return np.array(retval)
-
-def gak(seq1, seq2, sigma):
-    if seq1 is seq2:
-        return 1
-    
-    T1 = seq1.__len__()
-    T2 = seq2.__len__()
-
-    #sigma = 0.5*(T1+T2)/2*np.sqrt((T1+T2)/2)
-    #sigma = 2 ** 0
-    #print("sigma: " + repr(sigma), end="  ")
-    
-    triangular = np.abs(T1-T2) * 0.5
-
-    val = ga.tga_dissimilarity(seq1, seq2, sigma, triangular)
-    kval = np.exp(-val)
-    return kval
-
-def worker_for_f1(files, f1index, file_num, gak_sigma):
+def worker_for_f1(files, f1index, file_num, gak_sigma, triangular):
     f1 = files[f1index]
     seq1 = seqs[f1]
     ret_dict = {}
     for f2index in range(f1index, file_num):
         f2 = files[f2index]
         seq2 = seqs[f2]
-        ret_dict[f2] = gak(seq1, seq2, gak_sigma)
+        ret_dict[f2] = gak(seq1, seq2, gak_sigma, triangular)
     return ret_dict
 
 if __name__ == "__main__":
@@ -189,7 +167,6 @@ if __name__ == "__main__":
     files = sorted(files)
 
     audioset_resampling_frequency = config_dict['audioset_resampling_frequency']
-    #audioset_resampling_frequency = 10
     
     if dataset_type in {"num", "upperChar"}:
         # 6DMG
@@ -203,6 +180,9 @@ if __name__ == "__main__":
     similarities = []
     file_num = files.__len__()
 
+    gak_triangular = np.median([seq.__len__() for seq in seqs.values()]) * 0.5
+    print("gak_triangular: " + repr(gak_triangular))
+    
     futures = []
 
     separated_part = config_dict['part']
@@ -230,7 +210,7 @@ if __name__ == "__main__":
     #seqs[files[f2index]]
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_thread) as executor:
         print("Start submitting jobs.")
-        future_to_files = {executor.submit(worker_for_f1, files, f1index, file_num, gak_sigma):
+        future_to_files = {executor.submit(worker_for_f1, files, f1index, file_num, gak_sigma, gak_triangular):
                            f1index
                            for f1index in range(file_num)
                            if (first_part_start  <= f1index and f1index < first_part_finish ) or
