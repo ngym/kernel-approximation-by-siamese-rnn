@@ -42,7 +42,7 @@ if __name__ == "__main__":
             
             job_file_name = job_dir + output_filename_format_ + ".job"
             fd = open(job_file_name, "w")
-            fd.write(TIME + " -v -o " + time_dir + output_filename_format_ + " " +\
+            fd.write(TIME + " -v -o " + time_dir + output_filename_format_ + ".time " +\
                      PYTHON + " " + PROGRAM + " " + json_file_name + "\n")
             fd.close()
             
