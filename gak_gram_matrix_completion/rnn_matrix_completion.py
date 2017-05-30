@@ -21,15 +21,10 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.regularizers import l2
 from keras.callbacks import ModelCheckpoint, EarlyStopping, History
 
-    
-def mean_squared_error_of_dropped_elements(m1, m2, elements):
-    m1 = np.array(m1)
-    m2 = np.array(m2)
-    assert m1.shape == m2.shape
-    sum_squared_error = 0
-    for i, j in elements:
-        sum_squared_error += (m1[i][j] - m2[i][j]) ** 2
-    return sum_squared_error / elements.__len__()
+from nearest_positive_semidefinite import nearest_positive_semidefinite
+from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped_elements
+from plot_gram_matrix import plot
+from make_matrix_incomplete import make_matrix_incomplete
 
 def batch_dot(vects):
     x, y = vects
@@ -132,30 +127,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files):
     assert not np.any(np.isinf(np.array(completed_matrix)))
     return completed_matrix
 
-def plot(file_name, similarities, files):
-    # To fix the direction of the matrix as the diagonal line is from top-left to bottom-right.
-    similarities_ = similarities[::-1]
-    files_to_show = []
-    for f in files:
-        files_to_show.append(f.split('/')[-1].split('.')[0])
-    files_to_show_ = files_to_show[::-1]
-    
-    trace = pgo.Heatmap(z=similarities_,
-                        x=files_to_show,
-                        y=files_to_show_,
-                        zmin=0, zmax=1
-    )
-    data=[trace]
-    po.plot(data, filename=file_name, auto_open=False)
-
-def nearest_positive_semidefinite(matrix):
-    sym_matrix = (matrix + matrix.T) * 0.5
-    w, v = np.linalg.eig(sym_matrix)
-    psd_w = np.array([max(0, e) for e in w])
-    psd_matrix = np.dot(v, np.dot(np.diag(psd_w), np.linalg.inv(v)))
-    return np.real(psd_matrix)
-    
-if __name__ == "__main__":
+def main():
     filename = sys.argv[1]
     incomplete_percentage = int(sys.argv[2])
     mat = io.loadmat(filename)
@@ -167,37 +139,20 @@ if __name__ == "__main__":
         m = io.loadmat(f)
         seqs[f] = m['gest'].T
 
-    random.seed(1)
+    seed = 1
         
-    incomplete_similarities = []
-    dropped_elements = []
-    for i in range(similarities.__len__()):
-        s_row = similarities[i]
-        is_row = []
-        for j in range(s_row.__len__()):
-            s = s_row[j]
-            if s == 1:
-                if i == j:
-                    is_row.append(1)
-                    continue
-            if random.randint(0, 99) < incomplete_percentage:
-                is_row.append(np.nan)
-                dropped_elements.append((i, j))
-            else:
-                is_row.append(s)
-        incomplete_similarities.append(is_row)
-    print("Incomplete matrix is provided.")
+    incomplete_similarities, dropped_elements = make_matrix_incomplete(seed, similarities, incomplete_percentage)
 
-        
-    completed_similarities = np.array(rnn_matrix_completion(incomplete_similarities, seqs, files))
-    #assert np.nan not in completed_similarities.reshape([files.__len__() * files.__len__()])
-    #assert np.inf not in completed_similarities.reshape([files.__len__() * files.__len__()])
-    psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
-
-    html_out_rnn = "./rnn_completion_test.html"
-    mat_out_rnn = "./rnn_completion_test.mat"
+    html_out_rnn = filename.replace("NoCompletion", "RNN")\
+                                   .replace(".mat", ".html")
+    mat_out_rnn = filename.replace("NoCompletion", "RNN")
     
     # "RnnCompletion"
+    completed_similarities = np.array(rnn_matrix_completion(incomplete_similarities, seqs, files))
+    # eigenvalue check
+    psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
+
+    # OUTPUT
     plot(html_out_rnn,
          psd_completed_similarities, files)
     io.savemat(mat_out_rnn, dict(gram=psd_completed_similarities, indices=files))
@@ -207,3 +162,6 @@ if __name__ == "__main__":
     print("Mean squared error: " + str(mse))
     msede = mean_squared_error_of_dropped_elements(similarities, psd_completed_similarities, dropped_elements)
     print("Mean squared error of dropped elements: " + str(msede))
+
+if __name__ == "__main__":
+    main()

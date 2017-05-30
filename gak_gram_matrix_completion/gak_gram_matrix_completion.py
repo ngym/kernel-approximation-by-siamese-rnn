@@ -12,8 +12,6 @@ import concurrent.futures
 import plotly.offline as po
 import plotly.graph_objs as pgo
 
-from fancyimpute import BiScaler, KNN, NuclearNormMinimization, SoftImpute
-
 from string import Template
 
 from robust_matrix_completion import robust_matrix_completion
@@ -141,6 +139,16 @@ def gak(seq1, seq2, sigma):
         assert kval == 0
     return kval
 
+def worker_for_f1(files, f1index, f2indices, gak_sigma):
+    f1 = files[f1index]
+    seq1 = seqs[f1]
+    ret_dict = {}
+    for f2index in f2indices:
+        f2 = files[f2index]
+        seq2 = seqs[f2]
+        ret_dict[f2] = gak(seq1, seq2, gak_sigma)
+    return ret_dict
+    
 def plot(file_name, similarities, files):
     # To fix the direction of the matrix as the diagonal line is from top-left to bottom-right.
     similarities_ = similarities[::-1]
@@ -157,7 +165,7 @@ def plot(file_name, similarities, files):
     data=[trace]
     po.plot(data, filename=file_name, auto_open=False)
 
-if __name__ == "__main__":
+def main():
     config_json_file = sys.argv[1]
     config_dict = json.load(open(config_json_file, 'r'))
     
@@ -189,19 +197,8 @@ if __name__ == "__main__":
                  gak_sigma=("%.3f" % gak_sigma),
                  incomplete_persentage=str(incomplete_persentage)))
 
-    html_out_no_completion = output_dir + output_filename_format.replace("${completion_alg}", "NoCompletion") + ".html" 
-    html_out_nuclear_norm_minimization = output_dir + output_filename_format.replace("${completion_alg}",
-                                                                                     "NuclearNormMinimization") + ".html"
-    html_out_soft_impute = output_dir + output_filename_format.replace("${completion_alg}", "SoftImpute") + ".html"
-    html_out_robust_matrix_completion = output_dir + output_filename_format.replace("${completion_alg}",
-                                                                                    "RobustMatrixCompletion") + ".html"
-    
-    mat_out_no_completion = output_dir + output_filename_format.replace("${completion_alg}", "NoCompletion") + ".mat" 
-    mat_out_nuclear_norm_minimization = output_dir + output_filename_format.replace("${completion_alg}",
-                                                                                    "NuclearNormMinimization") + ".mat"
-    mat_out_soft_impute = output_dir + output_filename_format.replace("${completion_alg}", "SoftImpute") + ".mat"
-    mat_out_robust_matrix_completion = output_dir + output_filename_format.replace("${completion_alg}",
-                                                                                    "RobustMatrixCompletion") + ".mat"
+    html_out_full_gak = output_dir + output_filename_format.replace("${completion_alg}", "FullGAK") + ".html" 
+    mat_out_full_gak = output_dir + output_filename_format.replace("${completion_alg}", "FullGAK") + ".mat" 
     
     gak_logfile = output_dir + output_filename_format.replace("_${completion_alg}", "") + ".log"
     gak_logger = Logger(gak_logfile)
@@ -230,19 +227,9 @@ if __name__ == "__main__":
 
     futures = []
 
-    def worker_for_f1(f1index, f2indices, gak_sigma):
-        f1 = files[f1index]
-        seq1 = seqs[f1]
-        ret_dict = {}
-        for f2index in f2indices:
-            f2 = files[f2index]
-            seq2 = seqs[f2]
-            ret_dict[f2] = gak(seq1, seq2, gak_sigma)
-        return ret_dict
-    #seqs[files[f2index]]
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_thread) as executor:
         print("Start submitting jobs.")
-        future_to_files = {executor.submit(worker_for_f1, f1index,
+        future_to_files = {executor.submit(worker_for_f1, files, f1index,
                                            range(f1index, file_num), gak_sigma):
                            files[f1index]
                            for f1index in range(file_num)}
@@ -267,96 +254,11 @@ if __name__ == "__main__":
     for i in gram.gram.values():
         similarities.append(list(i.values()))
 
-    # "NO_COMPLETION"
-    plot(html_out_no_completion,
+    # "FullGAK"
+    plot(html_out_full_gak,
          similarities, files)
-    io.savemat(mat_out_no_completion, dict(gram=similarities, indices=files))
-    print("NoCompletion files are output.")
+    io.savemat(mat_out_full_gak, dict(gram=similarities, indices=files))
+    print("FullGAK files are output.")
 
-    ###################################
-    ###### completed GRAM matrix ######
-    ###################################
-    
-    random.seed(random_seed)
-        
-    incomplete_similarities = []
-    for s_row in similarities:
-        is_row = []
-        for s in s_row:
-            if s == 1:
-                if similarities.index(s_row) == s_row.index(s):
-                    is_row.append(1)
-                    continue
-            if random.randint(0, 99) < incomplete_persentage:
-                is_row.append(np.nan)
-            else:
-                is_row.append(s)
-        incomplete_similarities.append(is_row)
-    print("Incomplete matrix is provided.")
-    def nearest_positive_semidefinite(matrix):
-        sym_matrix = (matrix + matrix.T) * 0.5
-        w, v = np.linalg.eig(sym_matrix)
-        psd_w = np.array([max(0, e) for e in w])
-        psd_matrix = np.dot(v, np.dot(np.diag(psd_w), np.linalg.inv(v)))
-        return np.real(psd_matrix)
-    """
-        epsilon=0
-        n = A.shape[0]
-        eigval, eigvec = np.linalg.eig(A)
-        val = np.matrix(np.maximum(eigval,epsilon))
-        vec = np.matrix(eigvec)
-        T = 1/(np.multiply(vec,vec) * val.T)
-        T = np.matrix(np.sqrt(np.diag(np.array(T).reshape((n)) )))
-        B = T * vec * np.diag(np.array(np.sqrt(val)).reshape((n)))
-        out = B*B.T
-        return(np.real(out))
-    """
-
-    # reduce memory usage
-    gram = None
-    similarities = None
-    
-    # "SOFT_IMPUTE"
-    """
-    Instead of solving the nuclear norm objective directly, instead
-    induce sparsity using singular value thresholding
-    """
-    completed_similarities = SoftImpute().complete(incomplete_similarities)
-    # eigenvalue check
-    psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
-    io.savemat(mat_out_soft_impute, dict(gram=psd_completed_similarities, indices=files))
-    plot(html_out_soft_impute,
-         psd_completed_similarities, files)
-    print("SoftImpute is output")
-
-    # "Robust Matrix Completion"
-    """
-    """
-    completed_similarities, _ = robust_matrix_completion(np.array(incomplete_similarities))
-    # eigenvalue check
-    psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
-    io.savemat(mat_out_robust_matrix_completion, dict(gram=psd_completed_similarities, indices=files))
-    plot(html_out_robust_matrix_completion,
-         psd_completed_similarities, files)
-    print("RobustMatrixCompletion is output")
-   
-    # "NUCLEAR_NORM_MINIMIZATION":
-    """
-    matrix completion using convex optimization to find low-rank solution
-    that still matches observed values. Slow!
-    """
-    completed_similarities = NuclearNormMinimization().complete(incomplete_similarities)
-    # eigenvalue check
-    psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
-    io.savemat(mat_out_nuclear_norm_minimization, dict(gram=psd_completed_similarities, indices=files))
-    plot(html_out_nuclear_norm_minimization,
-         psd_completed_similarities, files)
-    print("NuclearNormMinimization is output")
-    
-    """
-    loaded_mat = io.loadmat(mat_out_nuclear_norm_minimization)
-    print(loaded_mat['gram'])
-    mat = second_map(np.float64, loaded_mat['gram'])
-    print(mat)
-    plot("tmp.html", mat, loaded_mat['indices'])
-    """
+if __name__ == "__main__":
+    main()
