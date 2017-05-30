@@ -9,11 +9,12 @@ def plot(file_name, similarities, files):
         files_to_show.append(f.split('/')[-1].split('.')[0])
     files_to_show_ = files_to_show[::-1]
     
-    trace = pgo.Heatmap(z=similarities_,
+    data = [pgo.Heatmap(z=similarities_,
                         x=files_to_show,
                         y=files_to_show_,
-                        zmin=0, zmax=1
-    )
-    data=[trace]
-    po.plot(data, filename=file_name, auto_open=False)
+                        zmin=0, zmax=1)
+            ]
+    layout = pgo.Layout(xaxis=dict(side='top'))
+    fig = pgo.Figure(data=data, layout=layout)
+    po.plot(fig, filename=file_name, auto_open=False)
 
