@@ -1,4 +1,9 @@
-import plotly.offline as po
+import sys
+import numpy as np
+import scipy as sp
+from scipy import io
+
+import plotly.plotly as py
 import plotly.graph_objs as pgo
 
 def plot(file_name, similarities, files):
@@ -18,5 +23,25 @@ def plot(file_name, similarities, files):
                                    tickfont=dict(size=5)),
                         yaxis=dict(tickfont=dict(size=5)))
     fig = pgo.Figure(data=data, layout=layout)
-    po.plot(fig, filename=file_name, auto_open=False)
 
+    py.image.save_as(fig,
+                     filename=file_name,
+                     scale=10)
+
+def main():
+    filename = sys.argv[1]
+    mat = io.loadmat(filename)
+    similarities = mat['gram']
+    files = mat['indices']
+    seqs = {}
+
+    seed = 1
+        
+    png_out = filename.replace(".mat", ".png")
+    
+    # OUTPUT
+    plot(png_out,
+         similarities, files)
+
+if __name__ == "__main__":
+    main()
