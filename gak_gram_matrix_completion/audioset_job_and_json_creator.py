@@ -1,7 +1,7 @@
 import sys, json
 
 PYTHON = "/usr/bin/python3"
-PROGRAM = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/audioset_separatedly_gak.py"
+PROGRAM = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/audioset_full_gak_separately.py"
 TIME = "/usr/bin/time"
 
 if __name__ == "__main__":
