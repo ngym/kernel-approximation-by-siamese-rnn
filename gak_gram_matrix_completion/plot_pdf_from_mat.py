@@ -9,21 +9,17 @@ def plot(file_name, similarities, files, separators, labels,
          sigma, loss):
     assert len(separators) == len(labels) - 1
     
-    similarities_ = similarities[::-1]
-    files_to_show = []
-    for f in files:
-        files_to_show.append(f.split('/')[-1].split('.')[0])
-    files_to_show_ = files_to_show[::-1]
-
     fig, ax = plt.subplots()
     f1 = ax.imshow(similarities,
                    interpolation='nearest',
                    cmap='bwr',
                    )
-    
-    fig.colorbar(f1 )#, ax=ax) #, shrink=0.9)
+    fig.subplots_adjust(hspace=1000)
 
-    # separator of labels in the graph
+    # Colorbar on the right of the graph
+    fig.colorbar(f1) #, ax=ax) #, shrink=0.9)
+
+    # Separator of labels in the graph
     for sep in separators:
         # https://matplotlib.org/examples/color/colormaps_reference.html
         ax.axhline(linewidth=0.5, y=(sep - 0.5),
@@ -31,23 +27,34 @@ def plot(file_name, similarities, files, separators, labels,
         ax.axvline(linewidth=0.5, x=(sep),
                    color='black', ls='dashed')
 
-
+    # Labels
+    ## actually deleting all labels at first and annotate corresponding texts
+    ## to corresponding place, the center of each group of data
     plt.axis('off')
     separators_ = [0] + separators + [len(similarities)]
     for i in range(len(labels)):
         label = labels[i]
+        x = -len(files)//100
         y = np.mean([separators_[i], separators_[i+1]]) \
             + len(files) // 75
-        ax.annotate(label, horizontalalignment='right',
-                    xy=(0,0), xytext=(-len(files)//100, y))
+        if all([len(l) == 1 for l in labels]):
+            ha = "center"
+            x = -len(files)//50
+        else:
+            ha = "right"
+        ax.annotate(label, horizontalalignment=ha,
+                    xy=(0,0), xytext=(x, y))
+        x = np.mean([separators_[i], separators_[i+1]]) 
+        y = -len(files)//100
+        ax.annotate(label, horizontalalignment='center',
+                    xy=(0,0), xytext=(x, y))
 
-        
-    #legend = ax.legend(loc='upper', shadow=True,
-    #                   fontsize='x-large')
-
-    titletext = "σ =" + str(sigma) + "    loss=" + str(loss) + "%"
+    # Title of the graph, displaying the sigma and the loss percentage
+    titletext = "σ =" + str(sigma) + "    loss=" + str(loss) + "%\n "
     ax.set_title(titletext,
                  horizontalalignment='center')
+    #fig.suptitle(titletext,
+    #             horizontalalignment='center')
 
     plt.savefig(file_name, format='pdf', dpi=1200)
     
@@ -88,7 +95,10 @@ def main():
                 i += 1
             separators.append(i)
         labels = alphabets
-        sigma = 6.0
+        sigma = float(filename.split("sigma")[1]
+                      .split("_")[0]
+                      .replace(".mat", ""))
+        print(sigma)
         
     pdf_out = filename.replace(".mat", ".pdf")
     
