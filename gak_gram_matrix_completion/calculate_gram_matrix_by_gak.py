@@ -121,7 +121,20 @@ def SixDMG_pick_attribute(ll, attribute_type):
         print("attribute type error.")
         assert False
     return retval
-        
+
+def UCIcharacter_read_mat_and_build_seqs(mat_filename):
+    mat = io.loadmat(mat_filename)
+    displayname = [k[0] for k in mat['consts']['key'][0][0][0]]
+    classes = mat['consts'][0][0][4][0]
+    labels = []
+    for c in classes:
+        labels.append(displayname[c-1])
+    i = 0
+    for l in labels:
+        seqs[l + str(i)] = mat['mixout'][0][i].T
+        i += 1
+    gram = GRAMmatrix(sorted(seqs.keys()))
+    
 def worker_for_f1(files, f1index, f2indices, gak_sigma, triangular):
     f1 = files[f1index]
     seq1 = seqs[f1]
@@ -140,25 +153,49 @@ def main():
 
     dataset_type = config_dict['dataset_type']
 
-    data_files = config_dict['data_mat_files']
     gak_sigma = np.float64(config_dict['gak_sigma'])
 
     output_dir = config_dict['output_dir']
     
     if dataset_type in {"num", "upperChar"}:
         # 6DMG
+        data_files = config_dict['data_mat_files']
         data_attribute_type = config_dict['data_attribute_type']
         output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
             dict(dataset_type=dataset_type,
                  data_attribute_type=data_attribute_type,
                  gak_sigma=("%.3f" % gak_sigma)))
-    else:
+        files = []
+        for df in data_files:
+            files_ = glob.glob(df)
+            print(files_[:3])
+            print("...")
+            print(files_[-3:])
+            files += files_
+        files = sorted(files)
+    elif dataset_type == "audioset":
         # audioset
+        data_files = config_dict['data_mat_files']
         audioset_resampling_frequency = config_dict['audioset_resampling_frequency']
         output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
             dict(dataset_type=dataset_type,
                  audioset_resampling_frequency=audioset_resampling_frequency,
                  gak_sigma=("%.3f" % gak_sigma)))
+        files = []
+        for df in data_files:
+            files_ = glob.glob(df)
+            print(files_[:3])
+            print("...")
+            print(files_[-3:])
+            files += files_
+        files = sorted(files)
+    elif dataset_type == "UCIcharacter":
+        data_file = config_dict['data_mat_file']
+        output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
+            dict(dataset_type=dataset_type,
+                 gak_sigma=("%.3f" % gak_sigma)))
+    else:
+        assert False
 
     html_out_full_gak = output_dir + output_filename_format.replace("${completion_alg}", "FullGAK") + ".html" 
     mat_out_full_gak = output_dir + output_filename_format.replace("${completion_alg}", "FullGAK") + ".mat" 
@@ -166,22 +203,17 @@ def main():
     gak_logfile = output_dir + output_filename_format.replace("_${completion_alg}", "") + ".log"
     gak_logger = Logger(gak_logfile)
 
-    files = []
-    for df in data_files:
-        files_ = glob.glob(df)
-        print(files_[:3])
-        print("...")
-        print(files_[-3:])
-        files += files_
-    files = sorted(files)
-
     if dataset_type in {"num", "upperChar"}:
         # 6DMG
         SixDMG_read_mats_and_build_seqs(files, data_attribute_type)
-    else:
+    elif dataset_type == "audioset":
         # audioset
         audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency)
-
+    elif dataset_type == "UCIcharacter":
+        UCIcharacter_read_mat_and_build_seqs(data_file)
+        files = sorted(seqs.keys())
+    else:
+        assert False
     
     gram = GRAMmatrix(files)
 
