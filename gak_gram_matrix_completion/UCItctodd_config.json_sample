@@ -1,0 +1,7 @@
+{"num_thread": 8,
+ "output_dir": "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/OUTPUT_UCI/",
+ "output_filename_format": "gram_${dataset_type}_sigma${gak_sigma}_${completion_alg}",
+ "dataset_type": "UCItctodd",
+ "data_tsd_files": ["/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset/UCI/AUSLAN/all/*tsd"],
+ "gak_sigma": 5
+}

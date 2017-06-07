@@ -6,7 +6,7 @@ from scipy import io
 from scipy.io import wavfile
 from scipy import signal
 
-import subprocess, functools, sys, threading, glob, json, random
+import subprocess, functools, sys, threading, glob, json, csv
 import concurrent.futures
 
 from python_speech_features import mfcc
@@ -134,6 +134,14 @@ def UCIcharacter_read_mat_and_build_seqs(mat_filename):
         seqs[l + str(i)] = mat['mixout'][0][i].T
         i += 1
     gram = GRAMmatrix(sorted(seqs.keys()))
+
+def UCItctodd_read_tsd_and_build_seqs(files):
+    for f in files:
+        reader = csv.reader(open(f, "r"), delimiter='\t')
+        seq = []
+        for r in reader:
+            seq.append(r)
+        seqs[f] = np.float64(np.array(seq))
     
 def worker_for_f1(files, f1index, f2indices, gak_sigma, triangular):
     f1 = files[f1index]
@@ -194,6 +202,19 @@ def main():
         output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
             dict(dataset_type=dataset_type,
                  gak_sigma=("%.3f" % gak_sigma)))
+    elif dataset_type == "UCItctodd":
+        data_files = config_dict['data_tsd_files']
+        output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
+            dict(dataset_type=dataset_type,
+                 gak_sigma=("%.3f" % gak_sigma)))
+        files = []
+        for df in data_files:
+            files_ = glob.glob(df)
+            print(files_[:3])
+            print("...")
+            print(files_[-3:])
+            files += files_
+        files = sorted(files)
     else:
         assert False
 
@@ -212,6 +233,8 @@ def main():
     elif dataset_type == "UCIcharacter":
         UCIcharacter_read_mat_and_build_seqs(data_file)
         files = sorted(seqs.keys())
+    elif dataset_type == "UCItctodd":
+        UCItctodd_read_tsd_and_build_seqs(files)
     else:
         assert False
     
