@@ -52,7 +52,7 @@ gram = None
 
 seqs = {}
 
-def read_and_resample_worder(f, frequency):
+def read_and_resample_worker(f, frequency):
     mat_filename = f.replace(".wav", ("_freq" + str(frequency) + ".mat"))
     print(mat_filename)
     try:
@@ -68,7 +68,7 @@ def read_and_resample_worder(f, frequency):
 
 def audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency, num_thread):
     for f in files:
-        resampled_data = read_and_resample_worder(f, audioset_resampling_frequency)
+        resampled_data = read_and_resample_worker(f, audioset_resampling_frequency)
         if resampled_data.ndim > 1:
             # stereo
             # convert stereo to mono
@@ -82,7 +82,7 @@ def audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency, num_
         sys.stdout.flush()
     """
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_thread) as executor:
-        future_to_file = {executor.submit(read_and_resample_worder, f, audioset_resampling_frequency): f
+        future_to_file = {executor.submit(read_and_resample_worker, f, audioset_resampling_frequency): f
                            for f in files}
         print("reading %d files." % future_to_file.__len__())
         for future in concurrent.futures.as_completed(future_to_file):
