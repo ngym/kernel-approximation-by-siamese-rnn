@@ -9,6 +9,9 @@ from scipy import signal
 import subprocess, functools, sys, threading, glob, json, random
 import concurrent.futures
 
+from python_speech_features import mfcc
+from python_speech_features import logfbank
+
 from plot_gram_matrix import plot
 
 from string import Template
@@ -52,15 +55,24 @@ gram = None
 
 seqs = {}
 
-def read_and_resample_worder(f, frequency):
-    rate, data = io.wavfile.read(f)
-    length = frequency * data.__len__() // rate
-    resampled_data = signal.resample(data, length)
+def read_and_resample_worker(f, frequency):
+    mat_filename = f.replace(".wav", ("_freq" + str(frequency) + ".mat"))
+    print(mat_filename)
+    try:
+        mat = io.loadmat(mat_filename)
+        resampled_data = mat['resampled_data']
+        print("read from mat")
+    except:
+        rate, data = io.wavfile.read(f)
+        data = logfbank(data, rate)
+        length = frequency * data.__len__() // rate
+        print("read from wav")
+        resampled_data = signal.resample(data, length)
     return resampled_data
 
 def audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency):
     with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:
-        future_to_file = {executor.submit(read_and_resample_worder, f, audioset_resampling_frequency): f
+        future_to_file = {executor.submit(read_and_resample_worker, f, audioset_resampling_frequency): f
                            for f in files}
         print("reading %d files." % future_to_file.__len__())
         for future in concurrent.futures.as_completed(future_to_file):
