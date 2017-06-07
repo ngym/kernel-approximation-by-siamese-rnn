@@ -14,7 +14,6 @@ def plot(file_name, similarities, files, separators, labels,
                    interpolation='nearest',
                    cmap='bwr',
                    )
-    fig.subplots_adjust(hspace=1000)
 
     # Colorbar on the right of the graph
     fig.colorbar(f1) #, ax=ax) #, shrink=0.9)
@@ -53,6 +52,7 @@ def plot(file_name, similarities, files, separators, labels,
     titletext = "σ =" + str(sigma) + "    loss=" + str(loss) + "%\n "
     ax.set_title(titletext,
                  horizontalalignment='center')
+
     #fig.suptitle(titletext,
     #             horizontalalignment='center')
 
@@ -72,14 +72,18 @@ def main():
             i += 1
             separators = [i]
         labels = ['Bark', 'Meow']
-        sigma = 0.4
+        sigma = float(filename.split("sigma")[1]
+                      .split("_")[0]
+                      .replace(".mat", ""))
     elif filename.find("num") != -1:
         i = 0
         while files[i].find("num_3") != -1:
             i += 1
             separators = [i]
         labels = ['3', '4']
-        sigma = 6.0
+        sigma = float(filename.split("sigma")[1]
+                      .split("_")[0]
+                      .replace(".mat", ""))
     else:
         alphabets = ["A", "B", "C", "D", "E", "F", "G",
                      "H", "I", "J", "K", "L", "M", "N",
