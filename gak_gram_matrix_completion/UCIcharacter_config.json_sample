@@ -1,0 +1,7 @@
+{"num_thread": 8,
+ "output_dir": "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/OUTPUT_UCI/",
+ "output_filename_format": "gram_${dataset_type}_sigma${gak_sigma}_${completion_alg}",
+ "dataset_type": "UCIcharacter",
+ "data_mat_file": "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset/UCI/mixoutALL_shifted.mat",
+ "gak_sigma": 5
+}
