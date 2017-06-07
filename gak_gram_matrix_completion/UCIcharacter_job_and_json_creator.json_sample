@@ -8,7 +8,7 @@
 	  "num_thread": 12,
 	  "output_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/OUTPUT_UCIcharacter/",
 	  "output_filename_format": "gram_${dataset_type}_sigma${gak_sigma}",
-	  "dataset_type": "upperChar",
+	  "dataset_type": "UCIcharacter",
 	  "data_mat_file": "/home/ngym/NFSshare/Lorincz_Lab/mixoutALL_shifted.mat"
     },
     "iterate": {
