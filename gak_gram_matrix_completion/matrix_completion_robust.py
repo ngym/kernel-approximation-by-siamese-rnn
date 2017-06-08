@@ -66,9 +66,8 @@ def main():
         
     incomplete_similarities, dropped_elements = make_matrix_incomplete(seed, similarities, incomplete_percentage)
 
-    html_out_robust_matrix_completion = filename.replace("FullGAK", "RobustMatrixCompletion")\
-                                   .replace(".mat", ".html")
-    mat_out_robust_matrix_completion = filename.replace("FullGAK", "RobustMatrixCompletion")
+    html_out_robust_matrix_completion = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RobustMatrixCompletion.html")
+    mat_out_robust_matrix_completion = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RobustMatrixCompletion.mat")
     
     # "SOFT_IMPUTE"
     completed_similarities, _ = robust_matrix_completion(incomplete_similarities)
@@ -77,7 +76,9 @@ def main():
 
     # OUTPUT
     io.savemat(mat_out_robust_matrix_completion,
-               dict(gram=psd_completed_similarities, indices=files))
+               dict(gram=psd_completed_similarities,
+                    dropped_gram=incomplete_similarities,
+                    indices=files))
     plot(html_out_robust_matrix_completion,
          psd_completed_similarities, files)
     print("RobustMatrixCompletion is output")

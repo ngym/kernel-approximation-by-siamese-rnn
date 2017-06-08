@@ -143,9 +143,8 @@ def main():
         
     incomplete_similarities, dropped_elements = make_matrix_incomplete(seed, similarities, incomplete_percentage)
 
-    html_out_rnn = filename.replace("NoCompletion", "RNN")\
-                                   .replace(".mat", ".html")
-    mat_out_rnn = filename.replace("NoCompletion", "RNN")
+    html_out_rnn = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN.html")
+    mat_out_rnn  = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN.mat")
     
     # "RnnCompletion"
     completed_similarities = np.array(rnn_matrix_completion(incomplete_similarities, seqs, files))
@@ -155,7 +154,9 @@ def main():
     # OUTPUT
     plot(html_out_rnn,
          psd_completed_similarities, files)
-    io.savemat(mat_out_rnn, dict(gram=psd_completed_similarities, indices=files))
+    io.savemat(mat_out_rnn, dict(gram=psd_completed_similarities,
+                                 dropped_gram=incomplete_similarities,
+                                 indices=files))
     print("RnnCompletion files are output.")
 
     mse = mean_squared_error(similarities, psd_completed_similarities)

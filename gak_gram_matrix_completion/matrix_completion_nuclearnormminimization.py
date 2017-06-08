@@ -38,9 +38,8 @@ def main():
         
     incomplete_similarities, dropped_elements = make_matrix_incomplete(seed, similarities, incomplete_percentage)
 
-    html_out_nuclear_norm_minimization = filename.replace("FullGAK", "NuclearNormMinimization")\
-                                                 .replace(".mat", ".html")
-    mat_out_nuclear_norm_minimization = filename.replace("FullGAK", "NuclearNormMinimization")
+    html_out_nuclear_norm_minimization = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_NuclearNormMinimization.html")
+    mat_out_nuclear_norm_minimization = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_NuclearNormMinimization.mat")
     
     # "NUCLEAR_NORM_MINIMIZATION"
     completed_similarities = neclearnormminimization_matrix_completion(incomplete_similarities)
@@ -49,7 +48,9 @@ def main():
 
     # OUTPUT
     io.savemat(mat_out_nuclear_norm_minimization,
-               dict(gram=psd_completed_similarities, indices=files))
+               dict(gram=psd_completed_similarities,
+                    dropped_gram=incomplete_similarities,
+                    indices=files))
     plot(html_out_nuclear_norm_minimization,
          psd_completed_similarities, files)
     print("NuclearNormMinimization is output")

@@ -38,9 +38,8 @@ def main():
         
     incomplete_similarities, dropped_elements = make_matrix_incomplete(seed, similarities, incomplete_percentage)
 
-    html_out_soft_impute = filename.replace("FullGAK", "SoftImpute")\
-                                   .replace(".mat", ".html")
-    mat_out_soft_impute = filename.replace("FullGAK", "SoftImpute")
+    html_out_soft_impute = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_SoftImpute.html")
+    mat_out_soft_impute = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_SoftImpute.mat")
     
     # "SOFT_IMPUTE"
     completed_similarities = softimpute_matrix_completion(incomplete_similarities)
@@ -49,7 +48,9 @@ def main():
 
     # OUTPUT
     io.savemat(mat_out_soft_impute,
-               dict(gram=psd_completed_similarities, indices=files))
+               dict(gram=psd_completed_similarities,
+                    dropped_gram=incomplete_similarities,
+                    indices=files))
     plot(html_out_soft_impute,
          psd_completed_similarities, files)
     print("SoftImpute is output")
