@@ -3,6 +3,8 @@ import numpy as np
 import scipy as sp
 from scipy import io
 
+from functools import reduce
+
 import matplotlib.pyplot as plt
 
 def plot(file_name, similarities, files, separators, labels,
@@ -84,7 +86,7 @@ def main():
         sigma = float(filename.split("sigma")[1]
                       .split("_")[0]
                       .replace(".mat", ""))
-    else:
+    elif filename.find("upperChar") != -1:
         alphabets = ["A", "B", "C", "D", "E", "F", "G",
                      "H", "I", "J", "K", "L", "M", "N",
                      "O", "P", "Q", "R", "S", "T", "U",
@@ -103,6 +105,42 @@ def main():
                       .split("_")[0]
                       .replace(".mat", ""))
         print(sigma)
+    elif filename.find("UCIcharacter") != -1:
+        labels = []
+        for f in files:
+            l = f[0]
+            if l not in labels:
+                labels.append(l)
+        separators = []
+        for l in labels[:-1]:
+            i = 0
+            while files[i].split('/')[-1].find(l) == -1:
+                i += 1
+            while files[i].split('/')[-1].find(l) != -1:
+                i += 1
+            separators.append(i)
+        sigma = float(filename.split("sigma")[1]
+                      .split("_")[0]
+                      .replace(".mat", ""))
+    elif filename.find("UCItctodd") != -1:
+        labels = []
+        for f in files:
+            l = reduce(lambda a, b: a + "-" + b, f.split('/')[-1].split('-')[:-2])
+            if l not in labels:
+                labels.append(l)
+        separators = []
+        for l in labels[:-1]:
+            i = 0
+            while files[i].split('/')[-1].find(l) == -1:
+                i += 1
+            while files[i].split('/')[-1].find(l) != -1:
+                i += 1
+            separators.append(i)
+        sigma = float(filename.split("sigma")[1]
+                      .split("_")[0]
+                      .replace(".mat", ""))
+    else:
+        assert False    
         
     pdf_out = filename.replace(".mat", ".pdf")
     
