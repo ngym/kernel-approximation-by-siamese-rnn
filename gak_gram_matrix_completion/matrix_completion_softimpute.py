@@ -25,6 +25,7 @@ def softimpute_matrix_completion(incomplete_similarities_):
 def main():
     filename = sys.argv[1]
     incomplete_percentage = int(sys.argv[2])
+    errorfile = sys.argv[3]
     mat = io.loadmat(filename)
     similarities = mat['gram']
     files = mat['indices']
@@ -51,9 +52,11 @@ def main():
     print("SoftImpute is output")
 
     mse = mean_squared_error(similarities, psd_completed_similarities)
-    print("Mean squared error: " + str(mse))
     msede = mean_squared_error_of_dropped_elements(similarities, psd_completed_similarities, dropped_elements)
-    print("Mean squared error of dropped elements: " + str(msede))
+    fd = open(errorfile, "w")
+    fd.write("Mean squared error: " + str(mse))
+    fd.write("Mean squared error of dropped elements: " + str(msede))
+    fd.close()
 
 if __name__ == "__main__":
     main()
