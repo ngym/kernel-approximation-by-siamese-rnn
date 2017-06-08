@@ -26,7 +26,7 @@ from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped
 from plot_gram_matrix import plot
 from make_matrix_incomplete import make_matrix_incomplete
 
-import time
+import time, csv
 
 def batch_dot(vects):
     x, y = vects
@@ -154,6 +154,38 @@ def main():
     mat = io.loadmat(filename)
     similarities = mat['gram']
     files = mat['indices']
+    seqs = {}
+
+    fd = open(completionanalysisfile, "w")
+    
+    if filename.find("upperChar") != -1:
+        for f in files:
+            #print(f)
+            m = io.loadmat(f)
+            seqs[f] = m['gest'].T
+    elif filename.find("UCIcharacter") != -1:
+        datasetfile = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset/UCI/mixoutALL_shifted.mat"
+        dataset = io.loadmat(datasetfile)
+        displayname = [k[0] for k in dataset['consts']['key'][0][0][0]]
+        classes = dataset['consts'][0][0][4][0]
+        labels = []
+        for c in classes:
+            labels.append(displayname[c-1])
+        i = 0
+        for l in labels:
+            seqs[l + str(i)] = dataset['mixout'][0][i].T
+            i += 1
+    elif filename.find("UCItctodd") != -1:
+        for f in files:
+            reader = csv.reader(open(f, "r"), delimiter='\t')
+            seq = []
+            for r in reader:
+                seq.append(r)
+            seqs[f] = np.float64(np.array(seq))
+        assert False
+    else:
+        print(4)
+        assert False
 
     seed = 1
         
@@ -179,7 +211,6 @@ def main():
 
     mse = mean_squared_error(similarities, psd_completed_similarities)
     msede = mean_squared_error_of_dropped_elements(similarities, psd_completed_similarities, dropped_elements)
-    fd = open(completionanalysisfile, "w")
     fd.write("start: " + str(t_start))
     fd.write("\n")
     fd.write("finish: " + str(t_finish))
