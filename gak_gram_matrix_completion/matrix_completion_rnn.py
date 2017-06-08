@@ -177,7 +177,7 @@ def main():
             i += 1
     elif filename.find("UCItctodd") != -1:
         for f in files:
-            reader = csv.reader(open(f, "r"), delimiter='\t')
+            reader = csv.reader(open(f.replace(' ' ''), "r"), delimiter='\t')
             seq = []
             for r in reader:
                 seq.append(r)
