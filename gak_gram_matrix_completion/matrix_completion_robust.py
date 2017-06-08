@@ -83,7 +83,9 @@ def main():
     msede = mean_squared_error_of_dropped_elements(similarities, psd_completed_similarities, dropped_elements)
     fd = open(errorfile, "w")
     fd.write("Mean squared error: " + str(mse))
+    fd.write("\n")
     fd.write("Mean squared error of dropped elements: " + str(msede))
+    fd.write("\n")
     fd.close()
 
 if __name__ == "__main__":
