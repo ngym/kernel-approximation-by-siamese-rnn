@@ -182,7 +182,6 @@ def main():
             for r in reader:
                 seq.append(r)
             seqs[f] = np.float64(np.array(seq))
-        assert False
     else:
         print(4)
         assert False
