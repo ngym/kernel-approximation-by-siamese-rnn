@@ -102,6 +102,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files):
     tr_y = np.array(tr_y).astype('float32')
     # need to pad train data nad validation data
 
+    fit_start = time.time()
     model.fit([np.array(tr_pairs)[:, 0, :, :],
                np.array(tr_pairs)[:, 1, :, :]],
               tr_y,
@@ -110,12 +111,27 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files):
               callbacks=[model_checkpoint, early_stopping, history],
               validation_split=0.1,
               shuffle=True)
+    fit_finish = time.time()
+    fd.write("fit starts: " + str(fit_start))
+    fd.write("\n")
+    fd.write("fit finishes: " + str(fit_finish))
+    fd.write("\n")
+    fd.write("fit duration: " + str(fit_finish - fit_start))
+    fd.write("\n")
 
     # need to pad test data
     # compute final result on test set
     #print(model.evaluate([te_pairs[:, 0, :, :], te_pairs[:, 1, :, :]], te_y))
+    pred_start = time.time()
     preds = model.predict([np.array(te_pairs)[:, 0, :, :],
                            np.array(te_pairs)[:, 1, :, :]])
+    pred_finish = time.time()
+    fd.write("pred starts: " + str(pred_start))
+    fd.write("\n")
+    fd.write("pred finishes: " + str(pred_finish))
+    fd.write("\n")
+    fd.write("pred duration: " + str(pred_finish - pred_start))
+    fd.write("\n")
     print(preds)
 
     completed_matrix = incomplete_matrix.tolist()
@@ -128,6 +144,8 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files):
     assert not np.any(np.isnan(np.array(completed_matrix)))
     assert not np.any(np.isinf(np.array(completed_matrix)))
     return completed_matrix
+
+fd = None
 
 def main():
     filename = sys.argv[1]
