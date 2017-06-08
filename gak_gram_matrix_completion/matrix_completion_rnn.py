@@ -36,11 +36,11 @@ def create_base_network(input_shape, mask_value):
     seq = Sequential()
     seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
     seq.add(Dropout(0.1))
-    #seq.add(LSTM(128, return_sequences=True))
+    #seq.add(LSTM(100, kernel_regularizer=l2(0.01), return_sequences=True))
     #seq.add(Dropout(0.1))
-    seq.add(LSTM(128, return_sequences=False))
+    seq.add(LSTM(100, kernel_regularizer=l2(0.01), return_sequences=False))
     seq.add(Dropout(0.1))
-    seq.add(Dense(128, activation='linear', kernel_regularizer=l2(0.01)))
+    seq.add(Dense(100, activation='linear', kernel_regularizer=l2(0.01)))
     return seq
 
 def rnn_matrix_completion(incomplete_matrix_, seqs_, files):
