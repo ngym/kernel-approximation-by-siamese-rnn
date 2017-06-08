@@ -28,11 +28,6 @@ def main():
     mat = io.loadmat(filename)
     similarities = mat['gram']
     files = mat['indices']
-    seqs = {}
-    for f in files:
-        #print(f)
-        m = io.loadmat(f)
-        seqs[f] = m['gest'].T
 
     seed = 1
         

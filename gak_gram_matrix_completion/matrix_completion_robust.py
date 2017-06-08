@@ -56,12 +56,7 @@ def main():
     mat = io.loadmat(filename)
     similarities = mat['gram']
     files = mat['indices']
-    seqs = {}
-    for f in files:
-        #print(f)
-        m = io.loadmat(f)
-        seqs[f] = m['gest'].T
-
+    
     seed = 1
         
     incomplete_similarities, dropped_elements = make_matrix_incomplete(seed, similarities, incomplete_percentage)
