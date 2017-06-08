@@ -124,7 +124,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd):
     #print(model.evaluate([te_pairs[:, 0, :, :], te_pairs[:, 1, :, :]], te_y))
     pred_start = time.time()
     preds = model.predict([np.array(te_pairs)[:, 0, :, :],
-                           np.array(te_pairs)[:, 1, :, :]])
+                           np.array(te_pairs)[:, 1, :, :]], batch_size=256)
     pred_finish = time.time()
     fd.write("pred starts: " + str(pred_start))
     fd.write("\n")
