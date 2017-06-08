@@ -15,6 +15,8 @@ from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped
 from plot_gram_matrix import plot
 from make_matrix_incomplete import make_matrix_incomplete
 
+import time
+
 def softimpute_matrix_completion(incomplete_similarities_):
     """
     Instead of solving the nuclear norm objective directly, instead
@@ -25,7 +27,7 @@ def softimpute_matrix_completion(incomplete_similarities_):
 def main():
     filename = sys.argv[1]
     incomplete_percentage = int(sys.argv[2])
-    errorfile = sys.argv[3]
+    completionanalysisfile = sys.argv[3]
     mat = io.loadmat(filename)
     similarities = mat['gram']
     files = mat['indices']
@@ -36,11 +38,13 @@ def main():
 
     html_out_soft_impute = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_SoftImpute.html")
     mat_out_soft_impute = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_SoftImpute.mat")
-    
+
+    t_start = time.time()
     # "SOFT_IMPUTE"
     completed_similarities = softimpute_matrix_completion(incomplete_similarities)
     # eigenvalue check
     psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
+    t_finish = time.time()
 
     # OUTPUT
     io.savemat(mat_out_soft_impute,
@@ -53,7 +57,13 @@ def main():
 
     mse = mean_squared_error(similarities, psd_completed_similarities)
     msede = mean_squared_error_of_dropped_elements(similarities, psd_completed_similarities, dropped_elements)
-    fd = open(errorfile, "w")
+    fd = open(completionanalysisfile, "w")
+    fd.write("start: " + str(t_start))
+    fd.write("\n")
+    fd.write("finish: " + str(t_finish))
+    fd.write("\n")
+    fd.write("duration: " + str(t_finish - t_start))
+    fd.write("\n")
     fd.write("Mean squared error: " + str(mse))
     fd.write("\n")
     fd.write("Mean squared error of dropped elements: " + str(msede))

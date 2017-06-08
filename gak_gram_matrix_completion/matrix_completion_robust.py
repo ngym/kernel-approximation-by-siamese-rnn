@@ -17,6 +17,8 @@ from make_matrix_incomplete import make_matrix_incomplete
 import numpy as np
 import cvxpy
 
+import time
+
 def robust_matrix_completion(Z, l=None, max_iters=10000, eps=1e-4):
     """Solve Robust Matrix Completion problem via CVXPY with large scale SCS solver.
 
@@ -53,7 +55,7 @@ def robust_matrix_completion(Z, l=None, max_iters=10000, eps=1e-4):
 def main():
     filename = sys.argv[1]
     incomplete_percentage = int(sys.argv[2])
-    errorfile = sys.argv[3]
+    completionanalysisfile = sys.argv[3]
     mat = io.loadmat(filename)
     similarities = mat['gram']
     files = mat['indices']
@@ -64,11 +66,13 @@ def main():
 
     html_out_robust_matrix_completion = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RobustMatrixCompletion.html")
     mat_out_robust_matrix_completion = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RobustMatrixCompletion.mat")
-    
+
+    t_start = time.time()
     # "SOFT_IMPUTE"
     completed_similarities, _ = robust_matrix_completion(incomplete_similarities)
     # eigenvalue check
     psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
+    t_finish = time.time()
 
     # OUTPUT
     io.savemat(mat_out_robust_matrix_completion,
@@ -81,7 +85,13 @@ def main():
 
     mse = mean_squared_error(similarities, psd_completed_similarities)
     msede = mean_squared_error_of_dropped_elements(similarities, psd_completed_similarities, dropped_elements)
-    fd = open(errorfile, "w")
+    fd = open(completionanalysisfile, "w")
+    fd.write("start: " + str(t_start))
+    fd.write("\n")
+    fd.write("finish: " + str(t_finish))
+    fd.write("\n")
+    fd.write("duration: " + str(t_finish - t_start))
+    fd.write("\n")
     fd.write("Mean squared error: " + str(mse))
     fd.write("\n")
     fd.write("Mean squared error of dropped elements: " + str(msede))

@@ -26,6 +26,8 @@ from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped
 from plot_gram_matrix import plot
 from make_matrix_incomplete import make_matrix_incomplete
 
+import time
+
 def batch_dot(vects):
     x, y = vects
     return K.batch_dot(x, y, axes=1)
@@ -130,7 +132,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files):
 def main():
     filename = sys.argv[1]
     incomplete_percentage = int(sys.argv[2])
-    errorfile = sys.argv[3]
+    completionanalysisfile = sys.argv[3]
     mat = io.loadmat(filename)
     similarities = mat['gram']
     files = mat['indices']
@@ -146,11 +148,13 @@ def main():
 
     html_out_rnn = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN.html")
     mat_out_rnn  = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN.mat")
-    
+
+    t_start = time.time()
     # "RnnCompletion"
     completed_similarities = np.array(rnn_matrix_completion(incomplete_similarities, seqs, files))
     # eigenvalue check
     psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
+    t_finish = time.time()
 
     # OUTPUT
     plot(html_out_rnn,
@@ -162,7 +166,13 @@ def main():
 
     mse = mean_squared_error(similarities, psd_completed_similarities)
     msede = mean_squared_error_of_dropped_elements(similarities, psd_completed_similarities, dropped_elements)
-    fd = open(errorfile, "w")
+    fd = open(completionanalysisfile, "w")
+    fd.write("start: " + str(t_start))
+    fd.write("\n")
+    fd.write("finish: " + str(t_finish))
+    fd.write("\n")
+    fd.write("duration: " + str(t_finish - t_start))
+    fd.write("\n")
     fd.write("Mean squared error: " + str(mse))
     fd.write("\n")
     fd.write("Mean squared error of dropped elements: " + str(msede))

@@ -4,7 +4,7 @@ ROOT_DIR = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification
 #ROOT_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/"
 JOB_DIR = ROOT_DIR + "JOB_COMPLETION/"
 TIME_DIR = ROOT_DIR + "TIME_COMPLETION/"
-ERROR_DIR = ROOT_DIR + "ERROR_COMPLETION/"
+COMPLETION_ANALYSIS_DIR = ROOT_DIR + "COMPLETION_ANALYSIS/"
 
 COMPLETION_ALG = ["NuclearNormMinimization",
                   "SoftImpute",
@@ -36,6 +36,6 @@ for mat in mats:
             fd = open(job_file_name, "w")
             command = TIME + " -v -o " + TIME_DIR + output_filename_format + ".time " +\
                       PYTHON + " " + py + " " + mat + " " + str(l) + \
-                      " " + ERROR_DIR + output_filename_format + ".error" + "\n"
+                      " " + COMPLETION_ANALYSIS_DIR + output_filename_format + ".error" + "\n"
             fd.write(command)
             fd.close()
