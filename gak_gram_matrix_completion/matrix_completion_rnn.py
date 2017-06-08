@@ -45,7 +45,7 @@ def create_base_network(input_shape, mask_value):
     seq.add(Dense(100, activation='linear', kernel_regularizer=l2(0.01)))
     return seq
 
-def rnn_matrix_completion(incomplete_matrix_, seqs_, files):
+def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd):
     incomplete_matrix = np.array(incomplete_matrix_)
     time_dim = max([seq_.shape[0] for seq_ in seqs_.values()])
 
@@ -106,7 +106,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files):
     model.fit([np.array(tr_pairs)[:, 0, :, :],
                np.array(tr_pairs)[:, 1, :, :]],
               tr_y,
-              batch_size=128,
+              batch_size=256,
               epochs=1, # 3 is enough for test, 300 would be proper for actual usage
               callbacks=[model_checkpoint, early_stopping, history],
               validation_split=0.1,
@@ -144,8 +144,6 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files):
     assert not np.any(np.isnan(np.array(completed_matrix)))
     assert not np.any(np.isinf(np.array(completed_matrix)))
     return completed_matrix
-
-fd = None
 
 def main():
     filename = sys.argv[1]
@@ -195,7 +193,7 @@ def main():
 
     t_start = time.time()
     # "RnnCompletion"
-    completed_similarities = np.array(rnn_matrix_completion(incomplete_similarities, seqs, files))
+    completed_similarities = np.array(rnn_matrix_completion(incomplete_similarities, seqs, files, fd))
     # eigenvalue check
     psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
     t_finish = time.time()
