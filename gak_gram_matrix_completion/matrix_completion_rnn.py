@@ -25,7 +25,7 @@ from nearest_positive_semidefinite import nearest_positive_semidefinite
 from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped_elements
 from plot_gram_matrix import plot
 from make_matrix_incomplete import make_matrix_incomplete
-import gc
+#import gc
 
 import time, csv
 
@@ -112,30 +112,31 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     tr_y = np.array(tr_y).astype('float32')
     # need to pad train data nad validation data
 
-    fit_start = time.time()
-    model.fit([tr_pairs_0,
-               tr_pairs_1],
-              tr_y,
-              batch_size=256,
-              epochs=300, # 3 is enough for test, 300 would be proper for actual usage
-              callbacks=[model_checkpoint, early_stopping, history],
-              validation_split=0.1,
-              shuffle=True)
-    fit_finish = time.time()
-    fd.write("fit starts: " + str(fit_start))
-    fd.write("\n")
-    fd.write("fit finishes: " + str(fit_finish))
-    fd.write("\n")
-    fd.write("fit duration: " + str(fit_finish - fit_start))
-    fd.write("\n")
-
-    # need to pad test data
-    # compute final result on test set
-    #print(model.evaluate([te_pairs[:, 0, :, :], te_pairs[:, 1, :, :]], te_y))
-    pred_start = time.time()
-    preds = model.predict([te_pairs_0,
-                           te_pairs_1], batch_size=256)
-    pred_finish = time.time()
+    with K.get_session():
+        fit_start = time.time()
+        model.fit([tr_pairs_0,
+                   tr_pairs_1],
+                  tr_y,
+                  batch_size=256,
+                  epochs=300, # 3 is enough for test, 300 would be proper for actual usage
+                  callbacks=[model_checkpoint, early_stopping, history],
+                  validation_split=0.1,
+                  shuffle=True)
+        fit_finish = time.time()
+        fd.write("fit starts: " + str(fit_start))
+        fd.write("\n")
+        fd.write("fit finishes: " + str(fit_finish))
+        fd.write("\n")
+        fd.write("fit duration: " + str(fit_finish - fit_start))
+        fd.write("\n")
+    
+        # need to pad test data
+        # compute final result on test set
+        #print(model.evaluate([te_pairs[:, 0, :, :], te_pairs[:, 1, :, :]], te_y))
+        pred_start = time.time()
+        preds = model.predict([te_pairs_0,
+                               te_pairs_1], batch_size=256)
+        pred_finish = time.time()
     fd.write("pred starts: " + str(pred_start))
     fd.write("\n")
     fd.write("pred finishes: " + str(pred_finish))
@@ -234,7 +235,7 @@ def main():
     fd.write("Mean squared error of dropped elements: " + str(msede))
     fd.write("\n")
     fd.close()
-    gc.collect()
+    #gc.collect()
 
 if __name__ == "__main__":
     main()
