@@ -6,19 +6,22 @@ JOB_DIR = ROOT_DIR + "JOB_COMPLETION/"
 TIME_DIR = ROOT_DIR + "TIME_COMPLETION/"
 COMPLETION_ANALYSIS_DIR = ROOT_DIR + "COMPLETION_ANALYSIS/"
 
+"""
 COMPLETION_ALG = ["NuclearNormMinimization",
                   "SoftImpute",
                   "RNN"]
+"""
+COMPLETION_ALG = ["RNN"]
 
 loss = [10, 20, 50]
 
-PYTHON = "/usr/bin/python3"
-TIME = "/usr/bin/time"
+PYTHON = "~/NFSshare/tflib/lib64/ld-2.17.so /usr/bin/python3"
+TIME = "~/NFSshare/tflib/lib64/ld-2.17.so /usr/bin/time"
 
 mats = []
-mats += glob.glob(ROOT_DIR + "OUTPUT6DMG/*mat")
-mats += glob.glob(ROOT_DIR + "OUTPUT_UCIcharacter/*mat")
-mats += glob.glob(ROOT_DIR + "OUTPUT_UCItctodd/*mat")
+mats += glob.glob(ROOT_DIR + "OUTPUT6DMG/*0.mat")
+mats += glob.glob(ROOT_DIR + "OUTPUT_UCIcharacter/*0.mat")
+mats += glob.glob(ROOT_DIR + "OUTPUT_UCItctodd/*0.mat")
 
 for mat in mats:
     for CALG in COMPLETION_ALG:
@@ -37,5 +40,10 @@ for mat in mats:
             command = TIME + " -v -o " + TIME_DIR + output_filename_format + ".time " +\
                       PYTHON + " " + py + " " + mat + " " + str(l) + \
                       " " + COMPLETION_ANALYSIS_DIR + output_filename_format + ".error" + "\n"
+            fd.write("echo $SHELL")
+            fd.write("\n")
+            fd.write("setenv LD_LIBRARY_PATH /home/ngym/NFSshare/tflib/lib64/:/home/ngym/NFSshare/tflib/usr/lib64/")
+            fd.write("\n")
             fd.write(command)
+            fd.write("\n")
             fd.close()
