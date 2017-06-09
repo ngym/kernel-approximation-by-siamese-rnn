@@ -171,7 +171,8 @@ def main():
             m = io.loadmat(f)
             seqs[f] = m['gest'].T
     elif filename.find("UCIcharacter") != -1:
-        datasetfile = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset/UCI/mixoutALL_shifted.mat"
+        #datasetfile = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset/UCI/mixoutALL_shifted.mat"
+        datasetfile = "/home/ngym/NFSshare/Lorincz_Lab/mixoutALL_shifted.mat"
         dataset = io.loadmat(datasetfile)
         displayname = [k[0] for k in dataset['consts']['key'][0][0][0]]
         classes = dataset['consts'][0][0][4][0]
