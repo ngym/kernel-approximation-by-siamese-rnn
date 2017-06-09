@@ -2,7 +2,7 @@ import glob
 
 ROOT_DIR = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/"
 #ROOT_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/"
-JOB_DIR = ROOT_DIR + "JOB_COMPLETION/"
+JOB_DIR = ROOT_DIR + "JOB_COMPLETION2/"
 TIME_DIR = ROOT_DIR + "TIME_COMPLETION/"
 COMPLETION_ANALYSIS_DIR = ROOT_DIR + "COMPLETION_ANALYSIS/"
 

@@ -107,7 +107,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd):
                np.array(tr_pairs)[:, 1, :, :]],
               tr_y,
               batch_size=256,
-              epochs=1, # 3 is enough for test, 300 would be proper for actual usage
+              epochs=300, # 3 is enough for test, 300 would be proper for actual usage
               callbacks=[model_checkpoint, early_stopping, history],
               validation_split=0.1,
               shuffle=True)
