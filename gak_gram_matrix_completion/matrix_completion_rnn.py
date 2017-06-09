@@ -137,8 +137,8 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     model.fit([tr_pairs_0,
                tr_pairs_1],
               tr_y,
-              batch_size=256,
-              epochs=300, # 3 is enough for test, 300 would be proper for actual usage
+              batch_size=1024,
+              epochs=1, # 3 is enough for test, 300 would be proper for actual usage
               callbacks=[model_checkpoint, early_stopping, history],
               validation_split=0.1,
               shuffle=False)
@@ -155,7 +155,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     #print(model.evaluate([te_pairs[:, 0, :, :], te_pairs[:, 1, :, :]], te_y))
     pred_start = time.time()
     preds = model.predict([te_pairs_0,
-                           te_pairs_1], batch_size=256)
+                           te_pairs_1], batch_size=1024)
     pred_finish = time.time()
     fd.write("pred starts: " + str(pred_start))
     fd.write("\n")
