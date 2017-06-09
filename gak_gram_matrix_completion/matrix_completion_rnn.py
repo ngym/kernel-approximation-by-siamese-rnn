@@ -73,9 +73,18 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd):
             tr_pairs += [[seqs[i], seqs[j]]]
             tr_y.append(incomplete_matrix[i][j])
 
-    #tr_pairs = np.array(tr_pairs)
-    #te_pairs = np.array(te_pairs)
+    tr_pairs = np.array(tr_pairs)
+    tr_pairs_0 = tr_pairs[:, 0, :, :]
+    tr_pairs_1 = tr_pairs[:, 1, :, :]
 
+    del tr_pairs
+    
+    te_pairs = np.array(te_pairs)
+    te_pairs_0 = te_pairs[:, 0, :, :]
+    te_pairs_1 = te_pairs[:, 1, :, :]
+
+    del te_pairs
+    
     # network definition
     input_shape = (time_dim, feat_dim)
     base_network = create_base_network(input_shape, pad_value)
@@ -103,11 +112,11 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd):
     # need to pad train data nad validation data
 
     fit_start = time.time()
-    model.fit([np.array(tr_pairs)[:, 0, :, :],
-               np.array(tr_pairs)[:, 1, :, :]],
+    model.fit([tr_pairs_0,
+               tr_pairs_1],
               tr_y,
               batch_size=256,
-              epochs=300, # 3 is enough for test, 300 would be proper for actual usage
+              epochs=1, # 3 is enough for test, 300 would be proper for actual usage
               callbacks=[model_checkpoint, early_stopping, history],
               validation_split=0.1,
               shuffle=True)
@@ -123,8 +132,8 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd):
     # compute final result on test set
     #print(model.evaluate([te_pairs[:, 0, :, :], te_pairs[:, 1, :, :]], te_y))
     pred_start = time.time()
-    preds = model.predict([np.array(te_pairs)[:, 0, :, :],
-                           np.array(te_pairs)[:, 1, :, :]], batch_size=256)
+    preds = model.predict([te_pairs_0,
+                           te_pairs_1], batch_size=256)
     pred_finish = time.time()
     fd.write("pred starts: " + str(pred_start))
     fd.write("\n")
@@ -156,7 +165,7 @@ def main():
 
     fd = open(completionanalysisfile, "w")
     
-    if filename.find("upperChar") != -1:
+    if filename.find("upperChar") != -1 or filename.find("velocity") != -1:
         for f in files:
             #print(f)
             m = io.loadmat(f)
@@ -187,6 +196,9 @@ def main():
     seed = 1
         
     incomplete_similarities, dropped_elements = make_matrix_incomplete(seed, similarities, incomplete_percentage)
+
+    fd.write("number of dropped elements: " + len(dropped_elements))
+    fd.write("\n")
 
     html_out_rnn = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN.html")
     mat_out_rnn  = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN.mat")
