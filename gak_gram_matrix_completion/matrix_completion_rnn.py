@@ -14,7 +14,7 @@ from sklearn.metrics import mean_squared_error
 
 from keras.datasets import mnist
 from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Input, Lambda, LSTM, Masking
+from keras.layers import Dense, Dropout, Input, Lambda, LSTM, Masking, Activation
 from keras.optimizers import RMSprop
 from keras import backend as K
 from keras.preprocessing.sequence import pad_sequences
@@ -28,6 +28,8 @@ from make_matrix_incomplete import make_matrix_incomplete
 #import gc
 
 import time, csv
+from tempfile import mkdtemp
+import os.path as path
 
 def batch_dot(vects):
     x, y = vects
@@ -57,34 +59,50 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
 
     feat_dim = seqs[0].shape[1]
 
-    tr_pairs = []
+    num_dropped = 0
+    for i in range(files.__len__()):
+        for j in range(files.__len__()):
+            if np.isnan(incomplete_matrix[i][j]):
+                num_dropped += 1
+
+    cache_dir = "/share/cache/"
+    #cache_dir = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/cache"
+    tr_pairs_0 = np.memmap(path.join(mkdtemp(dir=cache_dir), 'tr_pairs_0'), dtype='float32', mode='w+', shape=((len(files) * len(files) - num_dropped), time_dim, feat_dim))
+    tr_pairs_1 = np.memmap(path.join(mkdtemp(dir=cache_dir), 'tr_pairs_1'), dtype='float32', mode='w+', shape=((len(files) * len(files) - num_dropped), time_dim, feat_dim))
+    te_pairs_0 = np.memmap(path.join(mkdtemp(dir=cache_dir), 'te_pairs_0'), dtype='float32', mode='w+', shape=(num_dropped, time_dim, feat_dim))
+    te_pairs_1 = np.memmap(path.join(mkdtemp(dir=cache_dir), 'te_pairs_1'), dtype='float32', mode='w+', shape=(num_dropped, time_dim, feat_dim))
+
+    #tr_pairs = []
     tr_y = []
-    te_pairs = []
+    #te_pairs = []
     te_pairs_index = []
+    tr_index = 0
+    te_index = 0
     for i in range(files.__len__()):
         for j in range(files.__len__()):
             if np.isnan(incomplete_matrix[i][j]):
                 # test
-                te_pairs += [[seqs[i], seqs[j]]]
+                #te_pairs += [[seqs[i], seqs[j]]]
+                te_pairs_0[te_index] = np.array(seqs[i])
+                te_pairs_1[te_index] = np.array(seqs[j])
                 te_pairs_index += [[i, j]]
-    while len(tr_pairs) < 50000:
-        i = random.randint(0, len(files)-1)
-        j = random.randint(0, len(files)-1)
-        if not np.isnan(incomplete_matrix[i][j]):
-            tr_pairs += [[seqs[i], seqs[j]]]
-            tr_y.append(incomplete_matrix[i][j])
+                te_index += 1
+            else:
+                #tr_pairs += [[seqs[i], seqs[j]]]
+                tr_pairs_0[tr_index] = np.array(seqs[i])
+                tr_pairs_1[tr_index] = np.array(seqs[j])
+                tr_y.append(incomplete_matrix[i][j])
+                tr_index += 1
 
-    tr_pairs = np.array(tr_pairs)
-    tr_pairs_0 = tr_pairs[:, 0, :, :]
-    tr_pairs_1 = tr_pairs[:, 1, :, :]
-
-    del tr_pairs
+    #tr_pairs = np.array(tr_pairs)
+    #tr_pairs_0 = tr_pairs[:, 0, :, :]
+    #tr_pairs_1 = tr_pairs[:, 1, :, :]
+    #del tr_pairs
     
-    te_pairs = np.array(te_pairs)
-    te_pairs_0 = te_pairs[:, 0, :, :]
-    te_pairs_1 = te_pairs[:, 1, :, :]
-
-    del te_pairs
+    #te_pairs = np.array(te_pairs)
+    #te_pairs_0 = te_pairs[:, 0, :, :]
+    #te_pairs_1 = te_pairs[:, 1, :, :]
+    #del te_pairs
     
     # network definition
     K.clear_session()
@@ -102,8 +120,9 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     processed_b = base_network(input_b)
 
     dot = Lambda(batch_dot, output_shape=(1,))([processed_a, processed_b])
+    out = Activation('sigmoid')(dot)
 
-    model = Model([input_a, input_b], dot)
+    model = Model([input_a, input_b], out)
 
     # train
     rms = RMSprop(clipnorm=1.)
@@ -122,7 +141,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
               epochs=300, # 3 is enough for test, 300 would be proper for actual usage
               callbacks=[model_checkpoint, early_stopping, history],
               validation_split=0.1,
-              shuffle=True)
+              shuffle=False)
     fit_finish = time.time()
     fd.write("fit starts: " + str(fit_start))
     fd.write("\n")
