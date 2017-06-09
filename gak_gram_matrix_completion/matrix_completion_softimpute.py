@@ -34,7 +34,12 @@ def main():
 
     seed = 1
         
+    fd = open(completionanalysisfile, "w")
+    
     incomplete_similarities, dropped_elements = make_matrix_incomplete(seed, similarities, incomplete_percentage)
+
+    fd.write("number of dropped elements: " + str(len(dropped_elements)))
+    fd.write("\n")
 
     html_out_soft_impute = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_SoftImpute.html")
     mat_out_soft_impute = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_SoftImpute.mat")
@@ -57,7 +62,6 @@ def main():
 
     mse = mean_squared_error(similarities, psd_completed_similarities)
     msede = mean_squared_error_of_dropped_elements(similarities, psd_completed_similarities, dropped_elements)
-    fd = open(completionanalysisfile, "w")
     fd.write("start: " + str(t_start))
     fd.write("\n")
     fd.write("finish: " + str(t_finish))
