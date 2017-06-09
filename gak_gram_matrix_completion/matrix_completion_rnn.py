@@ -78,21 +78,20 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     te_pairs_index = []
     tr_index = 0
     te_index = 0
-    for i in range(files.__len__()):
-        for j in range(files.__len__()):
-            if np.isnan(incomplete_matrix[i][j]):
-                # test
-                #te_pairs += [[seqs[i], seqs[j]]]
-                te_pairs_0[te_index] = np.array(seqs[i])
-                te_pairs_1[te_index] = np.array(seqs[j])
-                te_pairs_index += [[i, j]]
-                te_index += 1
-            else:
-                #tr_pairs += [[seqs[i], seqs[j]]]
-                tr_pairs_0[tr_index] = np.array(seqs[i])
-                tr_pairs_1[tr_index] = np.array(seqs[j])
-                tr_y.append(incomplete_matrix[i][j])
-                tr_index += 1
+    for i, j in np.random.permutation([(i, j) for i in range(len(files)) for j in range(len(files))]):
+        if np.isnan(incomplete_matrix[i][j]):
+            # test
+            #te_pairs += [[seqs[i], seqs[j]]]
+            te_pairs_0[te_index] = np.array(seqs[i])
+            te_pairs_1[te_index] = np.array(seqs[j])
+            te_pairs_index += [[i, j]]
+            te_index += 1
+        else:
+            #tr_pairs += [[seqs[i], seqs[j]]]
+            tr_pairs_0[tr_index] = np.array(seqs[i])
+            tr_pairs_1[tr_index] = np.array(seqs[j])
+            tr_y.append(incomplete_matrix[i][j])
+            tr_index += 1
 
     #tr_pairs = np.array(tr_pairs)
     #tr_pairs_0 = tr_pairs[:, 0, :, :]
