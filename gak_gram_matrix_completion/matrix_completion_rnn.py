@@ -45,7 +45,7 @@ def create_base_network(input_shape, mask_value):
     seq.add(Dense(100, activation='linear', kernel_regularizer=l2(0.01)))
     return seq
 
-def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd):
+def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     incomplete_matrix = np.array(incomplete_matrix_)
     time_dim = max([seq_.shape[0] for seq_ in seqs_.values()])
 
@@ -105,7 +105,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd):
     # train
     rms = RMSprop(clipnorm=1.)
     model.compile(loss='mse', optimizer=rms)
-    model_checkpoint = ModelCheckpoint('model.hdf5', save_best_only=True, save_weights_only=True)
+    model_checkpoint = ModelCheckpoint(hdf5_out_rnn, save_best_only=True, save_weights_only=True)
     early_stopping = EarlyStopping(patience=15)
     history = History()
     tr_y = np.array(tr_y).astype('float32')
@@ -197,15 +197,16 @@ def main():
         
     incomplete_similarities, dropped_elements = make_matrix_incomplete(seed, similarities, incomplete_percentage)
 
-    fd.write("number of dropped elements: " + len(dropped_elements))
+    fd.write("number of dropped elements: " + str(len(dropped_elements)))
     fd.write("\n")
 
     html_out_rnn = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN.html")
     mat_out_rnn  = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN.mat")
+    hdf5_out_rnn  = filename.replace(".mat", "_hdf5" + str(incomplete_percentage) + "_RNN.hdf5")
 
     t_start = time.time()
     # "RnnCompletion"
-    completed_similarities = np.array(rnn_matrix_completion(incomplete_similarities, seqs, files, fd))
+    completed_similarities = np.array(rnn_matrix_completion(incomplete_similarities, seqs, files, fd, hdf5_out_rnn))
     # eigenvalue check
     psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
     t_finish = time.time()
