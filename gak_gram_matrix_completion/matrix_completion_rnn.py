@@ -25,6 +25,7 @@ from nearest_positive_semidefinite import nearest_positive_semidefinite
 from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped_elements
 from plot_gram_matrix import plot
 from make_matrix_incomplete import make_matrix_incomplete
+import gc
 
 import time, csv
 
@@ -233,6 +234,7 @@ def main():
     fd.write("Mean squared error of dropped elements: " + str(msede))
     fd.write("\n")
     fd.close()
+    gc.collect()
 
 if __name__ == "__main__":
     main()
