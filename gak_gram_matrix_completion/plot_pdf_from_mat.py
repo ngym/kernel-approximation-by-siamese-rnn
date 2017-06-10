@@ -5,6 +5,8 @@ from scipy import io
 
 from functools import reduce
 
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 def plot(file_name, similarities, files, separators, labels,
