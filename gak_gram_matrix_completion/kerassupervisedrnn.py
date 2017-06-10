@@ -239,9 +239,9 @@ class ResidualRNN(SimpleRNN):
             reduction_axes = [0, 1]
         elif self.normalization_axes == [1, 2]:
             reduction_axes = [0]
-        h_mean, h_var = h.mean(reduction_axes), h.var(reduction_axes)
-        u_mean, u_var = u.mean(reduction_axes), u.var(reduction_axes)
-        v_mean, v_var = v.mean(reduction_axes), v.var(reduction_axes)
+        h_mean, h_var = K.mean(h, reduction_axes), K.var(h, reduction_axes)
+        u_mean, u_var = K.mean(u, reduction_axes), K.var(u, reduction_axes)
+        v_mean, v_var = K.mean(v, reduction_axes), K.var(v, reduction_axes)
 
         self.add_update([K.moving_average_update(self.kernel_moving_mean,
                                                  K.in_train_phase(h_mean, self.kernel_moving_mean, training=training),
