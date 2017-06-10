@@ -43,9 +43,9 @@ def create_base_network(input_shape, mask_value):
     #seq.add(Dropout(0.1))
     #seq.add(LSTM(100, kernel_regularizer=l2(0.01), return_sequences=True))
     #seq.add(Dropout(0.1))
-    seq.add(GRU(100, kernel_regularizer=l2(0.01), dropout=0.1, implementation=2, return_sequences=False))
+    seq.add(GRU(1000, kernel_regularizer=l2(0.01), dropout=0.1, implementation=2, return_sequences=False))
     seq.add(Dropout(0.1))
-    seq.add(Dense(100, activation='linear', kernel_regularizer=l2(0.01)))
+    seq.add(Dense(500, activation='linear', kernel_regularizer=l2(0.01)))
     seq.add(BatchNormalization())
     return seq
 
