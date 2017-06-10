@@ -45,7 +45,7 @@ def create_base_network(input_shape, mask_value):
     #seq.add(Dropout(0.1))
     #seq.add(LSTM(100, kernel_regularizer=l2(0.01), return_sequences=True))
     #seq.add(Dropout(0.1))
-    seq.add(ResidualRNN(units=100, hidden_units=50, normalization_axis=[1, 2], kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
+    seq.add(ResidualRNN(units=100, hidden_units=50, normalization_axes=[1, 2], kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
                         decoder_regularizer=l2(0.01), 
                         dropout=0.1, return_sequences=False))
     seq.add(Dropout(0.1))
