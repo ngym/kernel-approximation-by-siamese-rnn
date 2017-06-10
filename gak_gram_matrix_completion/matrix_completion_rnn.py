@@ -126,7 +126,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     # train
     rms = RMSprop(clipnorm=1.)
     model.compile(loss='mse', optimizer=rms)
-    model_checkpoint = ModelCheckpoint(hdf5_out_rnn, save_best_only=True, save_weights_only=True)
+    model_checkpoint = ModelCheckpoint(hdf5_out_rnn, save_best_only=True)#, save_weights_only=True)
     early_stopping = EarlyStopping(patience=15)
     history = History()
     tr_y = np.array(tr_y).astype('float32')
@@ -136,7 +136,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     model.fit([tr_pairs_0,
                tr_pairs_1],
               tr_y,
-              batch_size=1024,
+              batch_size=256,
               epochs=1, # 3 is enough for test, 300 would be proper for actual usage
               callbacks=[model_checkpoint, early_stopping, history],
               validation_split=0.1,
@@ -154,7 +154,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     #print(model.evaluate([te_pairs[:, 0, :, :], te_pairs[:, 1, :, :]], te_y))
     pred_start = time.time()
     preds = model.predict([te_pairs_0,
-                           te_pairs_1], batch_size=1024)
+                           te_pairs_1], batch_size=256)
     pred_finish = time.time()
     fd.write("pred starts: " + str(pred_start))
     fd.write("\n")
