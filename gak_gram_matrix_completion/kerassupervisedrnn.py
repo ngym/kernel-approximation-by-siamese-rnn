@@ -165,7 +165,7 @@ class ResidualRNN(SimpleRNN):
     def get_initial_state(self, inputs):
         initial_state = super(ResidualRNN, self).get_initial_state(inputs)
         #initial_state[0] = K.random_normal(initial_state[0].shape, stddev=0.01)
-        initial_state[1] = K.expand_dims(K.zeros_like(initial_state[1][:, 0], dtype='int64'), axis=1)
+        initial_state[1] = K.expand_dims(K.zeros_like(initial_state[1][:, 0], dtype='int32'), axis=1)
         return initial_state
 
     def preprocess_input(self, inputs, training=None):
