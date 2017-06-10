@@ -25,7 +25,7 @@ def plot(file_name, similarities, files, separators, labels,
     # Separator of labels in the graph
     for sep in separators:
         # https://matplotlib.org/examples/color/colormaps_reference.html
-        ax.axhline(linewidth=0.25, y=(sep - 0.5),
+        ax.axhline(linewidth=0.25, y=(sep),
                    color='black')#, ls='dashed')
         ax.axvline(linewidth=0.25, x=(sep),
                    color='black')#, ls='dashed')
