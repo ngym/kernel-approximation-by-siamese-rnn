@@ -164,7 +164,7 @@ class ResidualRNN(SimpleRNN):
 
     def get_initial_state(self, inputs):
         initial_state = super(ResidualRNN, self).get_initial_state(inputs)
-        #initial_state[0] = K.random_normal(initial_state[0].shape, stddev=0.01)
+        initial_state[0] = K.zeros((initial_state[0].shape[0], 3 * self.units), dtype='float32')
         initial_state[1] = K.expand_dims(K.zeros_like(initial_state[1][:, 0], dtype='int32'), axis=1)
         return initial_state
 
@@ -289,6 +289,8 @@ class ResidualRNN(SimpleRNN):
         B_recurrent = states[-2]
         B_decoder = states[-1]
 
+
+        prev_output = prev_output[:, :self.units]
         if self.normalization_axes in [-1, 2]:
             kernel_moving_mean = self.kernel_moving_mean
             kernel_moving_var = self.kernel_moving_var
@@ -358,7 +360,7 @@ class ResidualRNN(SimpleRNN):
 
         t = t + 1
 
-        return concat, [output, t]
+        return concat, [concat, t]
 
     def get_constants(self, inputs, training=None):
         constants = super(ResidualRNN, self).get_constants(inputs, training=training)
