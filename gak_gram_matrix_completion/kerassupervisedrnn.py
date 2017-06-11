@@ -16,7 +16,7 @@ from keras.optimizers import *
 from keras.regularizers import l2
 from keras.callbacks import ModelCheckpoint, EarlyStopping, History
 from keras import backend as K
-from algorithms.algorithm import Algorithm
+from algorithm import Algorithm
 
 class ResidualRNN(SimpleRNN):
     """Fully-connected RNN where the output is to be fed back to input.
