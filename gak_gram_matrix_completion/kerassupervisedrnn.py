@@ -16,7 +16,7 @@ from keras.optimizers import *
 from keras.regularizers import l2
 from keras.callbacks import ModelCheckpoint, EarlyStopping, History
 from keras import backend as K
-from algorithm import Algorithm
+from algorithms.algorithm import Algorithm
 
 class ResidualRNN(SimpleRNN):
     """Fully-connected RNN where the output is to be fed back to input.
@@ -164,8 +164,10 @@ class ResidualRNN(SimpleRNN):
 
     def get_initial_state(self, inputs):
         initial_state = super(ResidualRNN, self).get_initial_state(inputs)
-        initial_state[0] = K.tile(initial_state[0], [1, 3])
-        initial_state[1] = K.zeros_like(K.tile(initial_state[1], [1, 3]), dtype='int32')
+        initial_state[0] = K.tile(K.expand_dims(K.zeros_like(initial_state[0][:, 0]), axis=1),
+                                  [1, 2 * (self.units + self.hidden_units)])
+        initial_state[1] = K.tile(K.expand_dims(K.zeros_like(initial_state[1][:, 0], dtype='int32'), axis=1),
+                                  [1, 2 * (self.units + self.hidden_units)])
         return initial_state
 
     def preprocess_input(self, inputs, training=None):
@@ -283,14 +285,13 @@ class ResidualRNN(SimpleRNN):
             return last_output
 
     def step(self, inputs, states, training=None):
-        prev_output = states[0]
+        prev_output = states[0][:, :self.units]
         t = states[1]
         B_kernel = states[-3]
         B_recurrent = states[-2]
         B_decoder = states[-1]
 
 
-        prev_output = prev_output[:, :self.units]
         if self.normalization_axes in [-1, 2]:
             kernel_moving_mean = self.kernel_moving_mean
             kernel_moving_var = self.kernel_moving_var
@@ -316,8 +317,7 @@ class ResidualRNN(SimpleRNN):
         bn_h_train, _, _ = K.normalize_batch_in_training(h, self.kernel_scale, None, [0], epsilon=self.epsilon)
         bn_h_test = K.batch_normalization(h, K.expand_dims(kernel_moving_mean, axis=0),
                                           K.expand_dims(kernel_moving_var, axis=0), None,
-                                          K.expand_dims(self.kernel_scale, axis=0) if self.kernel_scale is not None
-                                          else None, epsilon=self.epsilon)
+                                          K.expand_dims(self.kernel_scale, axis=0), epsilon=self.epsilon)
         bn_h = K.in_train_phase(bn_h_train, bn_h_test, training=training)
 
         if 0 < self.recurrent_dropout < 1:
@@ -327,8 +327,7 @@ class ResidualRNN(SimpleRNN):
                                                          epsilon=self.epsilon)
         bn_u_test = K.batch_normalization(u, K.expand_dims(recurrent_moving_mean, axis=0),
                                           K.expand_dims(recurrent_moving_var, axis=0), None,
-                                          K.expand_dims(self.recurrent_scale, axis=0)
-                                          if self.recurrent_scale is not None else None, epsilon=self.epsilon)
+                                          K.expand_dims(self.recurrent_scale, axis=0), epsilon=self.epsilon)
         bn_u = K.in_train_phase(bn_u_train, bn_u_test, training=training)
 
         output_encoder = bn_h + bn_u
@@ -343,8 +342,7 @@ class ResidualRNN(SimpleRNN):
         bn_v_train, _, _ = K.normalize_batch_in_training(v, self.decoder_scale, None, [0], epsilon=self.epsilon)
         bn_v_test = K.batch_normalization(v, K.expand_dims(decoder_moving_mean, axis=0),
                                           K.expand_dims(decoder_moving_var, axis=0), None,
-                                          K.expand_dims(self.decoder_scale, axis=0)
-                                          if self.decoder_scale is not None else None, epsilon=self.epsilon)
+                                          K.expand_dims(self.decoder_scale, axis=0), epsilon=self.epsilon)
         bn_v = K.in_train_phase(bn_v_train, bn_v_test, training=training)
 
         output = prev_output + bn_v
@@ -358,9 +356,9 @@ class ResidualRNN(SimpleRNN):
         concat = K.concatenate([output, h, u, v], axis=1)
         concat._uses_learning_phase = True
 
-        t = t + 1
+        tp1 = t + 1
 
-        return concat, [concat, t]
+        return concat, [concat, tp1]
 
     def get_constants(self, inputs, training=None):
         constants = super(ResidualRNN, self).get_constants(inputs, training=training)
