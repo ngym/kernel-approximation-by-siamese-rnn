@@ -29,6 +29,8 @@ from make_matrix_incomplete import make_matrix_incomplete
 
 import time, csv
 from tempfile import mkdtemp
+import gc
+import os
 import os.path as path
 
 def batch_dot(vects):
@@ -66,12 +68,17 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
             if np.isnan(incomplete_matrix[i][j]):
                 num_dropped += 1
 
-    cache_dir = "/share/cache/"
+    if os.uname().nodename == 'atlasz':
+        cache_dir = "/users/milacski/shota/cache"
+    else:
+        cache_dir = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/cache"
+    print("start memmap")
     #cache_dir = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/cache"
-    tr_pairs_0 = np.memmap(path.join(mkdtemp(dir=cache_dir), 'tr_pairs_0'), dtype='float32', mode='w+', shape=((len(files) * len(files) - num_dropped), time_dim, feat_dim))
-    tr_pairs_1 = np.memmap(path.join(mkdtemp(dir=cache_dir), 'tr_pairs_1'), dtype='float32', mode='w+', shape=((len(files) * len(files) - num_dropped), time_dim, feat_dim))
-    te_pairs_0 = np.memmap(path.join(mkdtemp(dir=cache_dir), 'te_pairs_0'), dtype='float32', mode='w+', shape=(num_dropped, time_dim, feat_dim))
-    te_pairs_1 = np.memmap(path.join(mkdtemp(dir=cache_dir), 'te_pairs_1'), dtype='float32', mode='w+', shape=(num_dropped, time_dim, feat_dim))
+    mmdir = mkdtemp(dir=cache_dir)
+    tr_pairs_0 = np.memmap(path.join(mmdir, 'tr_pairs_0'), dtype=np.float16, mode='w+', shape=((len(files) * len(files) - num_dropped), time_dim, feat_dim))
+    tr_pairs_1 = np.memmap(path.join(mmdir, 'tr_pairs_1'), dtype=np.float16, mode='w+', shape=((len(files) * len(files) - num_dropped), time_dim, feat_dim))
+    te_pairs_0 = np.memmap(path.join(mmdir, 'te_pairs_0'), dtype=np.float16, mode='w+', shape=(num_dropped, time_dim, feat_dim))
+    te_pairs_1 = np.memmap(path.join(mmdir, 'te_pairs_1'), dtype=np.float16, mode='w+', shape=(num_dropped, time_dim, feat_dim))
 
     #tr_pairs = []
     tr_y = []
@@ -174,6 +181,17 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
         assert not np.isnan(completed_matrix[i][j])
     assert not np.any(np.isnan(np.array(completed_matrix)))
     assert not np.any(np.isinf(np.array(completed_matrix)))
+
+    del tr_pairs_0
+    del tr_pairs_1
+    del te_pairs_0
+    del te_pairs_1
+    gc.collect()
+    os.remove(path.join(mmdir, 'tr_pairs_0'))
+    os.remove(path.join(mmdir, 'tr_pairs_1'))
+    os.remove(path.join(mmdir, 'te_pairs_0'))
+    os.remove(path.join(mmdir, 'te_pairs_1'))
+
     return completed_matrix
 
 def main():
@@ -190,11 +208,16 @@ def main():
     if filename.find("upperChar") != -1 or filename.find("velocity") != -1:
         for f in files:
             #print(f)
-            m = io.loadmat(f)
+            if os.uname().nodename == 'atlasz':
+                m = io.loadmat(f.replace("/home/ngym/NFSshare/Lorincz_Lab", "/users/milacski/shota/dataset"))
+            else:
+                m = io.loadmat(f)
             seqs[f] = m['gest'].T
     elif filename.find("UCIcharacter") != -1:
-        #datasetfile = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset/UCI/mixoutALL_shifted.mat"
-        datasetfile = "/home/ngym/NFSshare/Lorincz_Lab/mixoutALL_shifted.mat"
+        if os.uname().nodename == 'atlasz':
+            datasetfile = "/users/milacski/shota/dataset/mixoutALL_shifted.mat"
+        else:
+            datasetfile = "/home/ngym/NFSshare/Lorincz_Lab/mixoutALL_shifted.mat"
         dataset = io.loadmat(datasetfile)
         displayname = [k[0] for k in dataset['consts']['key'][0][0][0]]
         classes = dataset['consts'][0][0][4][0]
@@ -207,13 +230,17 @@ def main():
             i += 1
     elif filename.find("UCItctodd") != -1:
         for f in files:
-            reader = csv.reader(open(f.replace(' ', ''), "r"), delimiter='\t')
+            if os.uname().nodename == 'atlasz':
+                reader = csv.reader(open(f.replace(' ', '')\
+                                         .replace("/home/ngym/NFSshare/Lorincz_Lab", "/users/milacski/shota/dataset"),
+                                     "r"), delimiter='\t')
+            else:
+                reader = csv.reader(open(f.replace(' ', ''), "r"), delimiter='\t')
             seq = []
             for r in reader:
                 seq.append(r)
             seqs[f] = np.float64(np.array(seq))
     else:
-        print(4)
         assert False
 
     seed = 1
