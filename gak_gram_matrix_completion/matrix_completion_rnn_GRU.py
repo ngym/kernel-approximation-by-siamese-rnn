@@ -41,9 +41,9 @@ def create_base_network(input_shape, mask_value):
     #seq.add(Dropout(0.1))
     #seq.add(LSTM(100, kernel_regularizer=l2(0.01), return_sequences=True))
     #seq.add(Dropout(0.1))
-    seq.add(GRU(1000, kernel_regularizer=l2(0.01), dropout=0.1, implementation=2, return_sequences=False))
+    seq.add(GRU(300, kernel_regularizer=l2(0.01), dropout=0.1, implementation=2, return_sequences=False))
     seq.add(Dropout(0.1))
-    seq.add(Dense(500, activation='linear', kernel_regularizer=l2(0.01)))
+    seq.add(Dense(100, activation='linear', kernel_regularizer=l2(0.01)))
     seq.add(BatchNormalization())
     return seq
 
@@ -119,7 +119,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     v_indices = tv_indices[int(len(tv_indices) * 0.9):]
 
     patience = 10
-    epochs = 300
+    epochs = 2
     
     fit_start = time.time()
     wait = 0
@@ -129,37 +129,51 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
         ave_loss = 0
         np.random.shuffle(tr_indices)
         tr_gen = generator_sequence_pairs(tr_indices, incomplete_matrix, seqs)
+        cur_time = time.time()
         while num_trained_samples < len(tr_indices):
             # training
             x, y = next(tr_gen)
             loss_batch = model.train_on_batch(x, y)
             ave_loss = (ave_loss * num_trained_samples + loss_batch * y.shape[0]) / \
                        (num_trained_samples + y.shape[0])
-            print("epoch %d training: [%d/%d] %ds, loss:%.10f" %
-                  (epoch, num_trained_samples,
-                   len(tr_indices), time.time() - fit_start, ave_loss), end='\r')
             num_trained_samples += y.shape[0]
-        print("epoch %d training: [%d/%d] %ds, loss:%.10f" %
-              (epoch, num_trained_samples,
-               len(tr_indices), time.time() - fit_start, ave_loss))
+            prev_time = cur_time
+            cur_time = time.time()
+            print("epoch:[%d/%d] training:[%d/%d] %ds, ETA:%ds, loss:%.10f" %
+                  (epoch, epochs, num_trained_samples,
+                   len(tr_indices), cur_time - fit_start,
+                   ((cur_time - prev_time) * len(tr_indices) / y.shape[0]) - (cur_time - fit_start),
+                   ave_loss), end='\r')
+        print("epoch:[%d/%d] training:[%d/%d] %ds, ETA:%ds, loss:%.10f" %
+              (epoch, epochs, num_trained_samples,
+               len(tr_indices), cur_time - fit_start,
+               ((cur_time - prev_time) * len(tr_indices) / y.shape[0]) - (cur_time - fit_start),
+               ave_loss), end='\r')
 
         num_validated_samples = 0
         ave_loss = 0
         best_loss = np.inf
         v_gen  = generator_sequence_pairs(v_indices, incomplete_matrix, seqs)
+        cur_time = time.time()
         while num_validated_samples < len(v_indices):
             # validation
             x, y = next(v_gen)
             loss_batch = model.test_on_batch(x,y)
             ave_loss = (ave_loss * num_validated_samples + loss_batch * y.shape[0]) / \
                        (num_validated_samples + y.shape[0])
-            print("                                                        epoch %d validation: [%d/%d] %ds, loss:%.10f" %
-                  (epoch, num_validated_samples,
-                   len(v_indices), time.time() - fit_start, ave_loss), end='\r')
             num_validated_samples += y.shape[0]
-        print("                                                        epoch %d validation: [%d/%d] %ds, loss:%.10f" %
-              (epoch, num_validated_samples,
-               len(v_indices), time.time() - fit_start, ave_loss))
+            prev_time = cur_time
+            cur_time = time.time()
+            print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, loss:%.10f" %
+                  (epoch, epochs, num_validated_samples,
+                   len(v_indices), cur_time - fit_start,
+                   ((cur_time - prev_time) * len(v_indices) / y.shape[0]) - (cur_time - fit_start),
+                   ave_loss), end='\r')
+        print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, loss:%.10f" %
+              (epoch, epochs, num_validated_samples,
+               len(v_indices), cur_time - fit_start,
+               ((cur_time - prev_time) * len(v_indices) / y.shape[0]) - (cur_time - fit_start),
+               ave_loss), end='\r')
         if ave_loss < best_loss:
             best_loss = ave_loss
             model.save_weights(hdf5_out_rnn)
