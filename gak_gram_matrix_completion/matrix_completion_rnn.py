@@ -1,5 +1,7 @@
-import sys, random
+import sys, random, copy, os, gc, time, csv
+import os.path as path
 from collections import OrderedDict
+from tempfile import mkdtemp
 
 import plotly.offline as po
 import plotly.graph_objs as pgo
@@ -26,13 +28,6 @@ from nearest_positive_semidefinite import nearest_positive_semidefinite
 from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped_elements
 from plot_gram_matrix import plot
 from make_matrix_incomplete import make_matrix_incomplete
-#import gc
-
-import time, csv
-from tempfile import mkdtemp
-import gc
-import os
-import os.path as path
 
 def batch_dot(vects):
     x, y = vects
@@ -52,47 +47,23 @@ def create_base_network(input_shape, mask_value):
     seq.add(BatchNormalization())
     return seq
 
-def generate_training_gak_pair(indices_list_, incomplete_matrix, seqs):
+def generator_sequence_pairs(indices_list_, incomplete_matrix, seqs):
     indices_list = copy.deepcopy(indices_list_)
     batch_size = 256
     input_0 = []
     input_1 = []
     y = []
-    while True:
-        for i, j in indices_list:
-            if np.isnan(incomplete_matrix[i][j]):
-                continue
-            else:
-                """
-                print("i: %d, j:%d" % (i,j))
-                print(seqs[i])
-                print(seqs[j])
-                print(incomplete_matrix[i][j])
-                """
-                input_0.append(seqs[i])
-                input_1.append(seqs[j])
-                y.append([incomplete_matrix[i][j]])
-                if len(input_0) == batch_size:
-                    yield ([np.array(input_0), np.array(input_1)], np.array(y))
-                    input_0 = []
-                    input_1 = []
-                    y = []
-                #yield ([np.array([seqs[i]]), np.array([seqs[j]])], [np.array([incomplete_matrix[i][j]])])
-                
-        # For training and validation, the next loop of while heppens
-        # and the list gets shuffled.
-        # For test data for prediction, shuffle does not get caused.
-        np.random.shuffle(indices_list)
-
-def generate_test_gak_pair(indices_list, incomplete_matrix, seqs):
-    while True:
-        for i, j in indices_list:
-            if np.isnan(incomplete_matrix[i][j]):
-                yield [np.array([seqs[i]]), np.array([seqs[j]])]
-                # For training and validation, the next loop of while heppens
-                # and the list gets shuffled.
-                # For test data for prediction, shuffle does not get caused.
-
+    for i, j in indices_list:
+        input_0.append(seqs[i])
+        input_1.append(seqs[j])
+        y.append([incomplete_matrix[i][j]])
+        if len(input_0) == batch_size:
+            yield ([np.array(input_0), np.array(input_1)], np.array(y))
+            input_0 = []
+            input_1 = []
+            y = []
+    yield ([np.array(input_0), np.array(input_1)], np.array(y))
+    
 
 def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     incomplete_matrix = np.array(incomplete_matrix_)
@@ -104,14 +75,6 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
                          padding='post', value=pad_value)
 
     feat_dim = seqs[0].shape[1]
-
-    te_indices = []
-    num_dropped = 0
-    for i in range(len(files)):
-        for j in range(i, len(files)):
-            if np.isnan(incomplete_matrix[i][j]):
-                te_indices.append((i, j))
-                num_dropped += 1
 
     # network definition
     K.clear_session()
@@ -136,9 +99,9 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     # train
     rms = RMSprop(clipnorm=1.)
     model.compile(loss='mse', optimizer=rms)
-    model_checkpoint = ModelCheckpoint(hdf5_out_rnn, save_best_only=True)#, save_weights_only=True)
-    early_stopping = EarlyStopping(patience=15)
-    history = History()
+    #model_checkpoint = ModelCheckpoint(hdf5_out_rnn, save_best_only=True)#, save_weights_only=True)
+    #early_stopping = EarlyStopping(patience=15)
+    #history = History()
     # need to pad train data nad validation data
 
     """
@@ -147,32 +110,66 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     make gentrain
     make genval
     """
+    # for choose validation data at random
     tv_indices = np.random.permutation([(i, j)
                                         for i in range(len(files))
                                         for j in range(i, len(files))
                                         if not np.isnan(incomplete_matrix[i][j])])
     tr_indices = tv_indices[:int(len(tv_indices) * 0.9)]
     v_indices = tv_indices[int(len(tv_indices) * 0.9):]
-    tr_gen = generate_training_gak_pair(tr_indices, incomplete_matrix, seqs)
-    v_gen = generate_training_gak_pair(v_indices, incomplete_matrix, seqs)
+
+    patience = 10
+    epochs = 300
     
     fit_start = time.time()
+    wait = 0
+    best_sum_validation_loss = np.inf
+    for epoch in range(1, epochs + 1):
+        num_trained_samples = 0
+        ave_loss = 0
+        np.random.shuffle(tr_indices)
+        tr_gen = generator_sequence_pairs(tr_indices, incomplete_matrix, seqs)
+        while num_trained_samples < len(tr_indices):
+            # training
+            x, y = next(tr_gen)
+            loss_batch = model.train_on_batch(x, y)
+            ave_loss = (ave_loss * num_trained_samples + loss_batch * y.shape[0]) / \
+                       (num_trained_samples + y.shape[0])
+            print("epoch %d training: [%d/%d] %ds, loss:%.10f" %
+                  (epoch, num_trained_samples,
+                   len(tr_indices), time.time() - fit_start, ave_loss), end='\r')
+            num_trained_samples += y.shape[0]
+        print("epoch %d training: [%d/%d] %ds, loss:%.10f" %
+              (epoch, num_trained_samples,
+               len(tr_indices), time.time() - fit_start, ave_loss))
 
-    num_trained_samples = 0
-    while num_trained_samples < len(tr_indices):
-        x, y = next(tr_gen)
-        loss = model.train_on_batch(x, y)
-        num_trained_samples += y.shape[0]
-        print("[%d/%d], %ds, loss:%.10f" % (num_trained_samples, len(tr_indices), time.time() - fit_start, loss))
-    
-    """
-    model.fit_generator(generator=tr_gen,
-                        steps_per_epoch=len(tr_indices),
-                        epochs=1, # 3 is enough for test, 300 would be proper for actual usage
-                        validation_data=v_gen,
-                        validation_steps=len(v_indices),
-                        callbacks=[model_checkpoint, early_stopping, history])
-    """
+        num_validated_samples = 0
+        ave_loss = 0
+        best_loss = np.inf
+        v_gen  = generator_sequence_pairs(v_indices, incomplete_matrix, seqs)
+        while num_validated_samples < len(v_indices):
+            # validation
+            x, y = next(v_gen)
+            loss_batch = model.test_on_batch(x,y)
+            ave_loss = (ave_loss * num_validated_samples + loss_batch * y.shape[0]) / \
+                       (num_validated_samples + y.shape[0])
+            print("                                                        epoch %d validation: [%d/%d] %ds, loss:%.10f" %
+                  (epoch, num_validated_samples,
+                   len(v_indices), time.time() - fit_start, ave_loss), end='\r')
+            num_validated_samples += y.shape[0]
+        print("                                                        epoch %d validation: [%d/%d] %ds, loss:%.10f" %
+              (epoch, num_validated_samples,
+               len(v_indices), time.time() - fit_start, ave_loss))
+        if ave_loss < best_loss:
+            best_loss = ave_loss
+            model.save_weights(hdf5_out_rnn)
+            best_weights = model.get_weights()
+            wait = 0
+        else:
+            if wait >= patience:
+                model.set_weights(best_weights)
+                break
+            wait += 1
                         
     fit_finish = time.time()
     fd.write("fit starts: " + str(fit_start))
@@ -186,11 +183,23 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     # compute final result on test set
     #print(model.evaluate([te_pairs[:, 0, :, :], te_pairs[:, 1, :, :]], te_y))
 
-    te_gen = generate_test_gak_pair(te_indices, incomplete_matrix, seqs)
+    te_indices = [(i, j)
+                  for i in range(len(files))
+                  for j in range(i, len(files))
+                  if np.isnan(incomplete_matrix[i][j])]
+    #num_dropped = len(te_indices)
+    
+    te_gen = generator_sequence_pairs(te_indices, incomplete_matrix, seqs)
     
     pred_start = time.time()
-    preds = model.predict_generator(generator=te_gen,
-                                    steps=len(te_indices))
+    preds = []
+    num_predicted_samples = 0
+    while num_predicted_samples < len(te_indices):
+        x, _ = next(te_gen)
+        preds_batch = model.predict_on_batch(x)
+        preds += preds_batch.tolist()
+        num_predicted_samples += preds_batch.shape[0]
+    
     pred_finish = time.time()
     fd.write("pred starts: " + str(pred_start))
     fd.write("\n")
@@ -198,11 +207,10 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     fd.write("\n")
     fd.write("pred duration: " + str(pred_finish - pred_start))
     fd.write("\n")
-    print(preds)
 
     completed_matrix = incomplete_matrix.tolist()
     for k in range(te_indices.__len__()):
-        pred = preds[k]
+        pred = preds[k][0]
         i, j = te_indices[k]
         assert np.isnan(completed_matrix[i][j])
         completed_matrix[i][j] = pred
