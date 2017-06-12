@@ -14,6 +14,12 @@ data_dir = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification
 def mat_file_name(sigma, completion_alg):
     # gram_dataset_completionalg_sigma.mat
     #print("loss:" + str(loss_persentage))
+    if completion_alg == "":
+        return data_dir + \
+            "gram_" + \
+            dataset_type + "_" + \
+            attribute_type + "_" + \
+            "sigma" + ("%.3f" % sigma) + ".mat"
     return data_dir + \
         "gram_" + \
         dataset_type + "_" + \
@@ -139,12 +145,12 @@ def crossvalidation(completion_alg, sigmas, costs):
     return np.average(errors)
 
 def compare_completion_algorithms(sigmas, costs):
-    result_no_completion = crossvalidation("NoCompletion", sigmas, costs)
-    result_nuclear_norm_minimization = crossvalidation("NuclearNormMinimization", sigmas, costs)
+    result_ground_truth = crossvalidation("", sigmas, costs)
+    #result_nuclear_norm_minimization = crossvalidation("NuclearNormMinimization", sigmas, costs)
     result_soft_impute = crossvalidation("SoftImpute", sigmas, costs)
 
-    print("NoCompletion: " + repr(result_no_completion))
-    print("NuclearNormMinimization: " + repr(result_nuclear_norm_minimization))
+    print("Ground Truth: " + repr(result_ground_truth))
+    #print("NuclearNormMinimization: " + repr(result_nuclear_norm_minimization))
     print("SoftImpute: " + repr(result_soft_impute))
 
 if __name__ == "__main__":
@@ -156,5 +162,6 @@ if __name__ == "__main__":
     loss_persentage = config_dict['loss_persentage']
     sigmas_ = config_dict['gak_sigmas']
     l2regularization_costs = config_dict['l2regularization_costs']
-
+    data_dir = config_dict['data_dir']
+    
     compare_completion_algorithms(sigmas_, l2regularization_costs)
