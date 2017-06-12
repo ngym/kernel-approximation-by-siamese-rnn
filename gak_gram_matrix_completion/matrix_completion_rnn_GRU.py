@@ -15,7 +15,7 @@ from sklearn.metrics import mean_squared_error
 
 from keras.datasets import mnist
 from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Input, Lambda, LSTM, Masking, Activation, BatchNormalization
+from keras.layers import Dense, Dropout, Input, Lambda, LSTM, GRU, Masking, Activation, BatchNormalization
 from keras.optimizers import RMSprop
 from keras import backend as K
 from keras.preprocessing.sequence import pad_sequences
