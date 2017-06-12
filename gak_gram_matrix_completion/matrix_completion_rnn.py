@@ -1,4 +1,5 @@
 import sys, random
+from collections import OrderedDict
 
 import plotly.offline as po
 import plotly.graph_objs as pgo
@@ -45,11 +46,39 @@ def create_base_network(input_shape, mask_value):
     #seq.add(Dropout(0.1))
     #seq.add(LSTM(100, kernel_regularizer=l2(0.01), return_sequences=True))
     #seq.add(Dropout(0.1))
-    seq.add(LSTM(1000, kernel_regularizer=l2(0.01), dropout=0.1, implementation=2, return_sequences=False))
+    seq.add(LSTM(10, kernel_regularizer=l2(0.01), dropout=0.1, implementation=2, return_sequences=False))
     seq.add(Dropout(0.1))
-    seq.add(Dense(500, activation='linear', kernel_regularizer=l2(0.01)))
+    seq.add(Dense(5, activation='linear', kernel_regularizer=l2(0.01)))
     seq.add(BatchNormalization())
     return seq
+
+def generate_training_gak_pair(indices_list, incomplete_matrix, seqs):
+    while True:
+        for i, j in indices_list:
+            if np.isnan(incomplete_matrix[i][j]):
+                continue
+            else:
+                """
+                print("i: %d, j:%d" % (i,j))
+                print(seqs[i])
+                print(seqs[j])
+                print(incomplete_matrix[i][j])
+                """
+                yield ([np.array([seqs[i]]), np.array([seqs[j]])], [np.array([incomplete_matrix[i][j]])])
+                # For training and validation, the next loop of while heppens
+                # and the list gets shuffled.
+                # For test data for prediction, shuffle does not get caused.
+        np.random.shuffle(indices_list)
+
+def generate_test_gak_pair(indices_list, incomplete_matrix, seqs):
+    while True:
+        for i, j in indices_list:
+            if np.isnan(incomplete_matrix[i][j]):
+                yield [np.array([seqs[i]]), np.array([seqs[j]])]
+                # For training and validation, the next loop of while heppens
+                # and the list gets shuffled.
+                # For test data for prediction, shuffle does not get caused.
+
 
 def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     incomplete_matrix = np.array(incomplete_matrix_)
@@ -62,54 +91,14 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
 
     feat_dim = seqs[0].shape[1]
 
+    te_indices = []
     num_dropped = 0
-    for i in range(files.__len__()):
-        for j in range(files.__len__()):
+    for i in range(len(files)):
+        for j in range(i, len(files)):
             if np.isnan(incomplete_matrix[i][j]):
+                te_indices.append((i, j))
                 num_dropped += 1
 
-    if os.uname().nodename == 'atlasz':
-        cache_dir = "/users/milacski/shota/cache"
-    else:
-        cache_dir = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/cache"
-    print("start memmap")
-    mmdir = mkdtemp(dir=cache_dir)
-    tr_pairs_0 = np.memmap(path.join(mmdir, 'tr_pairs_0'), dtype=np.float16, mode='w+', shape=((len(files) * len(files) - num_dropped), time_dim, feat_dim))
-    tr_pairs_1 = np.memmap(path.join(mmdir, 'tr_pairs_1'), dtype=np.float16, mode='w+', shape=((len(files) * len(files) - num_dropped), time_dim, feat_dim))
-    te_pairs_0 = np.memmap(path.join(mmdir, 'te_pairs_0'), dtype=np.float16, mode='w+', shape=(num_dropped, time_dim, feat_dim))
-    te_pairs_1 = np.memmap(path.join(mmdir, 'te_pairs_1'), dtype=np.float16, mode='w+', shape=(num_dropped, time_dim, feat_dim))
-
-    #tr_pairs = []
-    tr_y = []
-    #te_pairs = []
-    te_pairs_index = []
-    tr_index = 0
-    te_index = 0
-    for i, j in np.random.permutation([(i, j) for i in range(len(files)) for j in range(len(files))]):
-        if np.isnan(incomplete_matrix[i][j]):
-            # test
-            #te_pairs += [[seqs[i], seqs[j]]]
-            te_pairs_0[te_index] = np.array(seqs[i])
-            te_pairs_1[te_index] = np.array(seqs[j])
-            te_pairs_index += [[i, j]]
-            te_index += 1
-        else:
-            #tr_pairs += [[seqs[i], seqs[j]]]
-            tr_pairs_0[tr_index] = np.array(seqs[i])
-            tr_pairs_1[tr_index] = np.array(seqs[j])
-            tr_y.append(incomplete_matrix[i][j])
-            tr_index += 1
-
-    #tr_pairs = np.array(tr_pairs)
-    #tr_pairs_0 = tr_pairs[:, 0, :, :]
-    #tr_pairs_1 = tr_pairs[:, 1, :, :]
-    #del tr_pairs
-    
-    #te_pairs = np.array(te_pairs)
-    #te_pairs_0 = te_pairs[:, 0, :, :]
-    #te_pairs_1 = te_pairs[:, 1, :, :]
-    #del te_pairs
-    
     # network definition
     K.clear_session()
     
@@ -125,7 +114,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     processed_a = base_network(input_a)
     processed_b = base_network(input_b)
 
-    dot = Lambda(batch_dot, output_shape=(1,))([processed_a, processed_b])
+    dot = Lambda(batch_dot)([processed_a, processed_b])
     out = Activation('sigmoid')(dot)
 
     model = Model([input_a, input_b], out)
@@ -136,18 +125,31 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     model_checkpoint = ModelCheckpoint(hdf5_out_rnn, save_best_only=True)#, save_weights_only=True)
     early_stopping = EarlyStopping(patience=15)
     history = History()
-    tr_y = np.array(tr_y).astype('float32')
     # need to pad train data nad validation data
 
+    """
+    generate random random permutation of (i,j)
+    split 90 and 10
+    make gentrain
+    make genval
+    """
+    tv_indices = np.random.permutation([(i, j)
+                                        for i in range(len(files))
+                                        for j in range(i, len(files))
+                                        if not np.isnan(incomplete_matrix[i][j])])
+    tr_indices = tv_indices[:int(len(tv_indices) * 0.9)]
+    v_indices = tv_indices[int(len(tv_indices) * 0.9):]
+    tr_gen = generate_training_gak_pair(tr_indices, incomplete_matrix, seqs)
+    v_gen = generate_training_gak_pair(v_indices, incomplete_matrix, seqs)
+    
     fit_start = time.time()
-    model.fit([tr_pairs_0,
-               tr_pairs_1],
-              tr_y,
-              batch_size=256,
-              epochs=1, # 3 is enough for test, 300 would be proper for actual usage
-              callbacks=[model_checkpoint, early_stopping, history],
-              validation_split=0.1,
-              shuffle=False)
+    model.fit_generator(generator=tr_gen,
+                        steps_per_epoch=len(tr_indices),
+                        epochs=1, # 3 is enough for test, 300 would be proper for actual usage
+                        validation_data=v_gen,
+                        validation_steps=len(v_indices),
+                        callbacks=[model_checkpoint, early_stopping, history])
+                        
     fit_finish = time.time()
     fd.write("fit starts: " + str(fit_start))
     fd.write("\n")
@@ -159,9 +161,12 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     # need to pad test data
     # compute final result on test set
     #print(model.evaluate([te_pairs[:, 0, :, :], te_pairs[:, 1, :, :]], te_y))
+
+    te_gen = generate_test_gak_pair(te_indices, incomplete_matrix, seqs)
+    
     pred_start = time.time()
-    preds = model.predict([te_pairs_0,
-                           te_pairs_1], batch_size=256)
+    preds = model.predict_generator(generator=te_gen,
+                                    steps=len(te_indices))
     pred_finish = time.time()
     fd.write("pred starts: " + str(pred_start))
     fd.write("\n")
@@ -172,24 +177,15 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     print(preds)
 
     completed_matrix = incomplete_matrix.tolist()
-    for k in range(te_pairs_index.__len__()):
+    for k in range(te_indices.__len__()):
         pred = preds[k]
-        i, j = te_pairs_index[k]
+        i, j = te_indices[k]
         assert np.isnan(completed_matrix[i][j])
         completed_matrix[i][j] = pred
+        completed_matrix[j][i] = pred
         assert not np.isnan(completed_matrix[i][j])
     assert not np.any(np.isnan(np.array(completed_matrix)))
     assert not np.any(np.isinf(np.array(completed_matrix)))
-
-    del tr_pairs_0
-    del tr_pairs_1
-    del te_pairs_0
-    del te_pairs_1
-    gc.collect()
-    os.remove(path.join(mmdir, 'tr_pairs_0'))
-    os.remove(path.join(mmdir, 'tr_pairs_1'))
-    os.remove(path.join(mmdir, 'te_pairs_0'))
-    os.remove(path.join(mmdir, 'te_pairs_1'))
 
     return completed_matrix
 
@@ -200,7 +196,7 @@ def main():
     mat = io.loadmat(filename)
     similarities = mat['gram']
     files = mat['indices']
-    seqs = {}
+    seqs = OrderedDict()
 
     fd = open(completionanalysisfile, "w")
     
@@ -209,6 +205,8 @@ def main():
             #print(f)
             if os.uname().nodename == 'atlasz':
                 m = io.loadmat(f.replace("/home/ngym/NFSshare/Lorincz_Lab", "/users/milacski/shota/dataset"))
+            elif os.uname().nodename == 'Regulus.local':
+                m = io.loadmat(f.replace("/home/ngym/NFSshare/Lorincz_Lab", "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset"))
             else:
                 m = io.loadmat(f)
             seqs[f] = m['gest'].T
