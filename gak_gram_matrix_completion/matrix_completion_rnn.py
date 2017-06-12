@@ -52,8 +52,9 @@ def create_base_network(input_shape, mask_value):
     seq.add(BatchNormalization())
     return seq
 
-def generate_training_gak_pair(indices_list, incomplete_matrix, seqs):
-    batch_size = 100
+def generate_training_gak_pair(indices_list_, incomplete_matrix, seqs):
+    indices_list = copy.deepcopy(indices_list_)
+    batch_size = 256
     input_0 = []
     input_1 = []
     y = []
@@ -156,12 +157,22 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     v_gen = generate_training_gak_pair(v_indices, incomplete_matrix, seqs)
     
     fit_start = time.time()
+
+    num_trained_samples = 0
+    while num_trained_samples < len(tr_indices):
+        x, y = next(tr_gen)
+        loss = model.train_on_batch(x, y)
+        num_trained_samples += y.shape[0]
+        print("[%d/%d], %ds, loss:%.10f" % (num_trained_samples, len(tr_indices), time.time() - fit_start, loss))
+    
+    """
     model.fit_generator(generator=tr_gen,
                         steps_per_epoch=len(tr_indices),
                         epochs=1, # 3 is enough for test, 300 would be proper for actual usage
                         validation_data=v_gen,
                         validation_steps=len(v_indices),
                         callbacks=[model_checkpoint, early_stopping, history])
+    """
                         
     fit_finish = time.time()
     fd.write("fit starts: " + str(fit_start))
