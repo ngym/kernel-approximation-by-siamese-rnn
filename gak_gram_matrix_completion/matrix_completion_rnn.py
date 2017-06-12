@@ -203,7 +203,7 @@ def main():
     if filename.find("upperChar") != -1 or filename.find("velocity") != -1:
         for f in files:
             #print(f)
-            if os.uname().nodename == 'atlasz':
+            if os.uname().nodename == 'atlasz' or 'cn' in os.uname().nodename:
                 m = io.loadmat(f.replace("/home/ngym/NFSshare/Lorincz_Lab", "/users/milacski/shota/dataset"))
             elif os.uname().nodename == 'Regulus.local':
                 m = io.loadmat(f.replace("/home/ngym/NFSshare/Lorincz_Lab", "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset"))
@@ -211,7 +211,7 @@ def main():
                 m = io.loadmat(f)
             seqs[f] = m['gest'].T
     elif filename.find("UCIcharacter") != -1:
-        if os.uname().nodename == 'atlasz':
+        if os.uname().nodename == 'atlasz' or 'cn' in os.uname().nodename:
             datasetfile = "/users/milacski/shota/dataset/mixoutALL_shifted.mat"
         else:
             datasetfile = "/home/ngym/NFSshare/Lorincz_Lab/mixoutALL_shifted.mat"
@@ -227,7 +227,7 @@ def main():
             i += 1
     elif filename.find("UCItctodd") != -1:
         for f in files:
-            if os.uname().nodename == 'atlasz':
+            if os.uname().nodename == 'atlasz' or 'cn' in os.uname().nodename:
                 reader = csv.reader(open(f.replace(' ', '')\
                                          .replace("/home/ngym/NFSshare/Lorincz_Lab", "/users/milacski/shota/dataset"),
                                      "r"), delimiter='\t')
