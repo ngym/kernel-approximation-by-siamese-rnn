@@ -53,6 +53,10 @@ def create_base_network(input_shape, mask_value):
     return seq
 
 def generate_training_gak_pair(indices_list, incomplete_matrix, seqs):
+    batch_size = 100
+    input_0 = []
+    input_1 = []
+    y = []
     while True:
         for i, j in indices_list:
             if np.isnan(incomplete_matrix[i][j]):
@@ -64,10 +68,19 @@ def generate_training_gak_pair(indices_list, incomplete_matrix, seqs):
                 print(seqs[j])
                 print(incomplete_matrix[i][j])
                 """
-                yield ([np.array([seqs[i]]), np.array([seqs[j]])], [np.array([incomplete_matrix[i][j]])])
-                # For training and validation, the next loop of while heppens
-                # and the list gets shuffled.
-                # For test data for prediction, shuffle does not get caused.
+                input_0.append(seqs[i])
+                input_1.append(seqs[j])
+                y.append([incomplete_matrix[i][j]])
+                if len(input_0) == batch_size:
+                    yield ([np.array(input_0), np.array(input_1)], np.array(y))
+                    input_0 = []
+                    input_1 = []
+                    y = []
+                #yield ([np.array([seqs[i]]), np.array([seqs[j]])], [np.array([incomplete_matrix[i][j]])])
+                
+        # For training and validation, the next loop of while heppens
+        # and the list gets shuffled.
+        # For test data for prediction, shuffle does not get caused.
         np.random.shuffle(indices_list)
 
 def generate_test_gak_pair(indices_list, incomplete_matrix, seqs):
