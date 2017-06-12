@@ -119,7 +119,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
     v_indices = tv_indices[int(len(tv_indices) * 0.9):]
 
     patience = 10
-    epochs = 300
+    epochs = 2
     
     fit_start = time.time()
     wait = 0
