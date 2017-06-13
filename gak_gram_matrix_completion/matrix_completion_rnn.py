@@ -69,7 +69,7 @@ def generator_sequence_pairs(indices_list_, incomplete_matrix, seqs):
     yield ([np.array(input_0), np.array(input_1)], np.array(y))
     
 
-def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
+def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd_analysis, fd_losses, hdf5_out_rnn):
     incomplete_matrix = np.array(incomplete_matrix_)
     time_dim = max([seq_.shape[0] for seq_ in seqs_.values()])
 
@@ -127,21 +127,26 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
 
     patience = 10
     epochs = 2
-    
+
+    list_ave_tr_loss = []
+    list_tr_loss_batch = []
+    list_ave_v_loss = []
+    list_v_loss_batch = []
     fit_start = time.time()
     wait = 0
     best_sum_validation_loss = np.inf
     for epoch in range(1, epochs + 1):
         num_trained_samples = 0
-        ave_loss = 0
+        ave_tr_loss = 0
         np.random.shuffle(tr_indices)
         tr_gen = generator_sequence_pairs(tr_indices, incomplete_matrix, seqs)
         cur_time = time.time()
+        num_iterated = 0
         while num_trained_samples < len(tr_indices):
             # training
             x, y = next(tr_gen)
-            loss_batch = model.train_on_batch(x, y)
-            ave_loss = (ave_loss * num_trained_samples + loss_batch * y.shape[0]) / \
+            tr_loss_batch = model.train_on_batch(x, y)
+            ave_tr_loss = (ave_tr_loss * num_trained_samples + tr_loss_batch * y.shape[0]) / \
                        (num_trained_samples + y.shape[0])
             num_trained_samples += y.shape[0]
             prev_time = cur_time
@@ -150,23 +155,27 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
                   (epoch, epochs, num_trained_samples,
                    len(tr_indices), cur_time - fit_start,
                    ((cur_time - prev_time) * len(tr_indices) / y.shape[0]) - (cur_time - fit_start),
-                   ave_loss, loss_batch), end='\r')
+                   ave_tr_loss, tr_loss_batch), end='\r')
+            list_ave_tr_loss.append(ave_tr_loss)
+            list_tr_loss_batch.append(tr_loss_batch)
+            fd_losses.write("%d,%d,%.5f,%.5f,%5f,%5f", % (epoch, num_iterated, ave_tr_loss, tr_loss_batch, 0, 0))
+            num_iterated += 1
         print("epoch:[%d/%d] training:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss:batch:%.5f" %
               (epoch, epochs, num_trained_samples,
                len(tr_indices), cur_time - fit_start,
                ((cur_time - prev_time) * len(tr_indices) / y.shape[0]) - (cur_time - fit_start),
-               ave_loss, loss_batch), end='\r')
+               ave_tr_loss, tr_loss_batch), end='\r')
 
         num_validated_samples = 0
-        ave_loss = 0
-        best_loss = np.inf
+        ave_v_loss = 0
+        best_v_loss = np.inf
         v_gen  = generator_sequence_pairs(v_indices, incomplete_matrix, seqs)
         cur_time = time.time()
         while num_validated_samples < len(v_indices):
             # validation
             x, y = next(v_gen)
-            loss_batch = model.test_on_batch(x,y)
-            ave_loss = (ave_loss * num_validated_samples + loss_batch * y.shape[0]) / \
+            v_loss_batch = model.test_on_batch(x,y)
+            ave_v_loss = (ave_v_loss * num_validated_samples + v_loss_batch * y.shape[0]) / \
                        (num_validated_samples + y.shape[0])
             num_validated_samples += y.shape[0]
             prev_time = cur_time
@@ -175,14 +184,18 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
                   (epoch, epochs, num_validated_samples,
                    len(v_indices), cur_time - fit_start,
                    ((cur_time - prev_time) * len(v_indices) / y.shape[0]) - (cur_time - fit_start),
-                   ave_loss, loss_batch), end='\r')
+                   ave_v_loss, v_loss_batch), end='\r')
+            list_ave_v_loss.append(ave_v_loss)
+            list_v_loss_batch.append(v_loss_batch)
+            fd_losses.write("%d,%d,%.5f,%.5f,%5f,%5f", % (epoch, num_iterated, 0, 0, ave_v_loss, v_loss_batch))
+            num_iterated += 1
         print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
               (epoch, epochs, num_validated_samples,
                len(v_indices), cur_time - fit_start,
                ((cur_time - prev_time) * len(v_indices) / y.shape[0]) - (cur_time - fit_start),
-               ave_loss, loss_batch), end='\r')
-        if ave_loss < best_loss:
-            best_loss = ave_loss
+               ave_v_loss, v_loss_batch), end='\r')
+        if ave_v_loss < best_v_loss:
+            best_v_loss = ave_v_loss
             model.save_weights(hdf5_out_rnn)
             best_weights = model.get_weights()
             wait = 0
@@ -193,12 +206,12 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
             wait += 1
                         
     fit_finish = time.time()
-    fd.write("fit starts: " + str(fit_start))
-    fd.write("\n")
-    fd.write("fit finishes: " + str(fit_finish))
-    fd.write("\n")
-    fd.write("fit duration: " + str(fit_finish - fit_start))
-    fd.write("\n")
+    fd_analysis.write("fit starts: " + str(fit_start))
+    fd_analysis.write("\n")
+    fd_analysis.write("fit finishes: " + str(fit_finish))
+    fd_analysis.write("\n")
+    fd_analysis.write("fit duration: " + str(fit_finish - fit_start))
+    fd_analysis.write("\n")
 
     # need to pad test data
     # compute final result on test set
@@ -222,12 +235,12 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
         num_predicted_samples += preds_batch.shape[0]
     
     pred_finish = time.time()
-    fd.write("pred starts: " + str(pred_start))
-    fd.write("\n")
-    fd.write("pred finishes: " + str(pred_finish))
-    fd.write("\n")
-    fd.write("pred duration: " + str(pred_finish - pred_start))
-    fd.write("\n")
+    fd_analysis.write("pred starts: " + str(pred_start))
+    fd_analysis.write("\n")
+    fd_analysis.write("pred finishes: " + str(pred_finish))
+    fd_analysis.write("\n")
+    fd_analysis.write("pred duration: " + str(pred_finish - pred_start))
+    fd_analysis.write("\n")
 
     completed_matrix = incomplete_matrix.tolist()
     for k in range(te_indices.__len__()):
@@ -251,17 +264,22 @@ def main():
     files = mat['indices']
     seqs = OrderedDict()
 
-    fd = open(completionanalysisfile, "w")
+    fd_analysis = open(completionanalysisfile, "w")
+    lossesfile = completionanalysisfile.replace(".error", "losses")
+    fd_losses = open(lossesfile, "w")
     
     if filename.find("upperChar") != -1 or filename.find("velocity") != -1:
         for f in files:
             #print(f)
             if os.uname().nodename == 'atlasz' or 'cn' in os.uname().nodename:
-                m = io.loadmat(f.replace("/home/ngym/NFSshare/Lorincz_Lab", "/users/milacski/shota/dataset"))
+                m = io.loadmat(f.replace("/home/ngym/NFSshare/Lorincz_Lab",
+                                         "/users/milacski/shota/dataset"))
             elif os.uname().nodename == 'nipgcore1':
-                m = io.loadmat(f.replace("/home/ngym/NFSshare/Lorincz_Lab", "/home/milacski/shota/dataset"))
+                m = io.loadmat(f.replace("/home/ngym/NFSshare/Lorincz_Lab",
+                                         "/home/milacski/shota/dataset"))
             elif os.uname().nodename == 'Regulus.local':
-                m = io.loadmat(f.replace("/home/ngym/NFSshare/Lorincz_Lab", "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset"))
+                m = io.loadmat(f.replace("/home/ngym/NFSshare/Lorincz_Lab",
+                                         "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset"))
             else:
                 m = io.loadmat(f)
             seqs[f] = m['gest'].T
@@ -270,6 +288,8 @@ def main():
             datasetfile = "/users/milacski/shota/dataset/mixoutALL_shifted.mat"
         elif os.uname().nodename == 'nipgcore1':
             datasetfile = "/home/milacski/shota/dataset/mixoutALL_shifted.mat"
+        elif os.uname().nodename == 'Regulus.local':
+            datasetfile = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset/UCI/mixoutALL_shifted.mat"
         else:
             datasetfile = "/home/ngym/NFSshare/Lorincz_Lab/mixoutALL_shifted.mat"
         dataset = io.loadmat(datasetfile)
@@ -286,11 +306,18 @@ def main():
         for f in files:
             if os.uname().nodename == 'atlasz' or 'cn' in os.uname().nodename:
                 reader = csv.reader(open(f.replace(' ', '')\
-                                         .replace("/home/ngym/NFSshare/Lorincz_Lab", "/users/milacski/shota/dataset"),
+                                         .replace("/home/ngym/NFSshare/Lorincz_Lab",
+                                                  "/users/milacski/shota/dataset"),
                                      "r"), delimiter='\t')
             elif os.uname().nodename == 'nipgcore1':
                 reader = csv.reader(open(f.replace(' ', '')\
-                                         .replace("/home/ngym/NFSshare/Lorincz_Lab", "/home/milacski/shota/dataset"),
+                                         .replace("/home/ngym/NFSshare/Lorincz_Lab",
+                                                  "/home/milacski/shota/dataset"),
+                                    "r"), delimiter='\t')
+            elif os.uname().nodename == 'Regulus.local':
+                reader = csv.reader(open(f.replace(' ', '')\
+                                         .replace("/home/ngym/NFSshare/Lorincz_Lab",
+                                                  "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset"),
                                     "r"), delimiter='\t')
             else:
                 reader = csv.reader(open(f.replace(' ', ''), "r"), delimiter='\t')
@@ -305,8 +332,8 @@ def main():
         
     incomplete_similarities, dropped_elements = make_matrix_incomplete(seed, similarities, incomplete_percentage)
 
-    fd.write("number of dropped elements: " + str(len(dropped_elements)))
-    fd.write("\n")
+    fd_analysis.write("number of dropped elements: " + str(len(dropped_elements)))
+    fd_analysis.write("\n")
 
     html_out_rnn = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN.html")
     mat_out_rnn  = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN.mat")
@@ -314,7 +341,7 @@ def main():
 
     t_start = time.time()
     # "RnnCompletion"
-    completed_similarities = np.array(rnn_matrix_completion(incomplete_similarities, seqs, files, fd, hdf5_out_rnn))
+    completed_similarities = np.array(rnn_matrix_completion(incomplete_similarities, seqs, files, fd_analysis, fd_losses, hdf5_out_rnn))
     # eigenvalue check
     psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
     t_finish = time.time()
@@ -329,17 +356,17 @@ def main():
 
     mse = mean_squared_error(similarities, psd_completed_similarities)
     msede = mean_squared_error_of_dropped_elements(similarities, psd_completed_similarities, dropped_elements)
-    fd.write("start: " + str(t_start))
-    fd.write("\n")
-    fd.write("finish: " + str(t_finish))
-    fd.write("\n")
-    fd.write("duration: " + str(t_finish - t_start))
-    fd.write("\n")
-    fd.write("Mean squared error: " + str(mse))
-    fd.write("\n")
-    fd.write("Mean squared error of dropped elements: " + str(msede))
-    fd.write("\n")
-    fd.close()
+    fd_analysis.write("start: " + str(t_start))
+    fd_analysis.write("\n")
+    fd_analysis.write("finish: " + str(t_finish))
+    fd_analysis.write("\n")
+    fd_analysis.write("duration: " + str(t_finish - t_start))
+    fd_analysis.write("\n")
+    fd_analysis.write("Mean squared error: " + str(mse))
+    fd_analysis.write("\n")
+    fd_analysis.write("Mean squared error of dropped elements: " + str(msede))
+    fd_analysis.write("\n")
+    fd_analysis.close()
     #gc.collect()
 
 if __name__ == "__main__":
