@@ -54,7 +54,7 @@ def create_base_network(input_shape, mask_value):
 
 def generator_sequence_pairs(indices_list_, incomplete_matrix, seqs):
     indices_list = copy.deepcopy(indices_list_)
-    batch_size = 128 * ngpus
+    batch_size = 256 * ngpus
     input_0 = []
     input_1 = []
     y = []
