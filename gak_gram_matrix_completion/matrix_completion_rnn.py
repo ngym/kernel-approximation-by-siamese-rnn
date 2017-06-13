@@ -45,9 +45,10 @@ def create_base_network(input_shape, mask_value):
     #seq.add(Dropout(0.1))
     #seq.add(LSTM(100, kernel_regularizer=l2(0.01), return_sequences=True))
     #seq.add(Dropout(0.1))
-    seq.add(LSTM(300, kernel_regularizer=l2(0.01), dropout=0.1, implementation=2, return_sequences=False))
-    seq.add(Dropout(0.1))
-    seq.add(Dense(100, activation='linear', kernel_regularizer=l2(0.01)))
+    seq.add(LSTM(100, kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
+                 dropout=0.5, implementation=2, return_sequences=False))
+    seq.add(Dropout(0.5))
+    seq.add(Dense(30, activation='linear', kernel_regularizer=l2(0.01)))
     seq.add(BatchNormalization())
     return seq
 
@@ -141,7 +142,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd_analysis, fd_loss
         ave_tr_loss = 0
         np.random.shuffle(tr_indices)
         tr_gen = generator_sequence_pairs(tr_indices, incomplete_matrix, seqs)
-        cur_time = time.time()
+        tr_start = cur_time = time.time()
         num_batch_iteration = 0
         while num_trained_samples < len(tr_indices):
             # training
@@ -154,8 +155,8 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd_analysis, fd_loss
             cur_time = time.time()
             print("epoch:[%d/%d] training:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
                   (epoch, epochs, num_trained_samples,
-                   len(tr_indices), cur_time - fit_start,
-                   ((cur_time - prev_time) * len(tr_indices) / y.shape[0]) - (cur_time - fit_start),
+                   len(tr_indices), cur_time - tr_start,
+                   ((cur_time - prev_time) * len(tr_indices) / y.shape[0]) - (cur_time - tr_start),
                    ave_tr_loss, tr_loss_batch), end='\r')
             list_ave_tr_loss.append(ave_tr_loss)
             list_tr_loss_batch.append(tr_loss_batch)
@@ -164,15 +165,15 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd_analysis, fd_loss
             num_batch_iteration += 1
         print("epoch:[%d/%d] training:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss:batch:%.5f" %
               (epoch, epochs, num_trained_samples,
-               len(tr_indices), cur_time - fit_start,
-               ((cur_time - prev_time) * len(tr_indices) / y.shape[0]) - (cur_time - fit_start),
+               len(tr_indices), cur_time - tr_start,
+               ((cur_time - prev_time) * len(tr_indices) / y.shape[0]) - (cur_time - tr_start),
                ave_tr_loss, tr_loss_batch), end='\r')
 
         num_validated_samples = 0
         ave_v_loss = 0
         best_v_loss = np.inf
         v_gen  = generator_sequence_pairs(v_indices, incomplete_matrix, seqs)
-        cur_time = time.time()
+        v_start = cur_time = time.time()
         while num_validated_samples < len(v_indices):
             # validation
             x, y = next(v_gen)
@@ -184,8 +185,8 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd_analysis, fd_loss
             cur_time = time.time()
             print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
                   (epoch, epochs, num_validated_samples,
-                   len(v_indices), cur_time - fit_start,
-                   ((cur_time - prev_time) * len(v_indices) / y.shape[0]) - (cur_time - fit_start),
+                   len(v_indices), cur_time - v_start,
+                   ((cur_time - prev_time) * len(v_indices) / y.shape[0]) - (cur_time - v_start),
                    ave_v_loss, v_loss_batch), end='\r')
             list_ave_v_loss.append(ave_v_loss)
             list_v_loss_batch.append(v_loss_batch)
@@ -194,8 +195,8 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd_analysis, fd_loss
             num_batch_iteration += 1
         print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
               (epoch, epochs, num_validated_samples,
-               len(v_indices), cur_time - fit_start,
-               ((cur_time - prev_time) * len(v_indices) / y.shape[0]) - (cur_time - fit_start),
+               len(v_indices), cur_time - v_start,
+               ((cur_time - prev_time) * len(v_indices) / y.shape[0]) - (cur_time - v_start),
                ave_v_loss, v_loss_batch), end='\r')
         if ave_v_loss < best_v_loss:
             best_v_loss = ave_v_loss
