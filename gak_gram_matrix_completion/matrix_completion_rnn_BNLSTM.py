@@ -341,9 +341,9 @@ def main():
     fd_analysis.write("number of dropped elements: " + str(len(dropped_elements)))
     fd_analysis.write("\n")
 
-    html_out_rnn = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN.html")
-    mat_out_rnn  = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN.mat")
-    hdf5_out_rnn  = filename.replace(".mat", "_hdf5" + str(incomplete_percentage) + "_RNN.hdf5")
+    html_out_rnn = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN_BNLSTM.html")
+    mat_out_rnn  = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN_BNLSTM.mat")
+    hdf5_out_rnn  = filename.replace(".mat", "_hdf5" + str(incomplete_percentage) + "_RNN_BNLSTM.hdf5")
 
     t_start = time.time()
     # "RnnCompletion"

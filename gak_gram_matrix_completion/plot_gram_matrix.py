@@ -1,3 +1,11 @@
+import sys
+
+import numpy as np
+import scipy as sp
+from scipy import io
+from scipy.io import wavfile
+from scipy import signal
+
 import plotly.offline as po
 import plotly.graph_objs as pgo
 
@@ -20,3 +28,14 @@ def plot(file_name, similarities, files):
     fig = pgo.Figure(data=data, layout=layout)
     po.plot(fig, filename=file_name, auto_open=False)
 
+def main():
+    filename = sys.argv[1]
+    mat = io.loadmat(filename)
+    similarities = mat['gram']
+    files = mat['indices']
+
+    filename_html = filename.replace('.mat', '.html')
+    plot(filename_html, similarities, files)
+
+if __name__ == "__main__":
+    main()
