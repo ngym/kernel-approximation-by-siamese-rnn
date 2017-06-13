@@ -29,6 +29,11 @@ from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped
 from plot_gram_matrix import plot
 from make_matrix_incomplete import make_matrix_incomplete
 
+sys.path.append("/home/milacski/repo/keras-extras")
+from utils.multi_gpu import make_parallel
+ngpus = 2
+
+
 def batch_dot(vects):
     x, y = vects
     return K.batch_dot(x, y, axes=1)
@@ -49,7 +54,7 @@ def create_base_network(input_shape, mask_value):
 
 def generator_sequence_pairs(indices_list_, incomplete_matrix, seqs):
     indices_list = copy.deepcopy(indices_list_)
-    batch_size = 128
+    batch_size = 512 * ngpus
     input_0 = []
     input_1 = []
     y = []
@@ -98,6 +103,9 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
 
     # train
     rms = RMSprop(clipnorm=1.)
+    
+    if ngpus > 1:
+        model = make_parallel(model,ngpus)
     model.compile(loss='mse', optimizer=rms)
     #model_checkpoint = ModelCheckpoint(hdf5_out_rnn, save_best_only=True)#, save_weights_only=True)
     #early_stopping = EarlyStopping(patience=15)
@@ -251,6 +259,8 @@ def main():
             #print(f)
             if os.uname().nodename == 'atlasz' or 'cn' in os.uname().nodename:
                 m = io.loadmat(f.replace("/home/ngym/NFSshare/Lorincz_Lab", "/users/milacski/shota/dataset"))
+            elif os.uname().nodename == 'nipgcore1':
+                m = io.loadmat(f.replace("/home/ngym/NFSshare/Lorincz_Lab", "/home/milacski/shota/dataset"))
             elif os.uname().nodename == 'Regulus.local':
                 m = io.loadmat(f.replace("/home/ngym/NFSshare/Lorincz_Lab", "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset"))
             else:
@@ -259,6 +269,8 @@ def main():
     elif filename.find("UCIcharacter") != -1:
         if os.uname().nodename == 'atlasz' or 'cn' in os.uname().nodename:
             datasetfile = "/users/milacski/shota/dataset/mixoutALL_shifted.mat"
+        elif os.uname().nodename == 'nipgcore1':
+            datasetfile = "/home/milacski/shota/dataset/mixoutALL_shifted.mat"
         else:
             datasetfile = "/home/ngym/NFSshare/Lorincz_Lab/mixoutALL_shifted.mat"
         dataset = io.loadmat(datasetfile)
@@ -277,6 +289,10 @@ def main():
                 reader = csv.reader(open(f.replace(' ', '')\
                                          .replace("/home/ngym/NFSshare/Lorincz_Lab", "/users/milacski/shota/dataset"),
                                      "r"), delimiter='\t')
+            elif os.uname().nodename == 'nipgcore1':
+                reader = csv.reader(open(f.replace(' ', '')\
+                                         .replace("/home/ngym/NFSshare/Lorincz_Lab", "/home/milacski/shota/dataset"),
+                                    "r"), delimiter='\t')
             else:
                 reader = csv.reader(open(f.replace(' ', ''), "r"), delimiter='\t')
             seq = []
