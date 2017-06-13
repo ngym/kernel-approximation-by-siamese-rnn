@@ -158,7 +158,8 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd_analysis, fd_loss
                    ave_tr_loss, tr_loss_batch), end='\r')
             list_ave_tr_loss.append(ave_tr_loss)
             list_tr_loss_batch.append(tr_loss_batch)
-            fd_losses.write("%d,%d,%.5f,%.5f,%5f,%5f" % (epoch, num_iterated, ave_tr_loss, tr_loss_batch, 0, 0))
+            fd_losses.write("%d,%d,%.5f,%.5f,%5f,%5f\n" % (epoch, num_iterated, ave_tr_loss, tr_loss_batch, 0, 0))
+            fd_losses.flush()
             num_iterated += 1
         print("epoch:[%d/%d] training:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss:batch:%.5f" %
               (epoch, epochs, num_trained_samples,
@@ -187,7 +188,8 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd_analysis, fd_loss
                    ave_v_loss, v_loss_batch), end='\r')
             list_ave_v_loss.append(ave_v_loss)
             list_v_loss_batch.append(v_loss_batch)
-            fd_losses.write("%d,%d,%.5f,%.5f,%5f,%5f" % (epoch, num_iterated, 0, 0, ave_v_loss, v_loss_batch))
+            fd_losses.write("%d,%d,%.5f,%.5f,%5f,%5f\n" % (epoch, num_iterated, 0, 0, ave_v_loss, v_loss_batch))
+            fd_losses.flush()
             num_iterated += 1
         print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
               (epoch, epochs, num_validated_samples,
@@ -265,7 +267,7 @@ def main():
     seqs = OrderedDict()
 
     fd_analysis = open(completionanalysisfile, "w")
-    lossesfile = completionanalysisfile.replace(".error", "losses")
+    lossesfile = completionanalysisfile.replace(".error", ".losses")
     fd_losses = open(lossesfile, "w")
     
     if filename.find("upperChar") != -1 or filename.find("velocity") != -1:
