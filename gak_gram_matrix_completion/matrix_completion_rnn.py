@@ -146,16 +146,16 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
             num_trained_samples += y.shape[0]
             prev_time = cur_time
             cur_time = time.time()
-            print("epoch:[%d/%d] training:[%d/%d] %ds, ETA:%ds, loss:%.10f" %
+            print("epoch:[%d/%d] training:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
                   (epoch, epochs, num_trained_samples,
                    len(tr_indices), cur_time - fit_start,
                    ((cur_time - prev_time) * len(tr_indices) / y.shape[0]) - (cur_time - fit_start),
-                   ave_loss), end='\r')
-        print("epoch:[%d/%d] training:[%d/%d] %ds, ETA:%ds, loss:%.10f" %
+                   ave_loss, loss_batch), end='\r')
+        print("epoch:[%d/%d] training:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss:batch:%.5f" %
               (epoch, epochs, num_trained_samples,
                len(tr_indices), cur_time - fit_start,
                ((cur_time - prev_time) * len(tr_indices) / y.shape[0]) - (cur_time - fit_start),
-               ave_loss), end='\r')
+               ave_loss, loss_batch), end='\r')
 
         num_validated_samples = 0
         ave_loss = 0
@@ -171,16 +171,16 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
             num_validated_samples += y.shape[0]
             prev_time = cur_time
             cur_time = time.time()
-            print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, loss:%.10f" %
+            print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
                   (epoch, epochs, num_validated_samples,
                    len(v_indices), cur_time - fit_start,
                    ((cur_time - prev_time) * len(v_indices) / y.shape[0]) - (cur_time - fit_start),
-                   ave_loss), end='\r')
-        print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, loss:%.10f" %
+                   ave_loss, loss_batch), end='\r')
+        print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
               (epoch, epochs, num_validated_samples,
                len(v_indices), cur_time - fit_start,
                ((cur_time - prev_time) * len(v_indices) / y.shape[0]) - (cur_time - fit_start),
-               ave_loss), end='\r')
+               ave_loss, loss_batch), end='\r')
         if ave_loss < best_loss:
             best_loss = ave_loss
             model.save_weights(hdf5_out_rnn)
