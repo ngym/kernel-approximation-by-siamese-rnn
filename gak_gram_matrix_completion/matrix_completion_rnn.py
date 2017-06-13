@@ -29,7 +29,7 @@ from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped
 from plot_gram_matrix import plot
 from make_matrix_incomplete import make_matrix_incomplete
 
-sys.path.append("$HOME/repo/keras-extras")
+sys.path.append("/home/milacski/repo/keras-extras")
 from utils.multi_gpu import make_parallel
 ngpus = 2
 
