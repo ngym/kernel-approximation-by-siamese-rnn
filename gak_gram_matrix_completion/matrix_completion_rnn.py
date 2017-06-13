@@ -29,6 +29,11 @@ from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped
 from plot_gram_matrix import plot
 from make_matrix_incomplete import make_matrix_incomplete
 
+sys.path.append("$HOME/repo/keras-extras")
+from utils.multi_gpu import make_parallel
+ngpus = 2
+
+
 def batch_dot(vects):
     x, y = vects
     return K.batch_dot(x, y, axes=1)
@@ -49,7 +54,7 @@ def create_base_network(input_shape, mask_value):
 
 def generator_sequence_pairs(indices_list_, incomplete_matrix, seqs):
     indices_list = copy.deepcopy(indices_list_)
-    batch_size = 128
+    batch_size = 128 * ngpus
     input_0 = []
     input_1 = []
     y = []
@@ -98,6 +103,9 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd, hdf5_out_rnn):
 
     # train
     rms = RMSprop(clipnorm=1.)
+    
+    if ngpus > 1:
+        model = make_parallel(model,ngpus)
     model.compile(loss='mse', optimizer=rms)
     #model_checkpoint = ModelCheckpoint(hdf5_out_rnn, save_best_only=True)#, save_weights_only=True)
     #early_stopping = EarlyStopping(patience=15)
