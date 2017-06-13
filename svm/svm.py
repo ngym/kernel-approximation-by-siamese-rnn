@@ -19,13 +19,13 @@ def mat_file_name(sigma, completion_alg):
             "gram_" + \
             dataset_type + "_" + \
             attribute_type + "_" + \
-            "sigma" + ("%.3f" % sigma) + ".mat"
+            "sigma" + ("%.3f" % sigma) + "_t1-t3.mat"
     return data_dir + \
         "gram_" + \
         dataset_type + "_" + \
         attribute_type + "_" + \
-        "sigma" + ("%.3f" % sigma) + "_" + \
-        "loss" + str(loss_persentage) + "_" + \
+        "sigma" + ("%.3f" % sigma) + "_t1-t3" + \
+        "_loss" + str(loss_persentage) + "_" + \
         completion_alg + ".mat"
 
 def convert_index_to_attributes(index):
@@ -67,15 +67,17 @@ def tryout1hyperparameter(cost, train, train_gtruths, validation_or_test, v_or_t
    pred = clf.predict(validation_or_test) # to check
    #matches = [z[0] == z[1] for z in zip(pred, v_or_t_gtruths)]
    #score = [m for m in matches if m is False].__len__() / matches.__len__()
+   score = metrics.f1_score(v_or_t_gtruths, pred, average='weighted')
    print("l2regularization_costs: " + repr(cost))
-   print("prediction & groud truth")
-   print([int(n) for n in list(pred)])
-   print([int(n) for n in v_or_t_gtruths])
+   print("score: " + repr(score))
+   #print([int(n) for n in list(pred)])
+   #print([int(n) for n in v_or_t_gtruths])
+   print(" " + functools.reduce(lambda a,b: a + "  " + b, [p for p in list(pred)]))
+   print(" " + functools.reduce(lambda a,b: a + "  " + b, [t for t in v_or_t_gtruths]))
    print(" " + functools.reduce(lambda a,b: a + "  " + b, ["!" if z[0] != z[1] else " " for z in zip(list(pred), v_or_t_gtruths)]))
    print("---")
    #fpr, tpr, thresholds = metrics.roc_curve(v_or_t_gtruths, pred)
    #score = metrics.auc(fpr, tpr)
-   score = metrics.f1_score(v_or_t_gtruths, pred, average='weighted')
    return score
 
 def optimizehyperparameter(completion_alg,
@@ -119,7 +121,7 @@ def optimizehyperparameter(completion_alg,
             error_to_hyperparameters[tryout1hyperparameter(cost, train_matrix, train_gtruths,
                                                            validation_matrix, validation_gtruths)] = (sigma, cost)
             #/* indices in the gram matrix is passed to the function to indicate the split. */
-    best_sigma, best_cost = error_to_hyperparameters[min(list(error_to_hyperparameters.keys()))]
+    best_sigma, best_cost = error_to_hyperparameters[max(list(error_to_hyperparameters.keys()))]
     test_matrix, train_validation_matrix, validation_matrix, train_matrix,\
     train_gtruths, validation_gtruths, train_validation_gtruths, test_gtruths\
     = train_validation_test_split(best_sigma)
@@ -132,9 +134,9 @@ def crossvalidation(completion_alg, sigmas, costs):
     # ["A1", "C1", "C2", "C3", "C4", "E1", "G1", "G2", "G3", "I1", "I2", "I3",
     #  "J1", "J2", "J3", "L1", "M1", "S1", "T1", "U1", "Y1", "Y2", "Y3", "Z1", "Z2"]
     # actually participants/person ID.
-    #k_groups = ["A1", "C1", "C2", "C3", "C4", "E1", "G1", "G2", "G3", "I1", "I2", "I3",
-    #            "J1", "J2", "J3", "L1", "M1", "S1", "T1", "U1", "Y1", "Y2", "Y3", "Z1", "Z2"]
-    k_groups = ["C1", "J1", "M1", "T1", "Y1", "Y2"]
+    k_groups = ["A1", "C1", "C2", "C3", "C4", "E1", "G1", "G2", "G3", "I1", "I2", "I3",
+                "J1", "J2", "J3", "L1", "M1", "S1", "T1", "U1", "Y1", "Y2", "Y3", "Z1", "Z2"]
+    #k_groups = ["C1", "J1", "M1", "T1", "Y1", "Y2"]
 
     errors = []
     for i in range(k_groups.__len__()):

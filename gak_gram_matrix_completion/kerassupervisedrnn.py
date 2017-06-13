@@ -16,7 +16,475 @@ from keras.optimizers import *
 from keras.regularizers import l2
 from keras.callbacks import ModelCheckpoint, EarlyStopping, History
 from keras import backend as K
-from algorithm import Algorithm
+from algorithms.algorithm import Algorithm
+
+class BNLSTM(LSTM):
+    """Batch Normalized LSTM
+    """
+
+    def __init__(self,
+                 use_scale=True,
+                 normalization_axes=-1,
+                 momentum=0.99,
+                 epsilon=0.001,
+                 scale_initializer=Constant(0.1),#'ones',
+                 moving_mean_initializer='zeros',
+                 moving_var_initializer='ones',
+                 scale_regularizer=None,
+                 scale_constraint=None,
+                 **kwargs):
+        super(BNLSTM, self).__init__(**kwargs)
+        self.use_scale = use_scale
+        assert(normalization_axes in [-1, 2, [1, 2]])
+        self.normalization_axes = normalization_axes
+        self.momentum = momentum
+        self.epsilon = epsilon
+        self.scale_initializer = initializers.get(scale_initializer)
+        self.moving_mean_initializer = initializers.get(moving_mean_initializer)
+        self.moving_var_initializer = initializers.get(moving_var_initializer)
+        self.scale_regularizer = regularizers.get(scale_regularizer)
+        self.scale_constraint = constraints.get(scale_constraint)
+
+    def build(self, input_shape):
+        if isinstance(input_shape, list):
+            input_shape = input_shape[0]
+
+        batch_size = input_shape[0] if self.stateful else None
+        self.time_dim = input_shape[1]
+        self.input_dim = input_shape[2]
+        self.input_spec[0] = InputSpec(shape=(batch_size, None, self.input_dim))
+
+        self.states = [None, None]
+        if self.stateful:
+            self.reset_states()
+
+        self.kernel = self.add_weight(shape=(self.input_dim, self.units * 4),
+                                      name='kernel',
+                                      initializer=self.kernel_initializer,
+                                      regularizer=self.kernel_regularizer,
+                                      constraint=self.kernel_constraint)
+        self.recurrent_kernel = self.add_weight(shape=(self.units, self.units * 4),
+                                                name='recurrent_kernel',
+                                                initializer=self.recurrent_initializer,
+                                                regularizer=self.recurrent_regularizer,
+                                                constraint=self.recurrent_constraint)
+
+        if self.use_scale:
+            self.kernel_scale = self.add_weight((self.units * 4,),
+                                                initializer=self.scale_initializer,
+                                                name='kernel_scale',
+                                                regularizer=self.scale_regularizer,
+                                                constraint=self.scale_constraint)
+            self.recurrent_scale = self.add_weight((self.units * 4,),
+                                                   initializer=self.scale_initializer,
+                                                   name='recurrent_scale',
+                                                   regularizer=self.scale_regularizer,
+                                                   constraint=self.scale_constraint)
+            self.decoder_scale = self.add_weight((self.units,),
+                                                 initializer=self.scale_initializer,
+                                                 name='decoder_scale',
+                                                 regularizer=self.scale_regularizer,
+                                                 constraint=self.scale_constraint)
+        else:
+            self.kernel_scale = None
+            self.recurrent_scale = None
+            self.decoder_scale = None
+            
+        if self.use_bias:
+            if self.unit_forget_bias:
+                def bias_initializer(shape, *args, **kwargs):
+                    return K.concatenate([
+                        self.bias_initializer((self.units,), *args, **kwargs),
+                        initializers.Ones()((self.units,), *args, **kwargs),
+                        self.bias_initializer((self.units * 2,), *args, **kwargs),
+                    ])
+            else:
+                bias_initializer = self.bias_initializer
+            self.encoder_bias = self.add_weight(shape=(self.units * 4,),
+                                                name='encoder_bias',
+                                                initializer=bias_initializer,
+                                                regularizer=self.bias_regularizer,
+                                                constraint=self.bias_constraint)
+            self.decoder_bias = self.add_weight((self.units,),
+                                                initializer=self.bias_initializer,
+                                                name='decoder_bias',
+                                                regularizer=self.bias_regularizer,
+                                                constraint=self.bias_constraint)
+        else:
+            self.encoder_bias = None
+            self.decoder_bias = None
+
+        if self.normalization_axes in [-1, 2]:
+            self.encoder_shape = (4 * self.units,)
+            self.decoder_shape = (self.units,)
+        elif self.normalization_axes == [1, 2]:
+            self.encoder_shape = (self.time_dim, 4 * self.units,)
+            self.decoder_shape = (self.time_dim, self.units,)
+        self.kernel_moving_mean = self.add_weight(self.encoder_shape,
+                                                  initializer=self.moving_mean_initializer,
+                                                  name='kernel_moving_mean',
+                                                  trainable=False)
+        self.kernel_moving_var = self.add_weight(self.encoder_shape,
+                                                 initializer=self.moving_var_initializer,
+                                                 name='kernel_moving_var',
+                                                 trainable=False)
+        self.recurrent_moving_mean = self.add_weight(self.encoder_shape,
+                                                     initializer=self.moving_mean_initializer,
+                                                     name='recurrent_moving_mean',
+                                                     trainable=False)
+        self.recurrent_moving_var = self.add_weight(self.encoder_shape,
+                                                    initializer=self.moving_var_initializer,
+                                                    name='recurrent_moving_var',
+                                                    trainable=False)
+        self.decoder_moving_mean = self.add_weight(self.decoder_shape,
+                                                   initializer=self.moving_mean_initializer,
+                                                   name='decoder_moving_mean',
+                                                   trainable=False)
+        self.decoder_moving_var = self.add_weight(self.decoder_shape,
+                                                  initializer=self.moving_var_initializer,
+                                                  name='decoder_moving_var',
+                                                  trainable=False)
+
+        self.kernel_i = self.kernel[:, :self.units]
+        self.kernel_f = self.kernel[:, self.units: self.units * 2]
+        self.kernel_c = self.kernel[:, self.units * 2: self.units * 3]
+        self.kernel_o = self.kernel[:, self.units * 3:]
+
+        self.recurrent_kernel_i = self.recurrent_kernel[:, :self.units]
+        self.recurrent_kernel_f = self.recurrent_kernel[:, self.units: self.units * 2]
+        self.recurrent_kernel_c = self.recurrent_kernel[:, self.units * 2: self.units * 3]
+        self.recurrent_kernel_o = self.recurrent_kernel[:, self.units * 3:]
+
+        if self.use_bias:
+            self.bias_i = self.encoder_bias[:self.units]
+            self.bias_f = self.encoder_bias[self.units: self.units * 2]
+            self.bias_c = self.encoder_bias[self.units * 2: self.units * 3]
+            self.bias_o = self.encoder_bias[self.units * 3:]
+        else:
+            self.bias_i = None
+            self.bias_f = None
+            self.bias_c = None
+            self.bias_o = None
+        self.built = True
+
+    def get_initial_state(self, inputs):
+        initial_state = super(BNLSTM, self).get_initial_state(inputs)
+        initial_state[0] = K.tile(K.expand_dims(K.zeros_like(initial_state[0][:, 0]), axis=1),
+                                  [1, 10 * self.units])
+        initial_state[1] = K.tile(K.expand_dims(K.zeros_like(initial_state[1][:, 0], dtype='int32'), axis=1),
+                                  [1, 10 * self.units])
+        return initial_state
+    
+    def preprocess_input(self, inputs, training=None):
+        if self.implementation == 0:
+            input_shape = K.int_shape(inputs)
+            input_dim = input_shape[2]
+            timesteps = input_shape[1]
+
+            x_i = _time_distributed_dense(inputs, self.kernel_i, K.zeros((self.units,)),
+                                          self.dropout, input_dim, self.units,
+                                          timesteps, training=training)
+            x_f = _time_distributed_dense(inputs, self.kernel_f, K.zeros((self.units,)),
+                                          self.dropout, input_dim, self.units,
+                                          timesteps, training=training)
+            x_c = _time_distributed_dense(inputs, self.kernel_c, K.zeros((self.units,)),
+                                          self.dropout, input_dim, self.units,
+                                          timesteps, training=training)
+            x_o = _time_distributed_dense(inputs, self.kernel_o, K.zeros((self.units,)),
+                                          self.dropout, input_dim, self.units,
+                                          timesteps, training=training)
+            return K.concatenate([x_i, x_f, x_c, x_o], axis=2)
+        else:
+            return inputs
+
+    def call(self, inputs, mask=None, training=None, initial_state=None):
+        # input shape: `(samples, time (padded with zeros), input_dim)`
+        # note that the .build() method of subclasses MUST define
+        # self.input_spec and self.state_spec with complete input shapes.
+        if isinstance(inputs, list):
+            initial_state = inputs[1:]
+            inputs = inputs[0]
+        elif initial_state is not None:
+            pass
+        elif self.stateful:
+            initial_state = self.states
+        else:
+            initial_state = self.get_initial_state(inputs)
+
+        if isinstance(mask, list):
+            mask = mask[0]
+
+        if len(initial_state) != len(self.states):
+            raise ValueError('Layer has ' + str(len(self.states)) +
+                             ' states but was passed ' +
+                             str(len(initial_state)) +
+                             ' initial states.')
+        input_shape = K.int_shape(inputs)
+        if self.unroll and input_shape[1] is None:
+            raise ValueError('Cannot unroll a RNN if the '
+                             'time dimension is undefined. \n'
+                             '- If using a Sequential model, '
+                             'specify the time dimension by passing '
+                             'an `input_shape` or `batch_input_shape` '
+                             'argument to your first layer. If your '
+                             'first layer is an Embedding, you can '
+                             'also use the `input_length` argument.\n'
+                             '- If using the functional API, specify '
+                             'the time dimension by passing a `shape` '
+                             'or `batch_shape` argument to your Input layer.')
+        constants = self.get_constants(inputs, training=None)
+        preprocessed_input = self.preprocess_input(inputs, training=None)
+        last_output, outputs, states = K.rnn(lambda i, s: self.step(i, s, training=training),
+                                             preprocessed_input,
+                                             initial_state,
+                                             go_backwards=self.go_backwards,
+                                             mask=mask,
+                                             constants=constants,
+                                             unroll=self.unroll,
+                                             input_length=input_shape[1])
+
+        outputs, h, u, c = outputs[:, :, :self.units], outputs[:, :, self.units:(5 * self.units)], \
+                           outputs[:, :, (5* self.units):(9 * self.units)],  outputs[:, :, (9 * self.units):]
+        last_output = last_output[:, :self.units]
+
+        if self.normalization_axes in [-1, 2]:
+            reduction_axes = [0, 1]
+        elif self.normalization_axes == [1, 2]:
+            reduction_axes = [0]
+        h_mean, h_var = K.mean(h, reduction_axes), K.var(h, reduction_axes)
+        u_mean, u_var = K.mean(u, reduction_axes), K.var(u, reduction_axes)
+        c_mean, c_var = K.mean(c, reduction_axes), K.var(c, reduction_axes)
+
+        self.add_update([K.moving_average_update(self.kernel_moving_mean,
+                                                 K.in_train_phase(h_mean, self.kernel_moving_mean, training=training),
+                                                 self.momentum),
+                         K.moving_average_update(self.kernel_moving_var,
+                                                 K.in_train_phase(h_var, self.kernel_moving_var, training=training),
+                                                 self.momentum),
+                         K.moving_average_update(self.recurrent_moving_mean,
+                                                 K.in_train_phase(u_mean, self.recurrent_moving_mean,
+                                                                  training=training),
+                                                 self.momentum),
+                         K.moving_average_update(self.recurrent_moving_var,
+                                                 K.in_train_phase(u_var, self.recurrent_moving_var,
+                                                                  training=training),
+                                                 self.momentum),
+                         K.moving_average_update(self.decoder_moving_mean,
+                                                 K.in_train_phase(c_mean, self.decoder_moving_mean,
+                                                                  training=training),
+                                                 self.momentum),
+                         K.moving_average_update(self.decoder_moving_var,
+                                                 K.in_train_phase(c_var, self.decoder_moving_var,
+                                                                  training=training),
+                                                 self.momentum)],
+                        inputs)
+
+        if self.stateful:
+            updates = []
+            for i in range(len(states)):
+                updates.append((self.states[i], states[i]))
+            self.add_update(updates, inputs)
+
+        # Properly set learning phase
+        last_output._uses_learning_phase = True
+        outputs._uses_learning_phase = True
+
+        if self.return_sequences:
+            return outputs
+        else:
+            return last_output
+
+    def step(self, inputs, states, training=None):
+        h_tm1 = states[0][:, :self.units]
+        c_tm1 = states[0][:, (9 * self.units):]
+        t = states[1]
+        dp_mask = states[-2]
+        rec_dp_mask = states[-1]
+
+        if self.normalization_axes in [-1, 2]:
+            kernel_moving_mean = self.kernel_moving_mean
+            kernel_moving_var = self.kernel_moving_var
+            recurrent_moving_mean = self.recurrent_moving_mean
+            recurrent_moving_var = self.recurrent_moving_var
+            decoder_moving_mean = self.decoder_moving_mean
+            decoder_moving_var = self.decoder_moving_var
+        elif self.normalization_axes == [1, 2]:
+            kernel_moving_mean = self.kernel_moving_mean[t[0, 0], :]
+            kernel_moving_var = self.kernel_moving_var[t[0, 0], :]
+            recurrent_moving_mean = self.recurrent_moving_mean[t[0, 0], :]
+            recurrent_moving_var = self.recurrent_moving_var[t[0, 0], :]
+            decoder_moving_mean = self.decoder_moving_mean[t[0, 0], :]
+            decoder_moving_var = self.decoder_moving_var[t[0, 0], :]
+
+        if self.implementation == 2:
+            h = K.dot(inputs * dp_mask[0], self.kernel)
+            bn_h_train, _, _ = K.normalize_batch_in_training(h, self.kernel_scale, None, [0], epsilon=self.epsilon)
+            bn_h_test = K.batch_normalization(h, K.expand_dims(kernel_moving_mean, axis=0),
+                                              K.expand_dims(kernel_moving_var, axis=0), None,
+                                              K.expand_dims(self.kernel_scale, axis=0), epsilon=self.epsilon)
+            bn_h = K.in_train_phase(bn_h_train, bn_h_test, training=training)
+
+            u = K.dot(h_tm1 * rec_dp_mask[0], self.recurrent_kernel)
+            bn_u_train, _, _ = K.normalize_batch_in_training(u, self.recurrent_scale, None, [0], epsilon=self.epsilon)
+            bn_u_test = K.batch_normalization(u, K.expand_dims(recurrent_moving_mean, axis=0),
+                                              K.expand_dims(recurrent_moving_var, axis=0), None,
+                                              K.expand_dims(self.recurrent_scale, axis=0), epsilon=self.epsilon)
+            bn_u = K.in_train_phase(bn_u_train, bn_u_test, training=training)
+            z = bn_h + bn_u
+
+            if self.use_bias:
+                z = K.bias_add(z, self.encoder_bias)
+
+            z0 = z[:, :self.units]
+            z1 = z[:, self.units: 2 * self.units]
+            z2 = z[:, 2 * self.units: 3 * self.units]
+            z3 = z[:, 3 * self.units:]
+
+            i = self.recurrent_activation(z0)
+            f = self.recurrent_activation(z1)
+            c = f * c_tm1 + i * self.activation(z2)
+            o = self.recurrent_activation(z3)
+        else:
+            if self.implementation == 0:
+                h_i = inputs[:, :self.units]
+                h_f = inputs[:, self.units: 2 * self.units]
+                h_c = inputs[:, 2 * self.units: 3 * self.units]
+                h_o = inputs[:, 3 * self.units:]
+                h = K.concatenate([h_i, h_f, h_c, h_o], axis=1) #inputs
+            elif self.implementation == 1:
+                h_i = K.dot(inputs * dp_mask[0], self.kernel_i)
+                h_f = K.dot(inputs * dp_mask[1], self.kernel_f)
+                h_c = K.dot(inputs * dp_mask[2], self.kernel_c)
+                h_o = K.dot(inputs * dp_mask[3], self.kernel_o)
+                h = K.concatenate([h_i, h_f, h_c, h_o], axis=1)
+            else:
+                raise ValueError('Unknown `implementation` mode.')
+
+            bn_h_i_train, _, _ = K.normalize_batch_in_training(h_i, self.kernel_scale[:self.units], None, [0],
+                                                               epsilon=self.epsilon)
+            bn_h_i_test = K.batch_normalization(h_i, K.expand_dims(kernel_moving_mean[:self.units], axis=0),
+                                                K.expand_dims(kernel_moving_var[:self.units], axis=0), None,
+                                                K.expand_dims(self.kernel_scale[:self.units], axis=0),
+                                                epsilon=self.epsilon)
+            bn_h_i = K.in_train_phase(bn_h_i_train, bn_h_i_test, training=training)
+            bn_h_f_train, _, _ = K.normalize_batch_in_training(h_f, self.kernel_scale[self.units:(2 * self.units)],
+                                                               None, [0], epsilon=self.epsilon)
+            bn_h_f_test = K.batch_normalization(h_f,
+                                                K.expand_dims(kernel_moving_mean[self.units:(2 * self.units)], axis=0),
+                                                K.expand_dims(kernel_moving_var[self.units:(2 * self.units)], axis=0),
+                                                None,
+                                                K.expand_dims(self.kernel_scale[self.units:(2 * self.units)], axis=0),
+                                                epsilon=self.epsilon)
+            bn_h_f = K.in_train_phase(bn_h_f_train, bn_h_f_test, training=training)
+            bn_h_c_train, _, _ = K.normalize_batch_in_training(h_c,
+                                                               self.kernel_scale[(2 * self.units):(3 * self.units)],
+                                                               None, [0], epsilon=self.epsilon)
+            bn_h_c_test = K.batch_normalization(h_c,
+                                                K.expand_dims(kernel_moving_mean[(2 * self.units):(3 * self.units)],
+                                                              axis=0),
+                                                K.expand_dims(kernel_moving_var[(2 * self.units):(3 * self.units)],
+                                                              axis=0), None,
+                                                K.expand_dims(self.kernel_scale[(2 * self.units):(3 * self.units)],
+                                                              axis=0),
+                                                epsilon=self.epsilon)
+            bn_h_c = K.in_train_phase(bn_h_c_train, bn_h_c_test, training=training)
+            bn_h_o_train, _, _ = K.normalize_batch_in_training(h_o, self.kernel_scale[(3 * self.units):], None, [0],
+                                                               epsilon=self.epsilon)
+            bn_h_o_test = K.batch_normalization(h_o, K.expand_dims(kernel_moving_mean[(3 * self.units):], axis=0),
+                                                K.expand_dims(kernel_moving_var[(3 * self.units):], axis=0), None,
+                                                K.expand_dims(self.kernel_scale[(3 * self.units):], axis=0),
+                                                epsilon=self.epsilon)
+            bn_h_o = K.in_train_phase(bn_h_o_train, bn_h_o_test, training=training)
+
+            u_i = K.dot(h_tm1 * rec_dp_mask[0], self.recurrent_kernel_i)
+            bn_u_i_train, _, _ = K.normalize_batch_in_training(u_i, self.recurrent_scale[:self.units], None, [0],
+                                                               epsilon=self.epsilon)
+            bn_u_i_test = K.batch_normalization(u_i, K.expand_dims(recurrent_moving_mean[:self.units], axis=0),
+                                                K.expand_dims(recurrent_moving_var[:self.units], axis=0), None,
+                                                K.expand_dims(self.recurrent_scale[:self.units], axis=0),
+                                                epsilon=self.epsilon)
+            bn_u_i = K.in_train_phase(bn_u_i_train, bn_u_i_test, training=training)
+            z0 = bn_h_i + bn_u_i
+            if self.use_bias:
+                z0 = K.bias_add(z0, self.encoder_bias[:self.units])
+            i = self.recurrent_activation(z0)
+            u_f = K.dot(h_tm1 * rec_dp_mask[1], self.recurrent_kernel_f)
+            bn_u_f_train, _, _ = K.normalize_batch_in_training(u_f, self.recurrent_scale[self.units:(2 * self.units)],
+                                                               None, [0], epsilon=self.epsilon)
+            bn_u_f_test = K.batch_normalization(u_f, K.expand_dims(recurrent_moving_mean[self.units:(2 * self.units)],
+                                                                   axis=0),
+                                                K.expand_dims(recurrent_moving_var[self.units:(2 * self.units)], axis=0),
+                                                None,
+                                                K.expand_dims(self.recurrent_scale[self.units:(2 * self.units)], axis=0),
+                                                epsilon=self.epsilon)
+            bn_u_f = K.in_train_phase(bn_u_f_train, bn_u_f_test, training=training)
+            z1 = bn_h_f + bn_u_f
+            if self.use_bias:
+                z1 = K.bias_add(z1, self.encoder_bias[self.units:(2 * self.units)])
+            f = self.recurrent_activation(z1)
+            u_c = K.dot(h_tm1 * rec_dp_mask[2], self.recurrent_kernel_c)
+            bn_u_c_train, _, _ = K.normalize_batch_in_training(u_c,
+                                                               self.recurrent_scale[(2 * self.units):(3 * self.units)],
+                                                               None, [0],
+                                                               epsilon=self.epsilon)
+            bn_u_c_test = K.batch_normalization(u_c,
+                                                K.expand_dims(recurrent_moving_mean[(2 * self.units):(3 * self.units)],
+                                                              axis=0),
+                                                K.expand_dims(recurrent_moving_var[(2 * self.units):(3 * self.units)],
+                                                              axis=0), None,
+                                                K.expand_dims(self.recurrent_scale[(2 * self.units):(3 * self.units)],
+                                                              axis=0),
+                                                epsilon=self.epsilon)
+            bn_u_c = K.in_train_phase(bn_u_c_train, bn_u_c_test, training=training)
+            z2 = bn_h_c + bn_u_c
+            if self.use_bias:
+                z2 = K.bias_add(z2, self.encoder_bias[(2 * self.units):(3 * self.units)])
+            c = f * c_tm1 + i * self.activation(z2)
+            u_o = K.dot(h_tm1 * rec_dp_mask[3], self.recurrent_kernel_o)
+            bn_u_o_train, _, _ = K.normalize_batch_in_training(u_o, self.recurrent_scale[(3 * self.units):], None, [0],
+                                                               epsilon=self.epsilon)
+            bn_u_o_test = K.batch_normalization(u_o, K.expand_dims(recurrent_moving_mean[(3 * self.units):], axis=0),
+                                                K.expand_dims(recurrent_moving_var[(3 * self.units):], axis=0), None,
+                                                K.expand_dims(self.recurrent_scale[(3 * self.units):], axis=0),
+                                                epsilon=self.epsilon)
+            bn_u_o = K.in_train_phase(bn_u_o_train, bn_u_o_test, training=training)
+            z4 = bn_h_o + bn_u_o
+            if self.use_bias:
+                z4 = K.bias_add(z4, self.encoder_bias[(3 * self.units):])
+            o = self.recurrent_activation(z4)
+            u = K.concatenate([u_i, u_f, u_c, u_o], axis=1)
+
+        bn_c_train, _, _ = K.normalize_batch_in_training(c, self.decoder_scale, None, [0],
+                                                         epsilon=self.epsilon)
+        bn_c_test = K.batch_normalization(c, K.expand_dims(decoder_moving_mean, axis=0),
+                                          K.expand_dims(decoder_moving_var, axis=0), None,
+                                          K.expand_dims(self.decoder_scale, axis=0),
+                                          epsilon=self.epsilon)
+        bn_c = K.in_train_phase(bn_c_train, bn_c_test, training=training)
+        if self.use_bias:
+            bn_c = K.bias_add(bn_c, self.decoder_bias)
+        output = o * self.activation(bn_c)
+        output._uses_learning_phase = True
+        concat = K.concatenate([output, h, u, c], axis=1)
+        concat._uses_learning_phase = True
+
+        tp1 = t + 1
+
+        return concat, [concat, tp1]
+
+    def get_config(self):
+        config = {'use_scale': self.use_scale,
+                  'normalization_axes': self.normalization_axes,
+                  'momentum': self.momentum,
+                  'epsilon': self.epsilon,
+                  'scale_initializer': initializers.serialize(self.scale_initializer),
+                  'moving_mean_initializer': initializers.serialize(self.moving_mean_initializer),
+                  'moving_var_initializer': initializers.serialize(self.moving_var_initializer),
+                  'scale_regularizer': regularizers.serialize(self.scale_regularizer),
+                  'scale_constraint': constraints.serialize(self.scale_constraint)}
+        base_config = super(BNLSTM, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
 
 class ResidualRNN(SimpleRNN):
     """Fully-connected RNN where the output is to be fed back to input.
@@ -161,6 +629,7 @@ class ResidualRNN(SimpleRNN):
                                                   initializer=self.moving_var_initializer,
                                                   name='decoder_moving_var',
                                                   trainable=False)
+        self.built = True
 
     def get_initial_state(self, inputs):
         initial_state = super(ResidualRNN, self).get_initial_state(inputs)
@@ -462,6 +931,7 @@ class KerasSupervisedRNN(Algorithm):
         super(KerasSupervisedRNN, self).__init__(hyperparams=hyperparams)
     
     def build(self):
+        K.clear_session()
         network = dict()
         network['inp'] = Input(shape=(self.hyperparams['shape1'], self.hyperparams['shape2']), dtype='float32')
         network['mask'] = Masking(mask_value=-123456789)(network['inp'])
@@ -473,11 +943,21 @@ class KerasSupervisedRNN(Algorithm):
                 return x
         for k in range(1, self.hyperparams['rnn'] + 1):
             if self.hyperparams['mode'] is 'lstm':
+                '''
                 rnn = LSTM(units=self.hyperparams['rnn' + str(k) + '_units'],
                            dropout=self.hyperparams['rnn' + str(k) + '_dropout'],
                            recurrent_dropout=self.hyperparams['rnn' + str(k) + '_recurrent_dropout'],
                            kernel_regularizer=l2(self.hyperparams['l2']),
                            return_sequences=True)
+                '''
+                rnn = BNLSTM(units=self.hyperparams['rnn' + str(k) + '_units'],
+                             dropout=self.hyperparams['rnn' + str(k) + '_dropout'],
+                             recurrent_dropout=self.hyperparams['rnn' + str(k) + '_recurrent_dropout'],
+                             kernel_regularizer=l2(self.hyperparams['l2']),
+                             recurrent_regularizer=l2(self.hyperparams['l2']),
+                             return_sequences=True,
+                             normalization_axes=[1, 2],
+                             implementation=0)
             elif self.hyperparams['mode'] is 'vanilla':
                 rnn = SimpleRNN(units=self.hyperparams['rnn' + str(k) + '_units'],
                                 dropout=self.hyperparams['rnn' + str(k) + '_dropout'],

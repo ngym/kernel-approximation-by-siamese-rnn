@@ -163,7 +163,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd_analysis, fd_loss
             fd_losses.write("%d, %d, %.5f, %.5f, nan, nan\n" % (epoch, num_batch_iteration, ave_tr_loss, tr_loss_batch))
             fd_losses.flush()
             num_batch_iteration += 1
-        print("epoch:[%d/%d] training:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss:batch:%.5f" %
+        print("epoch:[%d/%d] training:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
               (epoch, epochs, num_trained_samples,
                len(tr_indices), cur_time - tr_start,
                ((cur_time - prev_time) * len(tr_indices) / y.shape[0]) - (cur_time - tr_start),
@@ -190,7 +190,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd_analysis, fd_loss
                    ave_v_loss, v_loss_batch), end='\r')
             list_ave_v_loss.append(ave_v_loss)
             list_v_loss_batch.append(v_loss_batch)
-            fd_losses.write("%d, %d, nan, nan, %5f, %5f\n" % (epoch, num_batch_iteration, ave_v_loss, v_loss_batch))
+            fd_losses.write("%d, %d, nan, nan, %.5f, %.5f\n" % (epoch, num_batch_iteration, ave_v_loss, v_loss_batch))
             fd_losses.flush()
             num_batch_iteration += 1
         print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
