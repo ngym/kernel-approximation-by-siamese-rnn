@@ -50,6 +50,7 @@ def create_base_network(input_shape, mask_value):
     seq.add(ResidualRNN(units=300, hidden_units=100, normalization_axes=[1, 2], kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
                         decoder_regularizer=l2(0.01),
                         dropout=0.1, return_sequences=True,
+                        implementation=1,
                         input_shape=input_shape))
     seq.add(Lambda(lambda x: x[:, -1, :]))
     seq.add(Dropout(0.1))
