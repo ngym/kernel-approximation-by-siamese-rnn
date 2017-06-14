@@ -68,7 +68,7 @@ def convert_index_to_attributes(index):
     elif dataset_type == "UCItctodd":
         # UCI AUSLAN
         index_ = index.split('/')[-1]
-        k_group = index_.split('-')[-2]
+        k_group = int(index_.split('-')[-2])
         ground_truth = functools.reduce(lambda a, b: a + "-" + b, index_.split('-')[:-2])
         type_ = None
         trial = None
