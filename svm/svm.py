@@ -14,19 +14,51 @@ data_dir = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification
 def mat_file_name(sigma, completion_alg):
     # gram_dataset_completionalg_sigma.mat
     #print("loss:" + str(loss_persentage))
-    if completion_alg == "":
+    if dataset_type == "upperChar":
+        if completion_alg == "":
+            return data_dir + \
+                "gram_" + \
+                dataset_type + "_" + \
+                attribute_type + "_" + \
+                "sigma" + ("%.3f" % sigma) + "_t1-t3" +\
+                ".mat"
+        #"sigma" + ("%.3f" % sigma) + \
         return data_dir + \
-            "gram_" + \
-            dataset_type + "_" + \
-            attribute_type + "_" + \
-            "sigma" + ("%.3f" % sigma) + "_t1-t3.mat"
-    return data_dir + \
         "gram_" + \
         dataset_type + "_" + \
         attribute_type + "_" + \
         "sigma" + ("%.3f" % sigma) + "_t1-t3" + \
         "_loss" + str(loss_persentage) + "_" + \
         completion_alg + ".mat"
+        #"sigma" + ("%.3f" % sigma) + \
+    elif dataset_type == "UCIcharacter":
+        if completion_alg == "":
+            return data_dir + \
+                "gram_" + \
+                dataset_type + "_" + \
+                "sigma" + ("%.3f" % sigma) + \
+                ".mat"
+        return data_dir + \
+        "gram_" + \
+        dataset_type + "_" + \
+        "sigma" + ("%.3f" % sigma) + \
+        "_loss" + str(loss_persentage) + "_" + \
+        completion_alg + ".mat"
+    elif dataset_type == "UCItctodd":
+        if completion_alg == "":
+            return data_dir + \
+                "gram_" + \
+                dataset_type + "_" + \
+                "sigma" + ("%.3f" % sigma) + \
+                ".mat"
+        return data_dir + \
+        "gram_" + \
+        dataset_type + "_" + \
+        "sigma" + ("%.3f" % sigma) + \
+        "_loss" + str(loss_persentage) + "_" + \
+        completion_alg + ".mat"
+    else:
+        assert False
 
 def convert_index_to_attributes(index):
     index_ = index.split('/')[-1]
@@ -61,24 +93,26 @@ def separate_gram(gram, data_attributes, k_group):
     return new_matched, new_unmatched
 
 def tryout1hyperparameter(cost, train, train_gtruths, validation_or_test, v_or_t_gtruths):
-   # indices in the gram matrix is passed to the function to indicate the split. 
-   clf = SVC(C=cost, kernel='precomputed')
-   clf.fit(np.array(train), np.array(train_gtruths))
-   pred = clf.predict(validation_or_test) # to check
-   #matches = [z[0] == z[1] for z in zip(pred, v_or_t_gtruths)]
-   #score = [m for m in matches if m is False].__len__() / matches.__len__()
-   score = metrics.f1_score(v_or_t_gtruths, pred, average='weighted')
-   print("l2regularization_costs: " + repr(cost))
-   print("score: " + repr(score))
-   #print([int(n) for n in list(pred)])
-   #print([int(n) for n in v_or_t_gtruths])
-   print(" " + functools.reduce(lambda a,b: a + "  " + b, [p for p in list(pred)]))
-   print(" " + functools.reduce(lambda a,b: a + "  " + b, [t for t in v_or_t_gtruths]))
-   print(" " + functools.reduce(lambda a,b: a + "  " + b, ["!" if z[0] != z[1] else " " for z in zip(list(pred), v_or_t_gtruths)]))
-   print("---")
-   #fpr, tpr, thresholds = metrics.roc_curve(v_or_t_gtruths, pred)
-   #score = metrics.auc(fpr, tpr)
-   return score
+    # indices in the gram matrix is passed to the function to indicate the split. 
+    clf = SVC(C=cost, kernel='precomputed')
+    clf.fit(np.array(train), np.array(train_gtruths))
+    pred = clf.predict(validation_or_test) # to check
+    #matches = [z[0] == z[1] for z in zip(pred, v_or_t_gtruths)]
+    #score = [m for m in matches if m is False].__len__() / matches.__len__()
+    score = metrics.f1_score(v_or_t_gtruths, pred, average='weighted')
+    print("l2regularization_costs: " + repr(cost))
+    print("score: " + repr(score))
+    #print([int(n) for n in list(pred)])
+    #print([int(n) for n in v_or_t_gtruths])
+    print(" " + functools.reduce(lambda a,b: a + "  " + b, [t for t in v_or_t_gtruths]))
+    print(" " + functools.reduce(lambda a,b: a + "  " + b, [p for p in list(pred)]))
+    print(" " + functools.reduce(lambda a,b: a + "  " + b,
+                                 ["!" if z[0] != z[1] else " "
+                                  for z in zip(list(pred), v_or_t_gtruths)]))
+    print("---")
+    #fpr, tpr, thresholds = metrics.roc_curve(v_or_t_gtruths, pred)
+    #score = metrics.auc(fpr, tpr)
+    return score
 
 def optimizehyperparameter(completion_alg,
                            sigmas, # [sigma]
@@ -147,11 +181,11 @@ def crossvalidation(completion_alg, sigmas, costs):
     return np.average(errors)
 
 def compare_completion_algorithms(sigmas, costs):
-    result_ground_truth = crossvalidation("", sigmas, costs)
+    #result_ground_truth = crossvalidation("", sigmas, costs)
     #result_nuclear_norm_minimization = crossvalidation("NuclearNormMinimization", sigmas, costs)
     result_soft_impute = crossvalidation("SoftImpute", sigmas, costs)
 
-    print("Ground Truth: " + repr(result_ground_truth))
+    #print("Ground Truth: " + repr(result_ground_truth))
     #print("NuclearNormMinimization: " + repr(result_nuclear_norm_minimization))
     print("SoftImpute: " + repr(result_soft_impute))
 
