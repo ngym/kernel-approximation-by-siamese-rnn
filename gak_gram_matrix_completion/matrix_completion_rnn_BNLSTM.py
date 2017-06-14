@@ -48,7 +48,8 @@ def create_base_network(input_shape, mask_value):
     #seq.add(LSTM(100, kernel_regularizer=l2(0.01), return_sequences=True))
     #seq.add(Dropout(0.1))
     seq.add(BNLSTM(units=1000, kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
-                 dropout=0.5, implementation=1, return_sequences=False))
+                   dropout=0.5, implementation=1, return_sequences=True))
+    seq.add(Lambda(lambda x: x[:, -1, :]))
     seq.add(Dropout(0.5))
     seq.add(Dense(300, activation='linear', kernel_regularizer=l2(0.01)))
     seq.add(BatchNormalization())
