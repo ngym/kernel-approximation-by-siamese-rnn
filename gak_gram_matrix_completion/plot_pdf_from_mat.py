@@ -17,6 +17,7 @@ def plot(file_name, similarities, files, separators, labels,
     f1 = ax.imshow(similarities,
                    interpolation='nearest',
                    cmap='bwr',
+                   vmax=1, vmin=0
                    )
 
     # Colorbar on the right of the graph
