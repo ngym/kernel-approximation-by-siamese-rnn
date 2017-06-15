@@ -47,28 +47,13 @@ def create_base_network(input_shape, mask_value):
     #seq.add(Dropout(0.1))
     #seq.add(LSTM(100, kernel_regularizer=l2(0.01), return_sequences=True))
     #seq.add(Dropout(0.1))
-    seq.add(ResidualRNN(units=300, hidden_units=100, normalization_axes=[1, 2], kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
+    seq.add(ResidualRNN(units=100, hidden_units=30, normalization_axes=[1, 2], kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
                         decoder_regularizer=l2(0.01),
                         dropout=0.1, return_sequences=True,
                         implementation=1,
                         input_shape=input_shape))
     seq.add(Lambda(lambda x: x[:, -1, :]))
     seq.add(Dropout(0.1))
-    seq.add(Dense(100, activation='linear', kernel_regularizer=l2(0.01)))
-    seq.add(BatchNormalization())
-    return seq
-
-def create_base_network(input_shape, mask_value):
-    '''Base network to be shared (eq. to feature extraction).
-    '''
-    seq = Sequential()
-    seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
-    #seq.add(Dropout(0.1))
-    #seq.add(LSTM(100, kernel_regularizer=l2(0.01), return_sequences=True))
-    #seq.add(Dropout(0.1))
-    seq.add(LSTM(100, kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
-                 dropout=0.5, implementation=2, return_sequences=False))
-    seq.add(Dropout(0.5))
     seq.add(Dense(30, activation='linear', kernel_regularizer=l2(0.01)))
     seq.add(BatchNormalization())
     return seq
@@ -77,7 +62,7 @@ def generator_sequence_pairs(indices_list_, incomplete_matrix, seqs):
     indices_list = copy.deepcopy(indices_list_)
     batch_size = 512 * ngpus
     input_0 = []
-    input_1 = []
+    input_2 = []
     y = []
     for i, j in indices_list:
         input_0.append(seqs[i])
