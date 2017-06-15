@@ -62,7 +62,7 @@ def generator_sequence_pairs(indices_list_, incomplete_matrix, seqs):
     indices_list = copy.deepcopy(indices_list_)
     batch_size = 512 * ngpus
     input_0 = []
-    input_2 = []
+    input_1 = []
     y = []
     for i, j in indices_list:
         input_0.append(seqs[i])
@@ -133,7 +133,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, files, fd_analysis, fd_loss
     v_indices = tv_indices[int(len(tv_indices) * 0.9):]
 
     patience = 10
-    epochs = 2
+    epochs = 1
 
     list_ave_tr_loss = []
     list_tr_loss_batch = []
