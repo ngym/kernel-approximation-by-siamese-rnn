@@ -360,7 +360,9 @@ def main():
     plot(html_out_rnn,
          psd_completed_similarities, files)
     io.savemat(mat_out_rnn, dict(gram=psd_completed_similarities,
+                                 non_psd_gram=completed_similarities,
                                  dropped_gram=incomplete_similarities,
+                                 orig_gram=similarities,
                                  indices=files))
     print("RnnCompletion files are output.")
 
