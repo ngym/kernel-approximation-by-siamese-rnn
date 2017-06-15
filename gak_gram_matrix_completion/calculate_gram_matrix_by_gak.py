@@ -244,7 +244,8 @@ def main():
     file_num = files.__len__()
 
     gak_triangular = np.median([seq.__len__() for seq in seqs.values()]) * 0.5
-    print("gak_triangular: " + repr(gak_triangular))
+    print("gak_triangular (median of sequences): " + repr(gak_triangular))
+    print("average length of sequences: " + repr(np.mean([seq.__len__() for seq in seqs.values()])))
 
     futures = []
 

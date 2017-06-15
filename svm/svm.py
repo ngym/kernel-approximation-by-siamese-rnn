@@ -14,23 +14,73 @@ data_dir = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification
 def mat_file_name(sigma, completion_alg):
     # gram_dataset_completionalg_sigma.mat
     #print("loss:" + str(loss_persentage))
-    if completion_alg == "":
+    if dataset_type == "upperChar":
+        if completion_alg == "":
+            return data_dir + \
+                "gram_" + \
+                dataset_type + "_" + \
+                attribute_type + "_" + \
+                "sigma" + ("%.3f" % sigma) + "_t1-t3" +\
+                ".mat"
+        #"sigma" + ("%.3f" % sigma) + \
         return data_dir + \
-            "gram_" + \
-            dataset_type + "_" + \
-            attribute_type + "_" + \
-            "sigma" + ("%.3f" % sigma) + "_t1-t3.mat"
-    return data_dir + \
         "gram_" + \
         dataset_type + "_" + \
         attribute_type + "_" + \
         "sigma" + ("%.3f" % sigma) + "_t1-t3" + \
         "_loss" + str(loss_persentage) + "_" + \
         completion_alg + ".mat"
+        #"sigma" + ("%.3f" % sigma) + \
+    elif dataset_type == "UCIcharacter":
+        if completion_alg == "":
+            return data_dir + \
+                "gram_" + \
+                dataset_type + "_" + \
+                "sigma" + ("%.3f" % sigma) + \
+                ".mat"
+        return data_dir + \
+        "gram_" + \
+        dataset_type + "_" + \
+        "sigma" + ("%.3f" % sigma) + \
+        "_loss" + str(loss_persentage) + "_" + \
+        completion_alg + ".mat"
+    elif dataset_type == "UCItctodd":
+        if completion_alg == "":
+            return data_dir + \
+                "gram_" + \
+                dataset_type + "_" + \
+                "sigma" + ("%.3f" % sigma) + \
+                ".mat"
+        return data_dir + \
+        "gram_" + \
+        dataset_type + "_" + \
+        "sigma" + ("%.3f" % sigma) + \
+        "_loss" + str(loss_persentage) + "_" + \
+        completion_alg + ".mat"
+    else:
+        assert False
 
 def convert_index_to_attributes(index):
-    index_ = index.split('/')[-1]
-    type_, ground_truth, k_group, trial = index_.split('_')
+    if dataset_type == "upperChar":
+        # 6DMG
+        index_ = index.split('/')[-1]
+        type_, ground_truth, k_group, trial = index_.split('_')
+    elif dataset_type == "UCItctodd":
+        # UCI AUSLAN
+        index_ = index.split('/')[-1]
+        k_group = int(index_.split('-')[-2])
+        ground_truth = functools.reduce(lambda a, b: a + "-" + b, index_.split('-')[:-2])
+        type_ = None
+        trial = None
+    elif dataset_type == "UCIcharacter":
+        # UCI character
+        ground_truth = index[0]
+        serial_number = int(index[1:])
+        k_group = serial_number % 10
+        type_ = None
+        trial = None
+    else:
+        assert False
     return dict(type=type_, ground_truth=ground_truth, k_group=k_group, trial=trial)
 
 def separate_gram(gram, data_attributes, k_group):
@@ -61,24 +111,26 @@ def separate_gram(gram, data_attributes, k_group):
     return new_matched, new_unmatched
 
 def tryout1hyperparameter(cost, train, train_gtruths, validation_or_test, v_or_t_gtruths):
-   # indices in the gram matrix is passed to the function to indicate the split. 
-   clf = SVC(C=cost, kernel='precomputed')
-   clf.fit(np.array(train), np.array(train_gtruths))
-   pred = clf.predict(validation_or_test) # to check
-   #matches = [z[0] == z[1] for z in zip(pred, v_or_t_gtruths)]
-   #score = [m for m in matches if m is False].__len__() / matches.__len__()
-   score = metrics.f1_score(v_or_t_gtruths, pred, average='weighted')
-   print("l2regularization_costs: " + repr(cost))
-   print("score: " + repr(score))
-   #print([int(n) for n in list(pred)])
-   #print([int(n) for n in v_or_t_gtruths])
-   print(" " + functools.reduce(lambda a,b: a + "  " + b, [p for p in list(pred)]))
-   print(" " + functools.reduce(lambda a,b: a + "  " + b, [t for t in v_or_t_gtruths]))
-   print(" " + functools.reduce(lambda a,b: a + "  " + b, ["!" if z[0] != z[1] else " " for z in zip(list(pred), v_or_t_gtruths)]))
-   print("---")
-   #fpr, tpr, thresholds = metrics.roc_curve(v_or_t_gtruths, pred)
-   #score = metrics.auc(fpr, tpr)
-   return score
+    # indices in the gram matrix is passed to the function to indicate the split. 
+    clf = SVC(C=cost, kernel='precomputed')
+    clf.fit(np.array(train), np.array(train_gtruths))
+    pred = clf.predict(validation_or_test) # to check
+    #matches = [z[0] == z[1] for z in zip(pred, v_or_t_gtruths)]
+    #score = [m for m in matches if m is False].__len__() / matches.__len__()
+    score = metrics.f1_score(v_or_t_gtruths, pred, average='weighted')
+    print("l2regularization_costs: " + repr(cost))
+    print("score: " + repr(score))
+    #print([int(n) for n in list(pred)])
+    #print([int(n) for n in v_or_t_gtruths])
+    print(" " + functools.reduce(lambda a,b: a + "  " + b, [t for t in v_or_t_gtruths]))
+    print(" " + functools.reduce(lambda a,b: a + "  " + b, [p for p in list(pred)]))
+    print(" " + functools.reduce(lambda a,b: a + "  " + b,
+                                 ["!" if z[0] != z[1] else " "
+                                  for z in zip(list(pred), v_or_t_gtruths)]))
+    print("---")
+    #fpr, tpr, thresholds = metrics.roc_curve(v_or_t_gtruths, pred)
+    #score = metrics.auc(fpr, tpr)
+    return score
 
 def optimizehyperparameter(completion_alg,
                            sigmas, # [sigma]
@@ -134,10 +186,17 @@ def crossvalidation(completion_alg, sigmas, costs):
     # ["A1", "C1", "C2", "C3", "C4", "E1", "G1", "G2", "G3", "I1", "I2", "I3",
     #  "J1", "J2", "J3", "L1", "M1", "S1", "T1", "U1", "Y1", "Y2", "Y3", "Z1", "Z2"]
     # actually participants/person ID.
-    k_groups = ["A1", "C1", "C2", "C3", "C4", "E1", "G1", "G2", "G3", "I1", "I2", "I3",
-                "J1", "J2", "J3", "L1", "M1", "S1", "T1", "U1", "Y1", "Y2", "Y3", "Z1", "Z2"]
-    #k_groups = ["C1", "J1", "M1", "T1", "Y1", "Y2"]
-
+    if dataset_type == "upperChar":
+        k_groups = ["A1", "C1", "C2", "C3", "C4", "E1", "G1", "G2", "G3", "I1", "I2", "I3",
+                    "J1", "J2", "J3", "L1", "M1", "S1", "T1", "U1", "Y1", "Y2", "Y3", "Z1", "Z2"]
+        #k_groups = ["C1", "J1", "M1", "T1", "Y1", "Y2"]
+    elif dataset_type == "UCItctodd":
+        k_groups = [i for i in range(10)]
+    elif dataset_type == "UCIcharacter":
+        k_groups = [i for i in range(10)]
+    else:
+        assert False
+        
     errors = []
     for i in range(k_groups.__len__()):
         validation_group = k_groups[i-1]
@@ -149,11 +208,11 @@ def crossvalidation(completion_alg, sigmas, costs):
 def compare_completion_algorithms(sigmas, costs):
     result_ground_truth = crossvalidation("", sigmas, costs)
     #result_nuclear_norm_minimization = crossvalidation("NuclearNormMinimization", sigmas, costs)
-    result_soft_impute = crossvalidation("SoftImpute", sigmas, costs)
+    #result_soft_impute = crossvalidation("SoftImpute", sigmas, costs)
 
     print("Ground Truth: " + repr(result_ground_truth))
     #print("NuclearNormMinimization: " + repr(result_nuclear_norm_minimization))
-    print("SoftImpute: " + repr(result_soft_impute))
+    #print("SoftImpute: " + repr(result_soft_impute))
 
 if __name__ == "__main__":
     config_json_file = sys.argv[1]

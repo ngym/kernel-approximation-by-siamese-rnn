@@ -1,5 +1,6 @@
 import unittest
 import svm
+import numpy as np
 
 class Test_separate_gram(unittest.TestCase):
     def setUp(self):
@@ -8,13 +9,21 @@ class Test_separate_gram(unittest.TestCase):
             row = []
             for j in range(10):
                 row.append((i,j))
+            for j in range(10):
                 row.append((i,j))
             self.mat.append(row.copy())
+        for i in range(10):
+            row = []
+            for j in range(10):
+                row.append((i,j))
+            for j in range(10):
+                row.append((i,j))
             self.mat.append(row.copy())
 
         self.data_attributes = []
         for i in range(10):
             self.data_attributes.append(dict(k_group=i))
+        for i in range(10):
             self.data_attributes.append(dict(k_group=i))
     def test_separate_gram(self):
         for k_group in range(10):
