@@ -1,6 +1,7 @@
 import sys, json
 
 from sklearn.svm import SVC
+from sklearn.preprocessing import LabelBinarizer 
 import sklearn.metrics as metrics
 import scipy.io as sio
 import numpy as np
@@ -112,14 +113,18 @@ def separate_gram(gram, data_attributes, k_group):
 
 def tryout1hyperparameter(cost, train, train_gtruths, validation_or_test, v_or_t_gtruths):
     # indices in the gram matrix is passed to the function to indicate the split. 
-    clf = SVC(C=cost, kernel='precomputed')
+    clf = SVC(C=cost, kernel='precomputed', probability=True)
     clf.fit(np.array(train), np.array(train_gtruths))
-    pred = clf.predict(validation_or_test) # to check
-    #matches = [z[0] == z[1] for z in zip(pred, v_or_t_gtruths)]
-    #score = [m for m in matches if m is False].__len__() / matches.__len__()
-    score = metrics.f1_score(v_or_t_gtruths, pred, average='weighted')
+    pred = clf.predict(validation_or_test)
+    f1_score = metrics.f1_score(v_or_t_gtruths, pred, average='weighted')
+    pred_prob = clf.predict_proba(validation_or_test)
+    lb = LabelBinarizer()
+    y_true = lb.fit_transform(v_or_t_gtruths)
+    assert all(lb.classes_ == clf.classes_)
+    roc_auc_score = metrics.roc_auc_score(y_true=y_true, y_score=pred_prob)
     print("l2regularization_costs: " + repr(cost))
-    print("score: " + repr(score))
+    print("f1_score: " + repr(f1_score))
+    print("roc_auc_score:" + repr(roc_auc_score))
     #print([int(n) for n in list(pred)])
     #print([int(n) for n in v_or_t_gtruths])
     print(" " + functools.reduce(lambda a,b: a + "  " + b, [t for t in v_or_t_gtruths]))
@@ -128,9 +133,7 @@ def tryout1hyperparameter(cost, train, train_gtruths, validation_or_test, v_or_t
                                  ["!" if z[0] != z[1] else " "
                                   for z in zip(list(pred), v_or_t_gtruths)]))
     print("---")
-    #fpr, tpr, thresholds = metrics.roc_curve(v_or_t_gtruths, pred)
-    #score = metrics.auc(fpr, tpr)
-    return score
+    return (roc_auc_score, f1_score)
 
 def optimizehyperparameter(completion_alg,
                            sigmas, # [sigma]
@@ -191,7 +194,7 @@ def crossvalidation(completion_alg, sigmas, costs):
                     "J1", "J2", "J3", "L1", "M1", "S1", "T1", "U1", "Y1", "Y2", "Y3", "Z1", "Z2"]
         #k_groups = ["C1", "J1", "M1", "T1", "Y1", "Y2"]
     elif dataset_type == "UCItctodd":
-        k_groups = [i for i in range(10)]
+        k_groups = [i for i in range(1, 10)]
     elif dataset_type == "UCIcharacter":
         k_groups = [i for i in range(10)]
     else:
@@ -203,16 +206,20 @@ def crossvalidation(completion_alg, sigmas, costs):
         test_group = k_groups[i]
         errors.append(optimizehyperparameter(completion_alg, sigmas, costs, validation_group, test_group))
         # /* indices in the gram matrix is passed to the function to indicate the split. */
-    return np.average(errors)
+    return np.average([rocauc_f1[0] for rocauc_f1 in errors]), np.average([rocauc_f1[1] for rocauc_f1 in errors])
 
 def compare_completion_algorithms(sigmas, costs):
-    result_ground_truth = crossvalidation("", sigmas, costs)
-    #result_nuclear_norm_minimization = crossvalidation("NuclearNormMinimization", sigmas, costs)
-    #result_soft_impute = crossvalidation("SoftImpute", sigmas, costs)
-
-    print("Ground Truth: " + repr(result_ground_truth))
-    #print("NuclearNormMinimization: " + repr(result_nuclear_norm_minimization))
-    #print("SoftImpute: " + repr(result_soft_impute))
+    if loss_persentage == 0:
+        result_ground_truth = crossvalidation("", sigmas, costs)
+        print("Ground Truth: ROC_AUC:%.5f, F1:%.5f" % result_ground_truth)
+    else:
+        #result_soft_impute = crossvalidation("SoftImpute", sigmas, costs)
+        #print("SoftImpute: ROC_AUC:%.5f, F1:%.5f" % result_soft_impute)
+        result_RNN_residual = crossvalidation("RNN_residual", sigmas, costs)
+        print("RNN_residual: ROC_AUC:%.5f, F1:%.5f" % result_RNN_residual)
+        
+        #result_nuclear_norm_minimization = crossvalidation("NuclearNormMinimization", sigmas, costs)
+        #print("NuclearNormMinimization: " + repr(result_nuclear_norm_minimization))
 
 if __name__ == "__main__":
     config_json_file = sys.argv[1]
