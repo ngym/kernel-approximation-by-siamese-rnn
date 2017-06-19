@@ -43,15 +43,14 @@ def create_base_network(input_shape, mask_value):
     '''Base network to be shared (eq. to feature extraction).
     '''
     seq = Sequential()
-    #seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
+    seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
     #seq.add(Dropout(0.1))
     #seq.add(LSTM(100, kernel_regularizer=l2(0.01), return_sequences=True))
     #seq.add(Dropout(0.1))
     seq.add(ResidualRNN(units=100, hidden_units=30, normalization_axes=[1, 2], kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
                         decoder_regularizer=l2(0.01),
                         dropout=0.1, return_sequences=True,
-                        implementation=1,
-                        input_shape=input_shape))
+                        implementation=2))
     seq.add(Lambda(lambda x: x[:, -1, :]))
     seq.add(Dropout(0.1))
     seq.add(Dense(30, activation='linear', kernel_regularizer=l2(0.01)))
@@ -327,7 +326,8 @@ def main():
             elif os.uname().nodename == 'Regulus.local':
                 reader = csv.reader(open(f.replace(' ', '')\
                                          .replace("/home/ngym/NFSshare/Lorincz_Lab",
-                                                  "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset"),
+                                                  "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset")\
+                                         .replace("/UCI", "/UCI/AUSLAN"),
                                     "r"), delimiter='\t')
             else:
                 reader = csv.reader(open(f.replace(' ', ''), "r"), delimiter='\t')
