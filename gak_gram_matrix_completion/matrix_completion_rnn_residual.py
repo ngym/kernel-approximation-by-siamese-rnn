@@ -47,13 +47,13 @@ def create_base_network(input_shape, mask_value):
     #seq.add(Dropout(0.1))
     #seq.add(LSTM(100, kernel_regularizer=l2(0.01), return_sequences=True))
     #seq.add(Dropout(0.1))
-    seq.add(ResidualRNN(units=15, hidden_units=5, normalization_axes=[1, 2], kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
+    seq.add(ResidualRNN(units=5, hidden_units=2, normalization_axes=[1, 2], kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
                         decoder_regularizer=l2(0.01),
                         dropout=0.1, return_sequences=True,
                         implementation=2))
     seq.add(Lambda(lambda x: x[:, -1, :]))
     seq.add(Dropout(0.1))
-    seq.add(Dense(5, activation='linear', kernel_regularizer=l2(0.01)))
+    seq.add(Dense(2, activation='linear', kernel_regularizer=l2(0.01)))
     seq.add(BatchNormalization())
     return seq
 
