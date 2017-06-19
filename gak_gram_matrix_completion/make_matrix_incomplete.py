@@ -21,3 +21,24 @@ def make_matrix_incomplete(seed, similarities, incomplete_percentage):
         
     print("Incomplete matrix is provided.")
     return incomplete_similarities, dropped_elements
+
+def drop_samples(similarities, indices):
+    dropped_elements = []
+    for index in indices:
+        similarities, dropped_elements_ = drop_one_sample(similarities, index)
+        dropped_elements += dropped_elements_
+    return similarities, dropped_elements
+
+def drop_one_sample(similarities, index):
+    incomplete_similarities = copy.deepcopy(similarities)
+    dropped_elements = []
+    for i in range(len(similarities)):
+        incomplete_similarities[i][index] = np.nan
+        dropped_elements.append((i, index))
+    for j in range(len(similarities[0])):
+        incomplete_similarities[index][j] = np.nan
+        dropped_elements.append((index, j))
+
+    print("Incomplete matrix is provided.")
+    return incomplete_similarities, dropped_elements
+    
