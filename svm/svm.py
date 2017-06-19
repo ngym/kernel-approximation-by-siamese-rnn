@@ -213,10 +213,10 @@ def compare_completion_algorithms(sigmas, costs):
         result_ground_truth = crossvalidation("", sigmas, costs)
         print("Ground Truth: ROC_AUC:%.5f, F1:%.5f" % result_ground_truth)
     else:
-        #result_soft_impute = crossvalidation("SoftImpute", sigmas, costs)
-        #print("SoftImpute: ROC_AUC:%.5f, F1:%.5f" % result_soft_impute)
-        result_RNN_residual = crossvalidation("RNN_residual", sigmas, costs)
-        print("RNN_residual: ROC_AUC:%.5f, F1:%.5f" % result_RNN_residual)
+        result_soft_impute = crossvalidation("SoftImpute", sigmas, costs)
+        print("SoftImpute: ROC_AUC:%.5f, F1:%.5f" % result_soft_impute)
+        #result_RNN_residual = crossvalidation("RNN_residual", sigmas, costs)
+        #print("RNN_residual: ROC_AUC:%.5f, F1:%.5f" % result_RNN_residual)
         
         #result_nuclear_norm_minimization = crossvalidation("NuclearNormMinimization", sigmas, costs)
         #print("NuclearNormMinimization: " + repr(result_nuclear_norm_minimization))
