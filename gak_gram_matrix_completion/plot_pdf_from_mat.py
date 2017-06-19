@@ -12,11 +12,14 @@ import matplotlib.pyplot as plt
 def plot(file_name, similarities, files, separators, labels,
          sigma, loss):
     assert len(separators) == len(labels) - 1
+
+    cmap = plt.get_cmap('bwr')
+    cmap.set_bad('black')
     
     fig, ax = plt.subplots()
     f1 = ax.imshow(similarities,
                    interpolation='nearest',
-                   cmap='bwr',
+                   cmap=cmap,
                    vmax=1, vmin=0
                    )
 
@@ -155,5 +158,24 @@ def main():
          sigma,
          loss)
 
+    pdf_out = filename.replace(".mat", "_dropped.pdf")
+    plot(pdf_out,
+         mat['dropped_gram'],
+         files,
+         separators,
+         labels,
+         sigma,
+         loss)
+    
+    pdf_out = filename.replace(".mat", "_orig.pdf")
+    plot(pdf_out,
+         mat['orig_gram'],
+         files,
+         separators,
+         labels,
+         sigma,
+         loss)
+    
+    
 if __name__ == "__main__":
     main()
