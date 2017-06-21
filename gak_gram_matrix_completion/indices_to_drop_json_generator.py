@@ -8,6 +8,8 @@ if os.uname().nodename == 'Regulus.local':
     USE_CASE_RNN_COMPLETION_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
 elif os.uname().nodename == 'nipgcore1':
     USE_CASE_RNN_COMPLETION_DIR = "/home/milacski/shota/USE_CASE_RNN_COMPLETION"
+elif os.uname().nodename.split('.')[0] in {'procyon', 'pollux', 'capella', 'aldebaran', 'rigel'}:
+    USE_CASE_RNN_COMPLETION_DIR = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
 else:
     print("unsupported server")
     exit -1
@@ -26,7 +28,7 @@ for (direc, orig_gram_file_path) in original_gram_files:
     bloch_size = length // 10
 
     permutated_indices = np.random.permutation([i for i in range(length)])
-    
+
     for k in range(10):
         dataset_dir = os.path.join(USE_CASE_RNN_COMPLETION_DIR, direc)
         k_dir = os.path.join(dataset_dir, str(k))
@@ -53,3 +55,14 @@ for (direc, orig_gram_file_path) in original_gram_files:
         fd = open(json_file_name, "w")
         json.dump(json_dict, fd)
         fd.close()
+
+        if os.uname().nodename.split('.')[0] in {'procyon', 'pollux', 'capella', 'aldebaran', 'rigel'}:
+            job_file_name = os.path.join(k_dir, orig_gram_file + "_k" + str(k) + ".job")
+            fd = open(job_file_name, "w")
+            time_file_name = os.path.join(k_dir, "time_command.output")
+
+            fd.write("echo $SHELL\n")
+            fd.write("setenv LD_LIBRARY_PATH /home/ngym/NFSshare/tflib/lib64/:/home/ngym/NFSshare/tflib/usr/lib64/\n")
+            fd.write("~/NFSshare/tflib/lib64/ld-2.17.so /usr/bin/time -v -o " + time_file_name + \
+                     "~/NFSshare/tflib/lib64/ld-2.17.so /usr/bin/python3 matrix_completion_rnn_residual.py " + job_file_name + "\n")
+            fd.close()
