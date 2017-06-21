@@ -40,22 +40,22 @@ def batch_dot(vects):
     x, y = vects
     return K.batch_dot(x, y, axes=1)
 
-def create_base_network(input_shape, mask_value):
+def create_base_network(input_shape, mask_value, units=5, hidden_units=3):
     '''Base network to be shared (eq. to feature extraction).
     '''
     seq = Sequential()
     seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
-    #seq.add(Dropout(0.1))
-    #seq.add(LSTM(100, kernel_regularizer=l2(0.01), return_sequences=True))
-    #seq.add(Dropout(0.1))
-    seq.add(ResidualRNN(units=5, hidden_units=2, normalization_axes=[1, 2],
+
+    # for UCI character and tctodd: seq.add(ResidualRNN(units=5, hidden_units=2, normalization_axes=[1, 2],
+    seq.add(ResidualRNN(units=units, hidden_units=hidden_units, normalization_axes=[1, 2],
                         kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
                         decoder_regularizer=l2(0.01),
                         dropout=0.1, return_sequences=True,
                         implementation=2))
     seq.add(Lambda(lambda x: x[:, -1, :]))
     seq.add(Dropout(0.1))
-    seq.add(Dense(2, activation='linear', kernel_regularizer=l2(0.01)))
+    # for UCI character and tctodd: seq.add(Dense(2, activation='linear', kernel_regularizer=l2(0.01)))
+    seq.add(Dense(hidden_units, activation='linear', kernel_regularizer=l2(0.01)))
     seq.add(BatchNormalization())
     return seq
 
@@ -175,7 +175,7 @@ def test(model, te_indices, incomplete_matrix, seqs):
         num_predicted_samples += preds_batch.shape[0]
     return preds
 
-def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience, lossesfile, hdf5_out_rnn):
+def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience, lossesfile, hdf5_out_rnn, units, hidden_units):
     num_seqs = len(seqs_)
     incomplete_matrix = np.array(incomplete_matrix_)
     time_dim = max([seq_.shape[0] for seq_ in seqs_.values()])
@@ -191,7 +191,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience, lossesfil
     K.clear_session()
     
     input_shape = (time_dim, feat_dim)
-    base_network = create_base_network(input_shape, pad_value)
+    base_network = create_base_network(input_shape, pad_value, units, hidden_units)
 
     input_a = Input(shape=input_shape)
     input_b = Input(shape=input_shape)
@@ -277,6 +277,8 @@ def main():
         completionanalysisfile = sys.argv[3]
         epochs = 2
         patience = 2
+        units = 5
+        hidden_units = 2
     else:
         random_drop = False
         config_json_file = sys.argv[1]
@@ -287,7 +289,9 @@ def main():
         completionanalysisfile = config_dict['completionanalysisfile']
         epochs = config_dict['epochs']
         patience = config_dict['patience']
-        
+        units = config_dict['units']
+        hidden_units = config_dict['units']
+
     mat = io.loadmat(gram_filename)
     similarities = mat['gram']
     files = mat['indices']
@@ -313,8 +317,10 @@ def main():
     t_start = time.time()
     # "RnnCompletion"
     completed_similarities, fit_start, fit_finish, pred_start, \
-        pred_finish = rnn_matrix_completion(incomplete_similarities, seqs, epochs, patience,
-                                            lossesfile, hdf5_out_rnn)
+        pred_finish = rnn_matrix_completion(incomplete_similarities, seqs,
+                                            epochs, patience,
+                                            lossesfile, hdf5_out_rnn,
+                                            units, hidden_units)
     completed_similarities = np.array(completed_similarities)
     # eigenvalue check
     psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
