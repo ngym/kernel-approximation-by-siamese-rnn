@@ -221,7 +221,7 @@ def compare_completion_algorithms(sigmas, costs):
         #result_nuclear_norm_minimization = crossvalidation("NuclearNormMinimization", sigmas, costs)
         #print("NuclearNormMinimization: " + repr(result_nuclear_norm_minimization))
 
-if __name__ == "__main__":
+def main():
     config_json_file = sys.argv[1]
     config_dict = json.load(open(config_json_file, 'r'))
 
@@ -233,3 +233,6 @@ if __name__ == "__main__":
     data_dir = config_dict['data_dir']
     
     compare_completion_algorithms(sigmas_, l2regularization_costs)
+
+if __name__ == "__main__":
+    main()
