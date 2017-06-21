@@ -10,6 +10,7 @@ elif os.uname().nodename == 'nipgcore1':
     USE_CASE_RNN_COMPLETION_DIR = "/home/milacski/shota/USE_CASE_RNN_COMPLETION"
 elif os.uname().nodename.split('.')[0] in {'procyon', 'pollux', 'capella', 'aldebaran', 'rigel'}:
     USE_CASE_RNN_COMPLETION_DIR = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
+    PROGRAM = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION/matrix_completion_rnn_residual.py"
 else:
     print("unsupported server")
     exit -1
@@ -69,5 +70,5 @@ for (direc, orig_gram_file_path) in original_gram_files:
                 fd.write("echo $SHELL\n")
                 fd.write("setenv LD_LIBRARY_PATH /home/ngym/NFSshare/tflib/lib64/:/home/ngym/NFSshare/tflib/usr/lib64/\n")
                 fd.write("~/NFSshare/tflib/lib64/ld-2.17.so /usr/bin/time -v -o " + time_file_name + \
-                         " ~/NFSshare/tflib/lib64/ld-2.17.so /usr/bin/python3 matrix_completion_rnn_residual.py " + job_file_name + "\n")
+                         " ~/NFSshare/tflib/lib64/ld-2.17.so /usr/bin/python3 " + PROGRAM + " " + job_file_name + "\n")
                 fd.close()
