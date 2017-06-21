@@ -33,7 +33,7 @@ for (direc, orig_gram_file_path) in original_gram_files:
 
     for units, hidden_units in units_list:
         for k in range(10):
-            dataset_dir = os.path.join(USE_CASE_RNN_COMPLETION_DIR, str(units), direc)
+            dataset_dir = os.path.join(USE_CASE_RNN_COMPLETION_DIR, direc, str(units))
             k_dir = os.path.join(dataset_dir, str(k))
             
             try:
