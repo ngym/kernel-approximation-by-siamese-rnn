@@ -91,7 +91,6 @@ def train_and_validate(model, tr_indices, v_indices,
     list_v_loss_batch = []
     wait = 0
     best_v_loss = np.inf
-    best_sum_validation_loss = np.inf
     fd_losses.write("epoch, num_batch_iteration, ave_tr_loss, tr_loss_batch, ave_v_loss, v_loss_batch\n")
     for epoch in range(1, epochs + 1):
         num_trained_samples = 0
