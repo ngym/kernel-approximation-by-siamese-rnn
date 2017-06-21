@@ -118,7 +118,6 @@ def train_and_validate(model, tr_indices, v_indices,
             fd_losses.write("%d, %d, %.5f, %.5f, nan, nan\n" % (epoch, num_batch_iteration, ave_tr_loss, tr_loss_batch))
             fd_losses.flush()
             num_batch_iteration += 1
-            return
         print("epoch:[%d/%d] training:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
               (epoch, epochs, num_trained_samples,
                len(tr_indices), cur_time - tr_start,
