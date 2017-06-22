@@ -113,7 +113,6 @@ for (direc, units, hidden_units, orig_gram_file_path, gen) in dataset_settings:
         k_dir = os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                              direc,
                              str(units),
-                             dataset_dir,
                              str(k))
         
         try:
