@@ -46,15 +46,13 @@ def create_base_network(input_shape, mask_value, units=5, hidden_units=3):
     seq = Sequential()
     seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
 
-    # for UCI character and tctodd: seq.add(ResidualRNN(units=5, hidden_units=2, normalization_axes=[1, 2],
-    seq.add(ResidualRNN(units=units, hidden_units=hidden_units, normalization_axes=[1, 2],
+    seq.add(ResidualRNN(units=units, hidden_units=hidden_units, normalization_axes=2,
                         kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
                         decoder_regularizer=l2(0.01),
-                        dropout=0.1, return_sequences=True,
+                        return_sequences=True,
                         implementation=2))
     seq.add(Lambda(lambda x: x[:, -1, :]))
-    seq.add(Dropout(0.1))
-    # for UCI character and tctodd: seq.add(Dense(2, activation='linear', kernel_regularizer=l2(0.01)))
+    # Dropout and batch normalization do not work properly together. # seq.add(Dropout(0)) 
     seq.add(Dense(hidden_units, activation='linear', kernel_regularizer=l2(0.01)))
     seq.add(BatchNormalization())
     return seq
