@@ -85,18 +85,21 @@ class Drop_generator_6DMG():
 
 dataset_settings = [
     ("UCItctodd/RNN", 5, 2,
-     "original_gram_files/gram_UCItctodd_sigma12.000.mat",
+     os.path.join(USE_CASE_RNN_COMPLETION_DIR,
+                  "original_gram_files/gram_UCItctodd_sigma12.000.mat"),
      Drop_generator_UCItctodd(
          os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                       "original_gram_files/gram_UCItctodd_sigma12.000.mat")
      )),
     ("UCIcharacter/RNN", 5, 2,
-     "original_gram_files/gram_UCIcharacter_sigma20.000.mat",
+     os.path.join(USE_CASE_RNN_COMPLETION_DIR,
+                  "original_gram_files/gram_UCIcharacter_sigma20.000.mat"),
      Drop_generator_UCIcharacter(
          os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                       "original_gram_files/gram_UCIcharacter_sigma20.000.mat"))),
     ("6DMG/RNN", 5, 2,
-     "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat",
+     os.path.join(USE_CASE_RNN_COMPLETION_DIR,
+                  "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat"),
      Drop_generator_6DMG(
          os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                       "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat")))
@@ -107,8 +110,12 @@ np.random.seed(1)
 for (direc, units, hidden_units, orig_gram_file_path, gen) in dataset_settings:
     k = 0
     for indices_to_drop in gen:
-        dataset_dir = os.path.join(USE_CASE_RNN_COMPLETION_DIR, direc, str(units))
-        k_dir = os.path.join(dataset_dir, str(k))
+        k_dir = os.path.join()
+        k_dir = os.path.join(USE_CASE_RNN_COMPLETION_DIR,
+                             direc,
+                             str(units),
+                             dataset_dir,
+                             str(k))
         
         try:
             os.makedirs(k_dir)
