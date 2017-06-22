@@ -110,7 +110,6 @@ np.random.seed(1)
 for (direc, units, hidden_units, orig_gram_file_path, gen) in dataset_settings:
     k = 0
     for indices_to_drop in gen:
-        k_dir = os.path.join()
         k_dir = os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                              direc,
                              str(units),
