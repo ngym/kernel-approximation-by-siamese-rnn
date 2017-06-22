@@ -41,4 +41,31 @@ def drop_one_sample(similarities, index):
 
     print("Incomplete matrix is provided.")
     return incomplete_similarities, dropped_elements
+
+def drop_randomly_in_samples(similarities, indices, loss_persentage):
+    dropped_elements = []
+    for index in indices:
+        similarities, dropped_elements_ = drop_randomly_in_a_sample(similarities,
+                                                                    index,
+                                                                    loss_persentage)
+        dropped_elements += dropped_elements_
+    return similarities, dropped_elements
+
+def drop_randomly_in_a_sample(similarities, index, loss_persentage):
+    length = len(similarities)
+
+    permutated_indices = np.random.permutation([i for i in range(length)])
+    num_to_drop = length * loss_persentage // 100
+    indices_to_drop = permutated_indices[:num_to_drop]
+
+    incomplete_similarities = copy.deepcopy(similarities)
+    dropped_elements = []
+    for i in indices_to_drop:
+        incomplete_similarities[i][index] = np.nan
+        dropped_elements.append((i, index))
+        incomplete_similarities[index][i] = np.nan
+        dropped_elements.append((index, i))
+
+    return incomplete_similarities, dropped_elements
+        
     
