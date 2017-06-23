@@ -25,7 +25,7 @@ from keras.regularizers import l2
 from keras.callbacks import ModelCheckpoint, EarlyStopping, History
 
 from nearest_positive_semidefinite import nearest_positive_semidefinite
-from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped_elements
+from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped_elements, mean_ratio_between_absolute_loss_and_absolute_true_value_of_dropped_elements
 from plot_gram_matrix import plot
 from make_matrix_incomplete import make_matrix_incomplete, drop_samples
 from find_and_read_sequences import find_and_read_sequences
@@ -35,34 +35,22 @@ from kerassupervisedrnn import ResidualRNN
 from multi_gpu import make_parallel
 ngpus = 2
 
-
 def batch_dot(vects):
     x, y = vects
     return K.batch_dot(x, y, axes=1)
 
-def create_base_network(input_shape, mask_value, units=5, hidden_units=2):
+def create_base_network(input_shape, mask_value, lstm_units=5, dense_units=2):
     '''Base network to be shared (eq. to feature extraction).
     '''
     seq = Sequential()
     seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
 
-    seq.add(LSTM(units, kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
-                 dropout=0, implementation=2, return_sequences=False))
-    seq.add(Dropout(0))
-    seq.add(Dense(hidden_units, activation='linear', kernel_regularizer=l2(0.01)))
-    seq.add(BatchNormalization())
-    
-    """
-    seq.add(ResidualRNN(units=units, hidden_units=hidden_units, normalization_axes=2,
-                        kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
-                        decoder_regularizer=l2(0.01),
-                        return_sequences=True,
-                        implementation=2))
-    seq.add(Lambda(lambda x: x[:, -1, :]))
-    # Dropout and batch normalization do not work properly together. # seq.add(Dropout(0)) 
-    seq.add(Dense(hidden_units, activation='linear', kernel_regularizer=l2(0.01)))
-    seq.add(BatchNormalization())
-    """
+    seq.add(LSTM(lstm_units,
+                 dropout=0.3, implementation=2, return_sequences=True)) 
+    seq.add(LSTM(lstm_units,
+                 dropout=0.3, implementation=2, return_sequences=False))
+
+    seq.add(Dense(dense_units, activation='linear'))
     return seq
 
 def generator_sequence_pairs(indices_list_, incomplete_matrix, seqs):
@@ -181,12 +169,13 @@ def test(model, te_indices, incomplete_matrix, seqs):
         num_predicted_samples += preds_batch.shape[0]
     return preds
 
-def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience, lossesfile, hdf5_out_rnn, units, hidden_units):
+def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience,
+                          lossesfile, hdf5_out_rnn, lstm_units, dense_units):
     num_seqs = len(seqs_)
     incomplete_matrix = np.array(incomplete_matrix_)
     time_dim = max([seq_.shape[0] for seq_ in seqs_.values()])
 
-    pad_value =  -123456789 # np.inf #np.nan # 0 #np.NINF #np.inf
+    pad_value = -123456789 # np.inf #np.nan # 0 #np.NINF #np.inf
     seqs = pad_sequences([s.tolist() for s in seqs_.values()],
                          maxlen=time_dim, dtype='float32',
                          padding='post', value=pad_value)
@@ -195,9 +184,9 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience, lossesfil
 
     # network definition
     K.clear_session()
-    
+
     input_shape = (time_dim, feat_dim)
-    base_network = create_base_network(input_shape, pad_value, units, hidden_units)
+    base_network = create_base_network(input_shape, pad_value, lstm_units, dense_units)
 
     input_a = Input(shape=input_shape)
     input_b = Input(shape=input_shape)
@@ -215,9 +204,9 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience, lossesfil
 
     # train
     rms = RMSprop(clipnorm=1.)
-    
+
     if ngpus > 1:
-        model = make_parallel(model,ngpus)
+        model = make_parallel(model, ngpus)
     model.compile(loss='mse', optimizer=rms)
     #model_checkpoint = ModelCheckpoint(hdf5_out_rnn, save_best_only=True)#, save_weights_only=True)
     #early_stopping = EarlyStopping(patience=15)
@@ -257,7 +246,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience, lossesfil
                   for j in range(i, num_seqs)
                   if np.isnan(incomplete_matrix[i][j])]
     #num_dropped = len(te_indices)
-    
+
     pred_start = time.time()
     preds = test(model, te_indices, incomplete_matrix, seqs)
     pred_finish = time.time()
@@ -272,10 +261,11 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience, lossesfil
         assert not np.isnan(completed_matrix[i][j])
     assert not np.any(np.isnan(np.array(completed_matrix)))
     assert not np.any(np.isinf(np.array(completed_matrix)))
-    
+
     return completed_matrix, fit_start, fit_finish, pred_start, pred_finish
 
 def main():
+    main_start = time.time()
     if len(sys.argv) != 2:
         random_drop = True
         gram_filename = sys.argv[1]
@@ -283,20 +273,20 @@ def main():
         completionanalysisfile = sys.argv[3]
         epochs = 2
         patience = 2
-        units = 5
-        hidden_units = 2
+        lstm_units = 5
+        dense_units = 2
     else:
         random_drop = False
         config_json_file = sys.argv[1]
         config_dict = json.load(open(config_json_file, 'r'))
-        
+
         gram_filename = config_dict['gram_file']
         indices_to_drop = config_dict['indices_to_drop']
         completionanalysisfile = config_dict['completionanalysisfile']
         epochs = config_dict['epochs']
         patience = config_dict['patience']
-        units = config_dict['units']
-        hidden_units = config_dict['units']
+        lstm_units = config_dict['lstm_units']
+        dense_units = config_dict['dense_units']
 
     mat = io.loadmat(gram_filename)
     similarities = mat['gram']
@@ -319,18 +309,17 @@ def main():
         mat_out_rnn  = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_LSTM.mat")
         hdf5_out_rnn  = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_LSTM.hdf5")
 
-
-    t_start = time.time()
     # "RnnCompletion"
     completed_similarities, fit_start, fit_finish, pred_start, \
         pred_finish = rnn_matrix_completion(incomplete_similarities, seqs,
                                             epochs, patience,
                                             lossesfile, hdf5_out_rnn,
-                                            units, hidden_units)
+                                            lstm_units, dense_units)
     completed_similarities = np.array(completed_similarities)
     # eigenvalue check
+    npsd_start = time.time()
     psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
-    t_finish = time.time()
+    npsd_finish = time.time()
 
     # OUTPUT
     plot(html_out_rnn,
@@ -348,43 +337,39 @@ def main():
                                      dropped_indices_number=indices_to_drop,
                                      orig_gram=similarities,
                                      indices=files))
-        
+
     print("RnnCompletion files are output.")
 
     mse = mean_squared_error(similarities, psd_completed_similarities)
-    msede = mean_squared_error_of_dropped_elements(similarities, psd_completed_similarities, dropped_elements)
+    msede = mean_squared_error_of_dropped_elements(similarities,
+                                                   psd_completed_similarities,
+                                                   dropped_elements)
+    mr = mean_ratio_between_absolute_loss_and_absolute_true_value_of_dropped_elements(similarities,
+                                                                                      psd_completed_similarities,
+                                                                                      dropped_elements)
 
-
-    fd_analysis = open(completionanalysisfile, "w")
-    fd_analysis.write("number of dropped elements: " + str(len(dropped_elements)))
-    fd_analysis.write("\n")
-
-    fd_analysis.write("fit starts: " + str(fit_start))
-    fd_analysis.write("\n")
-    fd_analysis.write("fit finishes: " + str(fit_finish))
-    fd_analysis.write("\n")
-    fd_analysis.write("fit duration: " + str(fit_finish - fit_start))
-    fd_analysis.write("\n")
+    main_finish = time.time()
     
-    fd_analysis.write("pred starts: " + str(pred_start))
-    fd_analysis.write("\n")
-    fd_analysis.write("pred finishes: " + str(pred_finish))
-    fd_analysis.write("\n")
-    fd_analysis.write("pred duration: " + str(pred_finish - pred_start))
-    fd_analysis.write("\n")
-    
-    fd_analysis.write("start: " + str(t_start))
-    fd_analysis.write("\n")
-    fd_analysis.write("finish: " + str(t_finish))
-    fd_analysis.write("\n")
-    fd_analysis.write("duration: " + str(t_finish - t_start))
-    fd_analysis.write("\n")
-    fd_analysis.write("Mean squared error: " + str(mse))
-    fd_analysis.write("\n")
-    fd_analysis.write("Mean squared error of dropped elements: " + str(msede))
-    fd_analysis.write("\n")
-    fd_analysis.close()
+    analysis_json = {}
+    analysis_json['number_of_dropped_elements'] = len(dropped_elements)
+    analysis_json['fit_starts'] = fit_start
+    analysis_json['fit_finishes'] = fit_finish
+    analysis_json['fit_duration'] = fit_finish - fit_start
+    analysis_json['pred_starts'] = pred_start
+    analysis_json['pred_finishes'] = pred_finish
+    analysis_json['pred_duration'] = pred_finish - pred_start
+    analysis_json['npsd_start'] = npsd_start
+    analysis_json['npsd_finish'] = npsd_finish
+    analysis_json['main_start'] = main_start
+    analysis_json['main_finish'] = main_finish
+    analysis_json['duration'] = npsd_finish - npsd_start
+    analysis_json['mean_squared_error'] = mse
+    analysis_json['mean_squared_error_of_dropped_elements'] = msede
+    analysis_json['mean_ratio_between_absolute_loss_and_absolute_true_value_of_dropped_elements'] = mr
 
+    fd = open(completionanalysisfile, "w")
+    json.dump(analysis_json, fd)
+    fd.close()
 
 if __name__ == "__main__":
     main()
