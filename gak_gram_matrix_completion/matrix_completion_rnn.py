@@ -202,7 +202,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience,
     #dot = Lambda(batch_dot)([processed_a, processed_b])
     #out = Activation('sigmoid')(dot)
     con = Concatenate()([processed_a, processed_b])
-    dns = Dense(units=dense_units, activation='linear')(con)
+    dns = Dense(units=1, activation='linear')(con)
     out = Activation('sigmoid')(dns)
 
     model = Model([input_a, input_b], out)
