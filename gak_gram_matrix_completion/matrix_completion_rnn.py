@@ -24,6 +24,7 @@ from keras.preprocessing.sequence import pad_sequences
 from keras.regularizers import l2
 from keras.callbacks import ModelCheckpoint, EarlyStopping, History
 from keras.layers.wrappers import Bidirectional
+from keras.layers.merge import Concatenate
 
 from nearest_positive_semidefinite import nearest_positive_semidefinite
 from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped_elements, mean_ratio_between_absolute_loss_and_absolute_true_value_of_dropped_elements
@@ -198,8 +199,11 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience,
     processed_a = base_network(input_a)
     processed_b = base_network(input_b)
 
-    dot = Lambda(batch_dot)([processed_a, processed_b])
-    out = Activation('sigmoid')(dot)
+    #dot = Lambda(batch_dot)([processed_a, processed_b])
+    #out = Activation('sigmoid')(dot)
+    con = Concatenate()([processed_a, processed_b])
+    dns = Dense(activation='linear')(con)
+    out = Activation('sigmoid')(dns)
 
     model = Model([input_a, input_b], out)
 
