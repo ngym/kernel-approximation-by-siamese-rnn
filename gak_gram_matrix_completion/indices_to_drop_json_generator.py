@@ -110,7 +110,7 @@ for (direc, unit_settings, orig_gram_file_path, generator) in dataset_settings:
         for indices_to_drop in gen:
             k_dir = os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                                  direc,
-                                 str(units),
+                                 str(lstm_units),
                                  str(k))
             
             try:
