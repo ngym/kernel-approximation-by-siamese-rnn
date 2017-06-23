@@ -85,17 +85,17 @@ class Drop_generator_6DMG():
 
 dataset_settings = [
     ("UCItctodd/LSTM",
-     [(5, 2)],
+     [(5, 2), (30, 10), (200, 100)],
      os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                   "original_gram_files/gram_UCItctodd_sigma12.000.mat"),
      Drop_generator_UCItctodd),
     ("UCIcharacter/LSTM",
-     [(5, 2)],
+     [(5, 2), (30, 10), (200, 100)],
      os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                   "original_gram_files/gram_UCIcharacter_sigma20.000.mat"),
      Drop_generator_UCIcharacter),
     ("6DMG/LSTM",
-     [(5, 2), (30, 10)],
+     [(5, 2), (30, 10), (200, 100)],
      os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                   "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat"),
      Drop_generator_6DMG)
