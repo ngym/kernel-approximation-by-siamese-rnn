@@ -18,7 +18,7 @@ from sklearn.metrics import mean_squared_error
 from keras.datasets import mnist
 from keras.models import Sequential, Model
 from keras.layers import Dense, Dropout, Input, Lambda, LSTM, GRU, Masking, Activation, BatchNormalization
-from keras.optimizers import RMSprop
+from keras.optimizers import RMSprop, Adam
 from keras import backend as K
 from keras.preprocessing.sequence import pad_sequences
 from keras.regularizers import l2
@@ -203,7 +203,7 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience,
     model = Model([input_a, input_b], out)
 
     # train
-    rms = RMSprop(clipnorm=1.)
+    rms = Adam(clipnorm=1.)
 
     if ngpus > 1:
         model = make_parallel(model, ngpus)
