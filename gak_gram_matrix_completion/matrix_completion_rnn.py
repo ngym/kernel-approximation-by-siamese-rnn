@@ -23,6 +23,7 @@ from keras import backend as K
 from keras.preprocessing.sequence import pad_sequences
 from keras.regularizers import l2
 from keras.callbacks import ModelCheckpoint, EarlyStopping, History
+from keras.layers.wrappers import Bidirectional
 
 from nearest_positive_semidefinite import nearest_positive_semidefinite
 from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped_elements, mean_ratio_between_absolute_loss_and_absolute_true_value_of_dropped_elements
@@ -45,10 +46,10 @@ def create_base_network(input_shape, mask_value, lstm_units=5, dense_units=2):
     seq = Sequential()
     seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
 
-    seq.add(LSTM(lstm_units,
-                 dropout=0.3, implementation=2, return_sequences=True)) 
-    seq.add(LSTM(lstm_units,
-                 dropout=0.3, implementation=2, return_sequences=False))
+    seq.add(Bidirectional(LSTM(lstm_units,
+                               dropout=0.3, implementation=2, return_sequences=True)))
+    seq.add(Bidirectional(LSTM(lstm_units,
+                               dropout=0.3, implementation=2, return_sequences=False)))
 
     seq.add(Dense(dense_units, activation='linear'))
     return seq
