@@ -131,7 +131,7 @@ experiments = [
 
 for exp in experiments:
     if exp['dataset'] is "UCIauslan":
-        mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCItctodd_sigma12.000.mat"),
+        mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIauslan_sigma12.000.mat"),
         kfold = KFold_UCIauslan
     elif exp['dataset'] is "UCIcharacter":
         mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIcharacter_sigma20.000.mat"),
