@@ -94,12 +94,11 @@ def main():
             separators = [i]
         labels = ['3', '4']
     elif filename.find("upperChar") != -1:
-        alphabets = ["A", "B", "C", "D", "E", "F", "G",
+        labels = ["A", "B", "C", "D", "E", "F", "G",
                      "H", "I", "J", "K", "L", "M", "N",
                      "O", "P", "Q", "R", "S", "T", "U",
                      "V", "W", "X", "Y", "Z"]
         separators = []
-        labels = []
         for alph in alphabets[:-1]:
             i = 0
             while files[i].find("upper_" + alph) == -1:
@@ -107,7 +106,6 @@ def main():
             while files[i].find("upper_" + alph) != -1:
                 i += 1
             separators.append(i)
-        labels = alphabets
     elif filename.find("UCIcharacter") != -1:
         labels = []
         for f in files:
