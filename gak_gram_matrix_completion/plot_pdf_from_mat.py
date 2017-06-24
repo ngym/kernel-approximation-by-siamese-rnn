@@ -147,10 +147,10 @@ def main():
     else:
         drop_percent = filename.split("loss")[1].split("_")[0].replace(".mat", "") + "%"
 
-    pdf_out = filename.replace(".mat", ".pdf")
+    filename_pdf = filename.replace(".mat", ".pdf")
     
     # OUTPUT
-    plot(pdf_out,
+    plot(filename_pdf,
          gram,
          files,
          separators,
@@ -158,8 +158,8 @@ def main():
          sigma,
          drop_percent)
 
-    pdf_out = filename.replace(".mat", "_dropped.pdf")
-    plot(pdf_out,
+    filename_pdf = filename.replace(".mat", "_dropped.pdf")
+    plot(filename_pdf,
          mat['dropped_gram'],
          files,
          separators,
@@ -167,8 +167,8 @@ def main():
          sigma,
          drop_percent)
     
-    pdf_out = filename.replace(".mat", "_orig.pdf")
-    plot(pdf_out,
+    filename_pdf = filename.replace(".mat", "_orig.pdf")
+    plot(filename_pdf,
          mat['orig_gram'],
          files,
          separators,
