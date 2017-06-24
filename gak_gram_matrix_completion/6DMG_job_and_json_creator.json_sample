@@ -1,18 +1,27 @@
 {
-     "env":{
-	  "json_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/JSON6DMG/",
-	  "job_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/JOB6DMG/",
-	  "time_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/TIME6DMG/"
+     "env": {
+         "program": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/calculate_gram_matrix_by_gak.py",
+         "root_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/",
+	   "python": "/usr/bin/python3",
+	   "time": "/usr/bin/time",
+	   "num_thread": 12
     },
-   "fixed":{
-	  "num_thread": 12,
-	  "output_dir": "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/OUTPUT6DMG/",
-	  "output_filename_format": "gram_${dataset_type}_${data_attribute_type}_sigma${gak_sigma}",
-	  "dataset_type": "upperChar",
-	  "data_mat_files": ["/home/ngym/NFSshare/Lorincz_Lab/6DMG_mat_112712/matR_char/upper_*.mat"]
-    },
-    "iterate": {
-	  "data_attribute_type": ["all"],
-	  "gak_sigma": [0.4, 1, 2, 5, 10, 20]
+    "dataset": {
+        "6DMG": {
+	  	  "output_filename_format": "gram_upperChar_${data_attribute_type}_sigma${gak_sigma}",
+	  	  "gak_sigma": [0.4, 1, 2, 5, 10, 20],
+		  "data_mat_files": ["/home/ngym/NFSshare/Lorincz_Lab/6DMG_mat_112712/matR_char/upper_*.mat"],
+	  	  "data_attribute_type": ["all"]
+	  },
+	  "UCIauslan": {
+		  "output_filename_format": "gram_UCIauslan_sigma${gak_sigma}",
+	  	  "gak_sigma": [0.4, 1, 2, 5, 10, 20],
+	  	  "data_tsd_files": ["/home/ngym/NFSshare/Lorincz_Lab/UCI/all/*tsd"]
+        },
+	  "UCIcharacter": {
+	  	  "output_filename_format": "gram_UCIcharacter_sigma${gak_sigma}",
+		  "gak_sigma": [0.4, 1, 2, 5, 10, 20],
+	  	  "data_mat_file": "/home/ngym/NFSshare/Lorincz_Lab/mixoutALL_shifted.mat"
+        }
     }
 }

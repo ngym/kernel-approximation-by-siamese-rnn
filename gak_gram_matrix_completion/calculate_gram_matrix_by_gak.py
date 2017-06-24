@@ -165,7 +165,7 @@ def main():
 
     output_dir = config_dict['output_dir']
     
-    if dataset_type in {"num", "upperChar"}:
+    if dataset_type in {"num", "upperChar", "6DMGupperChar"}:
         # 6DMG
         data_files = config_dict['data_mat_files']
         data_attribute_type = config_dict['data_attribute_type']
@@ -202,10 +202,10 @@ def main():
         output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
             dict(dataset_type=dataset_type,
                  gak_sigma=("%.3f" % gak_sigma)))
-    elif dataset_type == "UCItctodd":
+    elif dataset_type == "UCIauslan":
         data_files = config_dict['data_tsd_files']
         output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
-            dict(dataset_type=dataset_type,
+             dict(dataset_type=dataset_type,
                  gak_sigma=("%.3f" % gak_sigma)))
         files = []
         for df in data_files:
@@ -224,7 +224,7 @@ def main():
     gak_logfile = output_dir + output_filename_format.replace("_${completion_alg}", "") + ".log"
     gak_logger = Logger(gak_logfile)
 
-    if dataset_type in {"num", "upperChar"}:
+    if dataset_type in {"num", "upperChar", "6DMGupperChar"}:
         # 6DMG
         SixDMG_read_mats_and_build_seqs(files, data_attribute_type)
     elif dataset_type == "audioset":
