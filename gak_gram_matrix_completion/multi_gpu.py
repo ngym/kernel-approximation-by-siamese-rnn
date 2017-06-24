@@ -7,7 +7,32 @@ from keras.models import Model
 import tensorflow as tf
 
 def make_parallel(model, gpu_count):
+    """Data parallelize model on multiple GPUs.
+    Each GPU is assigned a copy of the model
+    Each GPU is processes its own subbatch (batch is divided evenly, remainder assigned to last GPU)
+    Output subbatches are merged on CPU
+
+    :param model: Keras model to parallelize
+    :param gpu_count: Number of GPUs
+    :type model: keras.engine.training.Model
+    :type gpu_count: int
+    :returns: Parallelized Keras model
+    :rtype: keras.engine.training.Model
+    """
+    
     def get_slice(data, idx, parts):
+        """Get subbatch of batch for a GPU.
+        
+        :param data: Batch to slice
+        :param idx: Index of GPU
+        :param parts: Number of GPUs
+        :type data: tf.Tensor
+        :type idx: int
+        :type parts: int
+        :returns: Subbatch
+        :rtype: tf.Tensor
+        """
+
         shape = tf.shape(data)
         stride = tf.concat([ shape[:1] // parts, shape[1:]*0 ],axis=0)
         start = stride * idx
