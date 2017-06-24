@@ -13,7 +13,6 @@ from scipy.io import wavfile
 from scipy import signal
 
 from sklearn.metrics.pairwise import rbf_kernel
-from sklearn.metrics import mean_squared_error
 
 from keras.datasets import mnist
 from keras.models import Sequential, Model
@@ -27,7 +26,7 @@ from keras.layers.wrappers import Bidirectional
 from keras.layers.merge import Concatenate
 
 from nearest_positive_semidefinite import nearest_positive_semidefinite
-from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped_elements, relative_error
+from errors import mean_squared_error, relative_error
 from plot_gram_matrix import plot
 from make_matrix_incomplete import make_matrix_incomplete, drop_samples
 from find_and_read_sequences import find_and_read_sequences
@@ -391,12 +390,14 @@ def main():
     print("RnnCompletion files are output.")
 
     mse = mean_squared_error(similarities, psd_completed_similarities)
-    msede = mean_squared_error_of_dropped_elements(similarities,
-                                                   psd_completed_similarities,
-                                                   dropped_elements)
+    msede = mean_squared_error(similarities,
+                               psd_completed_similarities,
+                               dropped_elements)
     re = relative_error(similarities,
-                        psd_completed_similarities,
-                        dropped_elements)
+                        psd_completed_similarities)
+    rede = relative_error(similarities,
+                         psd_completed_similarities,
+                         dropped_elements)
 
     main_finish = time.time()
     
@@ -417,6 +418,7 @@ def main():
     analysis_json['mean_squared_error'] = mse
     analysis_json['mean_squared_error_of_dropped_elements'] = msede
     analysis_json['relative_error'] = re
+    analysis_json['relative_error_of_dropped_elements'] = rede
 
     fd = open(completionanalysisfile, "w")
     json.dump(analysis_json, fd)
