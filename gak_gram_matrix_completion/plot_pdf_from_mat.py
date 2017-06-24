@@ -10,7 +10,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 def plot(file_name, similarities, files, separators, labels,
-         sigma, loss):
+         sigma, drop_percent):
     assert len(separators) == len(labels) - 1
 
     cmap = plt.get_cmap('bwr')
@@ -63,8 +63,8 @@ def plot(file_name, similarities, files, separators, labels,
                     rotation='vertical',
                     xy=(0,0), xytext=(x, y))
 
-    # Title of the graph, displaying the sigma and the loss percentage
-    titletext = "σ =" + str(sigma) + "    loss=" + loss #+ "%\n "
+    # Title of the graph, displaying the sigma and the drop percentage
+    titletext = "σ =" + str(sigma) + "    drop=" + drop_percent #+ "%\n "
     ax.set_title(titletext,
                  horizontalalignment='center')
 
@@ -143,9 +143,9 @@ def main():
                   .split("_")[0]
                   .replace(".mat", ""))
     if filename.find("loss") == -1:
-        loss = "0%"
+        drop_percent = "0%"
     else:
-        loss = filename.split("loss")[1].split("_")[0].replace(".mat", "") + "%"
+        drop_percent = filename.split("loss")[1].split("_")[0].replace(".mat", "") + "%"
 
     pdf_out = filename.replace(".mat", ".pdf")
     
@@ -156,7 +156,7 @@ def main():
          separators,
          labels,
          sigma,
-         loss)
+         drop_percent)
 
     pdf_out = filename.replace(".mat", "_dropped.pdf")
     plot(pdf_out,
@@ -165,7 +165,7 @@ def main():
          separators,
          labels,
          sigma,
-         loss)
+         drop_percent)
     
     pdf_out = filename.replace(".mat", "_orig.pdf")
     plot(pdf_out,
@@ -174,7 +174,7 @@ def main():
          separators,
          labels,
          sigma,
-         loss)
+         drop_percent)
     
     
 if __name__ == "__main__":
