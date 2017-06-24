@@ -41,32 +41,37 @@ def batch_dot(vects):
     x, y = vects
     return K.batch_dot(x, y, axes=1)
 
-def create_Bidirectional_LSTM_base_network(input_shape, mask_value, lstm_units=5, dense_units=2, implementation=2):
+def create_LSTM_base_network(input_shape, mask_value,
+                             lstm_units=[5], dense_units=[2],
+                             dropout=0.3,
+                             implementation=2, bidirectional=False):
     '''Base network to be shared (eq. to feature extraction).
     '''
     seq = Sequential()
     seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
 
-    seq.add(Bidirectional(LSTM(lstm_units,
-                               dropout=0.3, implementation=implementation, return_sequences=True)))
-    seq.add(Bidirectional(LSTM(lstm_units,
-                               dropout=0.3, implementation=implementation, return_sequences=False)))
+    if bidirectional:
+        f = Bidirectional
+    else:
+        f = lambda x: x
 
-    seq.add(Dense(dense_units, activation='linear'))
-    return seq
+    for i in range(len(lstm_units)):
+        lstm_unit = lstm_units[i]
+        if i == len(lstm_units) - 1:
+            return_sequences = False
+        else:
+            return_sequences = True
+        seq.add(f(LSTM(lstm_unit,
+                       dropout=dropout, implementation=implementation,
+                       return_sequences=return_sequences)))
 
-def create_LSTM_base_network(input_shape, mask_value, lstm_units=5, dense_units=2, implementation=2):
-    '''Base network to be shared (eq. to feature extraction).
-    '''
-    seq = Sequential()
-    seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
-
-    seq.add(LSTM(lstm_units,
-                 dropout=0.3, implementation=implementation, return_sequences=True))
-    seq.add(LSTM(lstm_units,
-                 dropout=0.3, implementation=implementation, return_sequences=False))
-
-    seq.add(Dense(dense_units, activation='linear'))
+    for i in range(len(dense_units)):
+        dense_unit = dense_units[i]
+        if i == len(dense_units) - 1:
+            activation='linear'
+        else:
+            activation='relu'
+        seq.add(Dense(dense_unit, activation=activation))
     return seq
 
 def generator_sequence_pairs(indices_list_, incomplete_matrix, seqs):
@@ -185,11 +190,14 @@ def test(model, te_indices, incomplete_matrix, seqs):
         num_predicted_samples += preds_batch.shape[0]
     return preds
 
-def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience,
+def rnn_matrix_completion(incomplete_matrix_, seqs_,
+                          epochs, patience,
                           lossesfile, hdf5_out_rnn,
                           rnn,
                           lstm_units, dense_units,
-                          implementation):
+                          dropout,
+                          implementation,
+                          bidirectional):
     num_seqs = len(seqs_)
     incomplete_matrix = np.array(incomplete_matrix_)
     time_dim = max([seq_.shape[0] for seq_ in seqs_.values()])
@@ -206,9 +214,11 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience,
 
     input_shape = (time_dim, feat_dim)
     if rnn == "LSTM":
-        base_network = create_LSTM_base_network(input_shape, pad_value, lstm_units, dense_units, implementation)
-    elif rnn == "Bidirectional_LSTM":
-        base_network = create_Bidirectional_LSTM_base_network(input_shape, pad_value, lstm_units, dense_units, implementation)
+        base_network = create_LSTM_base_network(input_shape, pad_value,
+                                                lstm_units, dense_units,
+                                                dropout,
+                                                implementation,
+                                                bidirectional)
     else:
         print("invalid RNN network.")
         assert False
@@ -302,9 +312,11 @@ def main():
         epochs = 2
         patience = 2
         rnn = "LSTM"
-        lstm_units = 5
-        dense_units = 2
+        lstm_units = [5]
+        dense_units = [2]
+        dropout = 0.3
         implementation = 2
+        bidirectional = False
     else:
         random_drop = False
         config_json_file = sys.argv[1]
@@ -318,7 +330,9 @@ def main():
         rnn = config_dict['rnn']
         lstm_units = config_dict['lstm_units']
         dense_units = config_dict['dense_units']
+        dropout = config_dict['dropout']
         implementation = config_dict['implementation']
+        bidirectional = config_dict['bidirectional']
 
     mat = io.loadmat(gram_filename)
     similarities = mat['gram']
@@ -348,7 +362,9 @@ def main():
                                             lossesfile, hdf5_out_rnn,
                                             rnn,
                                             lstm_units, dense_units,
-                                            implementation)
+                                            dropout,
+                                            implementation,
+                                            bidirectional)
     completed_similarities = np.array(completed_similarities)
     # eigenvalue check
     npsd_start = time.time()
