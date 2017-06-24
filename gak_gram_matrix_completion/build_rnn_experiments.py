@@ -32,11 +32,12 @@ else:
 
 class KFold():
     """Base class for K-Fold Cross-Validation Test Set Generator.
-    Puts ith sample into fold i modulo fold count (next sample goes to next fold)
-    Assumes that mat['indices'] wrt classes
+    Puts ith sample into fold (i modulo fold count)
+    I.e. each new sample goes to next fold
+    Assumes that mat['indices'] is sorted wrt classes
 
-    :param hyperparams: Hyperparameter configuration
-    :type hyperparams: dict
+    :param mat_file_path: .mat file path for original Gram matrix
+    :type mat_file_path: str
     """
     
     def __init__(self, mat_file_path):
@@ -62,12 +63,18 @@ class KFold():
         self.k += 1
         return retval    
 
-class KFold_UCItctodd(KFold):
+class KFold_UCIauslan(KFold):
+    """Class for K-Fold Cross-Validation Test Set Generator on UCI AUSLAN data set.
+    This data set has 9 trials (recorded over 9 days) which defines a natural 9-fold separation.
+ 
+    :param mat_file_path: .mat file path for original Gram matrix
+    :type mat_file_path: str
+    """
+
     def __init__(self, mat_file_path):
-        super(KFold_UCItctodd, self).__init__(mat_file_path)
+        super(KFold_UCIauslan, self).__init__(mat_file_path)
 
     def generate_folds():
-        # k is divided by the date UCI AUSLAN is observed.
         self.num_folds = 9
         self.fold = [[] for i in range(self.num_folds)]
         for i in range(len(indices)):
@@ -79,15 +86,15 @@ class KFold_UCItctodd(KFold):
 
 
 experiments = [
-    {"dataset": "UCItctodd", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False},
+    {"dataset": "UCIauslan", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False},
     {"dataset": "UCIcharacter", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False},
     {"dataset": "6DMG", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False}]
 ]
 
 for exp in experiments:
-    if exp['dataset'] is "UCItctodd":
+    if exp['dataset'] is "UCIauslan":
         mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCItctodd_sigma12.000.mat"),
-        kfold = KFold_UCItctodd
+        kfold = KFold_UCIauslan
     elif exp['dataset'] is "UCIcharacter":
         mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIcharacter_sigma20.000.mat"),
         kfold = KFold
@@ -95,7 +102,7 @@ for exp in experiments:
         mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat"),
         kfold = KFold
     else:
-        raise ValueError("dataset must be one of UCItctodd, UCIcharacter or 6DMG")
+        raise ValueError("dataset must be one of UCIauslan, UCIcharacter or 6DMG")
 
     if exp['bidirectional']:
         direc = os.path.join(exp['dataset'], exp['rnn'], "Bidirectional")
