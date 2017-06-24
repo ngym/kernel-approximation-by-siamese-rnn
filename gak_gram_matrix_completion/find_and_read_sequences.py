@@ -13,6 +13,18 @@ from scipy.io import wavfile
 from scipy import signal
 
 def find_and_read_sequences(filename, files):
+    """Time series loader.
+    Parse time series from files
+    TODO: automatic files from data set name?
+    
+    :param filename: Gram matrix file name
+    :param files: List of data files to parse
+    :type filename: str
+    :type files: list of str
+    :returns: List of time series
+    :rtype: list of np.ndarray
+    """
+    
     seqs = OrderedDict()
     if filename.find("upperChar") != -1 or filename.find("velocity") != -1:
         for f in files:
@@ -30,25 +42,26 @@ def find_and_read_sequences(filename, files):
                 m = io.loadmat(f)
             seqs[f] = m['gest'].T
     elif filename.find("UCIcharacter") != -1:
+        mat_file = "mixoutALL_shifted.mat"
         if 'nipg' in os.uname().nodename:
-            datasetfile = "~/shota/dataset/mixoutALL_shifted.mat"
+            mat_file_path = os.path.join("~/shota/dataset/", mat_file)
         elif os.uname().nodename == 'atlasz' or 'cn' in os.uname().nodename:
-            datasetfile = "/users/milacski/shota/dataset/mixoutALL_shifted.mat"
+            mat_file_path = os.path.join("/users/milacski/shota/dataset/", mat_file)
         elif os.uname().nodename == 'Regulus.local':
-            datasetfile = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset/UCI/mixoutALL_shifted.mat"
+            mat_file_path = os.path.join("/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset/UCI/", mat_file)
         else:
-            datasetfile = "/home/ngym/NFSshare/Lorincz_Lab/mixoutALL_shifted.mat"
-        dataset = io.loadmat(datasetfile)
-        displayname = [k[0] for k in dataset['consts']['key'][0][0][0]]
-        classes = dataset['consts'][0][0][4][0]
+            mat_file_path = os.path.join("/home/ngym/NFSshare/Lorincz_Lab/", mat_file)
+        data = io.loadmat(mat_file_path)
+        displayname = [k[0] for k in data['consts']['key'][0][0][0]]
+        classes = data['consts'][0][0][4][0]
         labels = []
         for c in classes:
             labels.append(displayname[c-1])
         i = 0
         for l in labels:
-            seqs[l + str(i)] = dataset['mixout'][0][i].T
+            seqs[l + str(i)] = data['mixout'][0][i].T
             i += 1
-    elif filename.find("UCItctodd") != -1:
+    elif filename.find("UCIauslan") != -1:
         for f in files:
             if 'nipg' in os.uname().nodename:
                 reader = csv.reader(open(f.replace(' ', '')\
@@ -71,7 +84,8 @@ def find_and_read_sequences(filename, files):
             seq = []
             for r in reader:
                 seq.append(r)
-            seqs[f] = np.float64(np.array(seq))
+            seqs[f] = np.array(seq).astype(np.float32)
     else:
         assert False
     return seqs
+
