@@ -41,16 +41,30 @@ def batch_dot(vects):
     x, y = vects
     return K.batch_dot(x, y, axes=1)
 
-def create_base_network(input_shape, mask_value, lstm_units=5, dense_units=2):
+def create_Bidirectional_LSTM_base_network(input_shape, mask_value, lstm_units=5, dense_units=2, implementation=2):
     '''Base network to be shared (eq. to feature extraction).
     '''
     seq = Sequential()
     seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
 
     seq.add(Bidirectional(LSTM(lstm_units,
-                               dropout=0.3, implementation=2, return_sequences=True)))
+                               dropout=0.3, implementation=implementation, return_sequences=True)))
     seq.add(Bidirectional(LSTM(lstm_units,
-                               dropout=0.3, implementation=2, return_sequences=False)))
+                               dropout=0.3, implementation=implementation, return_sequences=False)))
+
+    seq.add(Dense(dense_units, activation='linear'))
+    return seq
+
+def create_LSTM_base_network(input_shape, mask_value, lstm_units=5, dense_units=2, implementation=2):
+    '''Base network to be shared (eq. to feature extraction).
+    '''
+    seq = Sequential()
+    seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
+
+    seq.add(LSTM(lstm_units,
+                 dropout=0.3, implementation=implementation, return_sequences=True))
+    seq.add(LSTM(lstm_units,
+                 dropout=0.3, implementation=implementation, return_sequences=False))
 
     seq.add(Dense(dense_units, activation='linear'))
     return seq
@@ -172,7 +186,10 @@ def test(model, te_indices, incomplete_matrix, seqs):
     return preds
 
 def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience,
-                          lossesfile, hdf5_out_rnn, lstm_units, dense_units):
+                          lossesfile, hdf5_out_rnn,
+                          rnn,
+                          lstm_units, dense_units,
+                          implementation):
     num_seqs = len(seqs_)
     incomplete_matrix = np.array(incomplete_matrix_)
     time_dim = max([seq_.shape[0] for seq_ in seqs_.values()])
@@ -188,7 +205,13 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_, epochs, patience,
     K.clear_session()
 
     input_shape = (time_dim, feat_dim)
-    base_network = create_base_network(input_shape, pad_value, lstm_units, dense_units)
+    if rnn == "LSTM":
+        base_network = create_LSTM_base_network(input_shape, pad_value, lstm_units, dense_units, implementation)
+    elif rnn == "Bidirectional_LSTM":
+        base_network = create_Bidirectional_LSTM_base_network(input_shape, pad_value, lstm_units, dense_units, implementation)
+    else:
+        print("invalid RNN network.")
+        assert False
 
     input_a = Input(shape=input_shape)
     input_b = Input(shape=input_shape)
@@ -278,8 +301,10 @@ def main():
         completionanalysisfile = sys.argv[3]
         epochs = 2
         patience = 2
+        rnn = "LSTM"
         lstm_units = 5
         dense_units = 2
+        implementation = 2
     else:
         random_drop = False
         config_json_file = sys.argv[1]
@@ -290,8 +315,10 @@ def main():
         completionanalysisfile = config_dict['completionanalysisfile']
         epochs = config_dict['epochs']
         patience = config_dict['patience']
+        rnn = config_dict['rnn']
         lstm_units = config_dict['lstm_units']
         dense_units = config_dict['dense_units']
+        implementation = config_dict['implementation']
 
     mat = io.loadmat(gram_filename)
     similarities = mat['gram']
@@ -319,7 +346,9 @@ def main():
         pred_finish = rnn_matrix_completion(incomplete_similarities, seqs,
                                             epochs, patience,
                                             lossesfile, hdf5_out_rnn,
-                                            lstm_units, dense_units)
+                                            rnn,
+                                            lstm_units, dense_units,
+                                            implementation)
     completed_similarities = np.array(completed_similarities)
     # eigenvalue check
     npsd_start = time.time()

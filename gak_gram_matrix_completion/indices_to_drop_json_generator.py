@@ -7,15 +7,23 @@ from functools import reduce
 
 if os.uname().nodename == 'Regulus.local':
     USE_CASE_RNN_COMPLETION_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
+    IMPLEMENTATION = 1
 elif os.uname().nodename == 'nipgcore1':
     USE_CASE_RNN_COMPLETION_DIR = "/home/milacski/shota/USE_CASE_RNN_COMPLETION"
+    IMPLEMENTATION = 2
 elif os.uname().nodename.split('.')[0] in {'procyon', 'pollux', 'capella',
                                            'aldebaran', 'rigel'}:
     USE_CASE_RNN_COMPLETION_DIR = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
-    PROGRAM = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/matrix_completion_rnn_residual.py"
+    PROGRAM = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/matrix_completion_rnn.py"
+    IMPLEMENTATION = 1
 else:
-    print("unsupported server")
-    exit -1
+    if len(sys.argv) == 3:
+        USE_CASE_RNN_COMPLETION_DIR = sys.argv[1]
+        IMPLEMENTATION = int(sys.argv[2])
+    else:
+        print("Specify an existing directory to build directies for experiments and" +\
+              "\"implementation\" which specifies to use CPU(1) or GPU(2).")
+        exit -1
 
 class Drop_generator_UCItctodd():
     def __init__(self, orig_gram_file_path):
@@ -63,9 +71,11 @@ class Drop_generator_UCIcharacter():
 class Drop_generator_6DMG():
     def __init__(self, orig_gram_file_path):
         # assume mat['indices'] is sorted with ground truth
+        """
         k_groups = ["A1", "C1", "C2", "C3", "C4", "E1", "G1", "G2", "G3", "I1",
                     "I2", "I3", "J1", "J2", "J3", "L1", "M1", "S1", "T1", "U1",
                     "Y1", "Y2", "Y3", "Z1", "Z2"]
+        """
         mat = io.loadmat(orig_gram_file_path)
         indices = mat['indices']
         
@@ -84,26 +94,25 @@ class Drop_generator_6DMG():
         return retval
 
 dataset_settings = [
-    ("UCItctodd/LSTM",
-     [(5, 2), (30, 10), (100, 33)],
+    ("UCItctodd", "LSTM",
+     [(5, 2), (10, 3), (30, 10), (50, 16), (100, 33)],
      os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                   "original_gram_files/gram_UCItctodd_sigma12.000.mat"),
      Drop_generator_UCItctodd),
-    ("UCIcharacter/LSTM",
-     [(5, 2), (30, 10), (100, 33)],
+    ("UCIcharacter", "LSTM",
+     [(5, 2), (10, 3), (30, 10), (50, 16), (100, 33)],
      os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                   "original_gram_files/gram_UCIcharacter_sigma20.000.mat"),
      Drop_generator_UCIcharacter),
-    ("6DMG/LSTM",
-     [(5, 2), (30, 10), (100, 33)],
+    ("6DMG", "LSTM",
+     [(5, 2), (10, 3), (30, 10), (50, 16), (100, 33)],
      os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                   "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat"),
      Drop_generator_6DMG)
 ]
 
-np.random.seed(1)
-
-for (direc, unit_settings, orig_gram_file_path, generator) in dataset_settings:
+for (dataset, rnn, unit_settings, orig_gram_file_path, generator) in dataset_settings:
+    direc = os.path.join(dataset, rnn)
     for lstm_units, dense_units in unit_settings:
         gen = generator(orig_gram_file_path)
         k = 0
@@ -112,38 +121,41 @@ for (direc, unit_settings, orig_gram_file_path, generator) in dataset_settings:
                                  direc,
                                  str(lstm_units),
                                  str(k))
-            
+
             try:
                 os.makedirs(k_dir)
             except FileExistsError:
                 pass
-    
+
             orig_gram_file = orig_gram_file_path.split("/")[-1]
-    
+
             subprocess.run(["ln", "-s", orig_gram_file_path, k_dir])
             gram_file = os.path.join(k_dir, orig_gram_file)
             completionanalysisfile = gram_file.replace(".mat", ".error")
-    
+
             json_dict = dict(gram_file=gram_file,
                              indices_to_drop=indices_to_drop,
                              completionanalysisfile=os.path.join(k_dir,
                                                                  completionanalysisfile),
                              epochs=100,
                              patience=2,
+                             dataset=dataset,
+                             rnn=rnn,
                              lstm_units=lstm_units,
-                             dense_units=dense_units)
-    
+                             dense_units=dense_units,
+                             implementation=IMPLEMENTATION)
+
             json_file_name = os.path.join(k_dir, "indices_to_drop.json")
             fd = open(json_file_name, "w")
             json.dump(json_dict, fd)
             fd.close()
-    
+
             if os.uname().nodename.split('.')[0] in {'procyon', 'pollux', 'capella',
                                                      'aldebaran', 'rigel'}:
                 job_file_name = os.path.join(k_dir, orig_gram_file + "_k" + str(k) + ".job")
                 fd = open(job_file_name, "w")
                 time_file_name = os.path.join(k_dir, "time_command.output")
-    
+
                 fd.write("echo $SHELL\n")
                 fd.write("setenv LD_LIBRARY_PATH /home/ngym/NFSshare/tflib/lib64/:/home/ngym/NFSshare/tflib/usr/lib64/\n")
                 fd.write("~/NFSshare/tflib/lib64/ld-2.17.so /usr/bin/time -v -o " +\
@@ -152,4 +164,4 @@ for (direc, unit_settings, orig_gram_file_path, generator) in dataset_settings:
                          PROGRAM + " " + json_file_name + "\n")
                 fd.close()
             k += 1
-    
+
