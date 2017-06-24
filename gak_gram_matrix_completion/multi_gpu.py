@@ -1,3 +1,5 @@
+# Modified version of https://github.com/kuza55/keras-extras/blob/master/utils/multi_gpu.py
+
 from keras.layers import merge
 from keras.layers.core import Lambda
 from keras.models import Model
