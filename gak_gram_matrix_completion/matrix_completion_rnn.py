@@ -26,7 +26,7 @@ from keras.layers.wrappers import Bidirectional
 from keras.layers.merge import Concatenate
 
 from nearest_positive_semidefinite import nearest_positive_semidefinite
-from errors import mean_squared_error, relative_error
+from errors import mean_squared_error, mean_absolute_error, relative_error
 from plot_gram_matrix import plot
 from make_matrix_incomplete import make_matrix_incomplete, drop_samples
 from find_and_read_sequences import find_and_read_sequences

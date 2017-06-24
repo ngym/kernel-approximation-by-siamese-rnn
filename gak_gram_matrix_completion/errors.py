@@ -99,12 +99,12 @@ def main():
     mse = mean_squared_error(gram1, gram2)
     print("Mean squared error: %.10f" % mse)
     msede = mean_squared_error(gram1, gram2, dropped_elements)
-    print("Mean squared error of dropped elements: %.10f" msede)
+    print("Mean squared error of dropped elements: %.10f" % msede)
 
     mae = mean_absolute_error(gram1, gram2)
     print("Mean absolute error: %.10f" % mae)
     maede = mean_absolute_error(gram1, gram2, dropped_elements)
-    print("Mean absolute error of dropped elements: %.10f" maede)
+    print("Mean absolute error of dropped elements: %.10f" % maede)
     
     re = relative_error(gram1, gram2)
     print("Relative error: %.10f" % re)
