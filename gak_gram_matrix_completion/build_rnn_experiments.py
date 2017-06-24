@@ -27,76 +27,56 @@ else:
         assert IMPLEMENTATION in {0, 1, 2}
     else:
         print("Specify an existing directory to build directies for experiments and" +\
-              "\"implementation\" which specifies to use CPU(0) or GPU(2) or any (1).")
+              "\"implementation\" which is recommended to be 0 for CPU, 2 for GPU, 1 for any.")
         exit -1
 
-class Drop_generator_UCItctodd():
-    def __init__(self, orig_gram_file_path):
-        # k_group is divided by the date UCI AUSLAN is observed.
-        mat = io.loadmat(orig_gram_file_path)
-        indices = mat['indices']
+class KFold():
+    """Base class for K-Fold Cross-Validation Test Set Generator.
+    Puts ith sample into fold i modulo fold count (next sample goes to next fold)
+    Assumes that mat['indices'] wrt classes
 
-        num_groups = 9
-        self.__groups = [[] for i in range(num_groups)]
+    :param hyperparams: Hyperparameter configuration
+    :type hyperparams: dict
+    """
+    
+    def __init__(self, mat_file_path):
+        # assume mat['indices'] is sorted with ground truth
+        mat = io.loadmat(mat_file_path)
+        indices = mat['indices']
+        self.generate_folds()
+        
+    def generate_folds():
+        self.num_folds = 10
+        self.fold = [[] for i in range(self.num_folds)]
+        for i in range(len(indices)):
+            self.fold[i % self.num_folds].append(i)
+
+    def __iter__(self):
+        self.k = 0
+        return self
+
+    def __next__(self):
+        if self.k == len(self.fold):
+            raise StopIteration()
+        retval = self.fold[self.k]
+        self.k += 1
+        return retval    
+
+class KFold_UCItctodd(KFold):
+    def __init__(self, mat_file_path):
+        super(KFold_UCItctodd, self).__init__(mat_file_path)
+
+    def generate_folds():
+        # k is divided by the date UCI AUSLAN is observed.
+        self.num_folds = 9
+        self.fold = [[] for i in range(self.num_folds)]
         for i in range(len(indices)):
             index = indices[i]
             index_ = index.split('/')[-1]
-            k_group = int(index_.split('-')[-2])
-            ground_truth = reduce(lambda a, b: a + "-" + b, index_.split('-')[:-2])
-            self.__groups[k_group-1].append(i)
-    def __iter__(self):
-        self.__i = 0
-        return self
-    def __next__(self):
-        if self.__i == len(self.__groups):
-            raise StopIteration()
-        retval = self.__groups[self.__i]
-        self.__i += 1
-        return retval
+            k = int(index_.split('-')[-2])
+            self.fold[k - 1].append(i)
 
-class Drop_generator_UCIcharacter():
-    def __init__(self, orig_gram_file_path):
-        mat = io.loadmat(orig_gram_file_path)
-        indices = mat['indices']
 
-        num_groups = 10
-        self.__groups = [[] for i in range(num_groups)]
-        for i in range(len(indices)):
-            self.__groups[i % num_groups].append(i)
-    def __iter__(self):
-        self.__i = 0
-        return self
-    def __next__(self):
-        if self.__i == len(self.__groups):
-            raise StopIteration()
-        retval = self.__groups[self.__i]
-        self.__i += 1
-        return retval
-
-class Drop_generator_6DMG():
-    def __init__(self, orig_gram_file_path):
-        # assume mat['indices'] is sorted with ground truth
-        """
-        k_groups = ["A1", "C1", "C2", "C3", "C4", "E1", "G1", "G2", "G3", "I1",
-                    "I2", "I3", "J1", "J2", "J3", "L1", "M1", "S1", "T1", "U1",
-                    "Y1", "Y2", "Y3", "Z1", "Z2"]
-        """
-        mat = io.loadmat(orig_gram_file_path)
-        indices = mat['indices']
-        
-        num_groups = 10
-        self.__groups = [[] for i in range(num_groups)]
-        for i in range(len(indices)):
-            self.__groups[i % num_groups].append(i)
-    def __iter__(self):
-        self.__i = 0
-        return self
-    def __next__(self):
-        if self.__i == len(self.__groups):
-            raise StopIteration()
-        retval = self.__groups[self.__i]
-        self.__i += 1
-        return retval
 
 dataset_settings = [
     ("UCItctodd", "LSTM",
@@ -106,7 +86,7 @@ dataset_settings = [
      False,
      os.path.join(EXPERIMENTS_DIR,
                   "original_gram_files/gram_UCItctodd_sigma12.000.mat"),
-     Drop_generator_UCItctodd),
+     KFold_UCItctodd),
     ("UCIcharacter", "LSTM",
      #[([5], [2]), ([10], [3]), ([30], [10]), ([50], [16]), ([100], [33])],
      [([10], [3])],
@@ -114,7 +94,7 @@ dataset_settings = [
      False,
      os.path.join(EXPERIMENTS_DIR,
                   "original_gram_files/gram_UCIcharacter_sigma20.000.mat"),
-     Drop_generator_UCIcharacter),
+     KFold),
     ("6DMG", "LSTM",
      #[([5], [2]), ([10], [3]), ([30], [10]), ([50], [16]), ([100], [33])],
      [([10], [3])],
@@ -122,7 +102,7 @@ dataset_settings = [
      False,
      os.path.join(EXPERIMENTS_DIR,
                   "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat"),
-     Drop_generator_6DMG)
+     KFold)
 ]
 
 for (dataset, rnn, unit_settings, dropout, bidirectional,
