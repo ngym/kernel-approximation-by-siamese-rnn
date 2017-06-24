@@ -32,7 +32,7 @@ def relative_error(m1, m2, elements):
     :type m1: np.ndarray
     :type m2: np.ndarray
     :type elements: list of 2-tuples
-    :returns: Relative Squared Error
+    :returns: Relative 2-norm Error
     :rtype: float
     """
 
