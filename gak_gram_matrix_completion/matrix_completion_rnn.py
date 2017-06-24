@@ -393,6 +393,12 @@ def main():
     msede = mean_squared_error(similarities,
                                psd_completed_similarities,
                                dropped_elements)
+
+    mae = mean_absolute_error(similarities, psd_completed_similarities)
+    maede = mean_absolute_error(similarities,
+                                psd_completed_similarities,
+                                dropped_elements)
+    
     re = relative_error(similarities,
                         psd_completed_similarities)
     rede = relative_error(similarities,
@@ -417,6 +423,8 @@ def main():
     analysis_json['main_duration'] = main_finish - main_start
     analysis_json['mean_squared_error'] = mse
     analysis_json['mean_squared_error_of_dropped_elements'] = msede
+    analysis_json['mean_absolute_error'] = mae
+    analysis_json['mean_absolute_error_of_dropped_elements'] = maede
     analysis_json['relative_error'] = re
     analysis_json['relative_error_of_dropped_elements'] = rede
 
