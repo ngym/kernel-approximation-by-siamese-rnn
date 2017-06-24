@@ -93,6 +93,9 @@ def plot(file_name, gram, files, separators, labels,
     
 
 def main():
+    """Read .mat file, parse its metadata, plot Gram matrix and save as pdf file with matplotlib.
+    """
+    
     filename = sys.argv[1]
     mat = io.loadmat(filename)
     gram = mat['gram']

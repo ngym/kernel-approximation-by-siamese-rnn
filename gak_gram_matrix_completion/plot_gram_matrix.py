@@ -10,6 +10,16 @@ import plotly.offline as po
 import plotly.graph_objs as pgo
 
 def plot(file_name, gram, files):
+    """Plot Gram matrix to html with plotly.
+    
+    :param file_name: Output html file name
+    :param gram: Gram matrix to be plotted
+    :param files: Filenames for labels
+    :type file_name: str
+    :type gram: np.ndarray
+    :type files: list of str
+    """
+
     # To fix the direction of the matrix as the diagonal line is from top-left to bottom-right.
     gram_ = gram[::-1]
     files_to_show = []
@@ -29,6 +39,9 @@ def plot(file_name, gram, files):
     po.plot(fig, filename=file_name, auto_open=False)
 
 def main():
+    """Read .mat file and plot Gram matrix to html with plotly.
+    """
+    
     filename = sys.argv[1]
     mat = io.loadmat(filename)
     gram = mat['gram']
