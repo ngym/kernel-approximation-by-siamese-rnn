@@ -1,3 +1,6 @@
+"""Print .mat file contents for 6DMG data set.
+"""
+
 import numpy as np
 import scipy.io as sio
 import sys

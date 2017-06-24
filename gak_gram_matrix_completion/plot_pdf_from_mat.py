@@ -11,6 +11,24 @@ import matplotlib.pyplot as plt
 
 def plot(file_name, gram, files, separators, labels,
          sigma, drop_percent):
+    """Plot Gram matrix and save as pdf file with matplotlib.
+    
+    :param file_name: Output pdf file name
+    :param gram: Gram matrix to be plotted
+    :param files: Filenames used for Global Alignment Kernel calcucation
+    :param separators: Class sizes for label separators
+    :param labels: Class names for labeling
+    :param sigma: Global Alignment Kernel sigma parameter
+    :param drop_percent: Amount of Gram matrix elements removed
+    :type file_name: str
+    :type gram: np.ndarray
+    :type files: list of str
+    :type separators: list of int
+    :type labels: list of str
+    :type sigma: float
+    :type drop_percent: float
+    """
+             
     assert len(separators) == len(labels) - 1
 
     cmap = plt.get_cmap('bwr')
@@ -75,6 +93,9 @@ def plot(file_name, gram, files, separators, labels,
     
 
 def main():
+    """Read .mat file, parse its metadata, plot Gram matrix and save as pdf file with matplotlib.
+    """
+    
     filename = sys.argv[1]
     mat = io.loadmat(filename)
     gram = mat['gram']
