@@ -9,15 +9,15 @@ from scipy import signal
 import plotly.offline as po
 import plotly.graph_objs as pgo
 
-def plot(file_name, similarities, files):
+def plot(file_name, gram, files):
     # To fix the direction of the matrix as the diagonal line is from top-left to bottom-right.
-    similarities_ = similarities[::-1]
+    gram_ = gram[::-1]
     files_to_show = []
     for f in files:
         files_to_show.append(f.split('/')[-1].split('.')[0])
     files_to_show_ = files_to_show[::-1]
     
-    data = [pgo.Heatmap(z=similarities_,
+    data = [pgo.Heatmap(z=gram_,
                         x=files_to_show,
                         y=files_to_show_,
                         zmin=0, zmax=1)
@@ -31,11 +31,11 @@ def plot(file_name, similarities, files):
 def main():
     filename = sys.argv[1]
     mat = io.loadmat(filename)
-    similarities = mat['gram']
+    gram = mat['gram']
     files = mat['indices']
 
     filename_html = filename.replace('.mat', '.html')
-    plot(filename_html, similarities, files)
+    plot(filename_html, gram, files)
 
 if __name__ == "__main__":
     main()
