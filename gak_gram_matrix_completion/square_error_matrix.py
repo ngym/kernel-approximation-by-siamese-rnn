@@ -1,3 +1,6 @@
+"""Read two .mat files and compute Mean Squared Error between their Gram matrices.
+"""
+
 import sys, random
 
 import plotly.offline as po
