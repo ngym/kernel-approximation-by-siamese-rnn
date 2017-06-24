@@ -27,7 +27,7 @@ from keras.layers.wrappers import Bidirectional
 from keras.layers.merge import Concatenate
 
 from nearest_positive_semidefinite import nearest_positive_semidefinite
-from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped_elements, mean_ratio_between_absolute_loss_and_absolute_true_value_of_dropped_elements
+from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped_elements, relative_error
 from plot_gram_matrix import plot
 from make_matrix_incomplete import make_matrix_incomplete, drop_samples
 from find_and_read_sequences import find_and_read_sequences
@@ -338,7 +338,7 @@ def main():
     similarities = mat['gram']
     files = mat['indices']
 
-    lossesfile = completionanalysisfile.replace(".error", ".losses")
+    lossesfile = completionanalysisfile.replace(".timelog", ".losses")
     
     seqs = find_and_read_sequences(gram_filename, files)
 
@@ -394,9 +394,9 @@ def main():
     msede = mean_squared_error_of_dropped_elements(similarities,
                                                    psd_completed_similarities,
                                                    dropped_elements)
-    mr = mean_ratio_between_absolute_loss_and_absolute_true_value_of_dropped_elements(similarities,
-                                                                                      psd_completed_similarities,
-                                                                                      dropped_elements)
+    re = relative_error(similarities,
+                        psd_completed_similarities,
+                        dropped_elements)
 
     main_finish = time.time()
     
@@ -410,12 +410,13 @@ def main():
     analysis_json['pred_duration'] = pred_finish - pred_start
     analysis_json['npsd_start'] = npsd_start
     analysis_json['npsd_finish'] = npsd_finish
+    analysis_json['npsd_duration'] = npsd_finish - npsd_start
     analysis_json['main_start'] = main_start
     analysis_json['main_finish'] = main_finish
-    analysis_json['duration'] = npsd_finish - npsd_start
+    analysis_json['main_duration'] = main_finish - main_start
     analysis_json['mean_squared_error'] = mse
     analysis_json['mean_squared_error_of_dropped_elements'] = msede
-    analysis_json['mean_ratio_between_absolute_loss_and_absolute_true_value_of_dropped_elements'] = mr
+    analysis_json['relative_error'] = re
 
     fd = open(completionanalysisfile, "w")
     json.dump(analysis_json, fd)

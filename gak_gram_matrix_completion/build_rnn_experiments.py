@@ -7,9 +7,13 @@ from functools import reduce
 
 if os.uname().nodename == 'Regulus.local':
     USE_CASE_RNN_COMPLETION_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
+    PROGRAM = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/matrix_completion_rnn.py"
+    TIME = "gtime"
     IMPLEMENTATION = 1
 elif os.uname().nodename == 'nipgcore1':
     USE_CASE_RNN_COMPLETION_DIR = "/home/milacski/shota/USE_CASE_RNN_COMPLETION"
+    PROGRAM = "/home/milacski/shota/fast-time-series-data-classification/gak_gram_matrix_completion/matrix_completion_rnn.py"
+    TIME = "/usr/bin/time"
     IMPLEMENTATION = 2
 elif os.uname().nodename.split('.')[0] in {'procyon', 'pollux', 'capella',
                                            'aldebaran', 'rigel'}:
@@ -96,21 +100,24 @@ class Drop_generator_6DMG():
 
 dataset_settings = [
     ("UCItctodd", "LSTM",
-     [([5], [2]), ([10], [3]), ([30], [10]), ([50], [16]), ([100], [33])],
+     #[([5], [2]), ([10], [3]), ([30], [10]), ([50], [16]), ([100], [33])],
+     [([10], [3])],
      0.3,
      False,
      os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                   "original_gram_files/gram_UCItctodd_sigma12.000.mat"),
      Drop_generator_UCItctodd),
     ("UCIcharacter", "LSTM",
-     [([5], [2]), ([10], [3]), ([30], [10]), ([50], [16]), ([100], [33])],
+     #[([5], [2]), ([10], [3]), ([30], [10]), ([50], [16]), ([100], [33])],
+     [([10], [3])],
      0.3,
      False,
      os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                   "original_gram_files/gram_UCIcharacter_sigma20.000.mat"),
      Drop_generator_UCIcharacter),
     ("6DMG", "LSTM",
-     [([5], [2]), ([10], [3]), ([30], [10]), ([50], [16]), ([100], [33])],
+     #[([5], [2]), ([10], [3]), ([30], [10]), ([50], [16]), ([100], [33])],
+     [([10], [3])],
      0.3,
      False,
      os.path.join(USE_CASE_RNN_COMPLETION_DIR,
@@ -144,7 +151,7 @@ for (dataset, rnn, unit_settings, dropout, bidirectional,
 
             subprocess.run(["ln", "-s", orig_gram_file_path, k_dir])
             gram_file = os.path.join(k_dir, orig_gram_file)
-            completionanalysisfile = gram_file.replace(".mat", ".error")
+            completionanalysisfile = gram_file.replace(".mat", ".timelog")
 
             json_dict = dict(gram_file=gram_file,
                              indices_to_drop=indices_to_drop,
@@ -178,5 +185,14 @@ for (dataset, rnn, unit_settings, dropout, bidirectional,
                          " ~/NFSshare/tflib/lib64/ld-2.17.so /usr/bin/python3 " +\
                          PROGRAM + " " + json_file_name + "\n")
                 fd.close()
+            else:
+                command_file_name = os.path.join(k_dir, "command.sh")
+                time_file_name = os.path.join(k_dir, "time_command.output")
+                fd = open(command_file_name, "w")
+                fd.write(TIME + " -v -o " + time_file_name +\
+                         " python3 " +\
+                         PROGRAM + " " + json_file_name + "\n")
+                fd.close()
+
             k += 1
 
