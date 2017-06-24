@@ -75,7 +75,7 @@ def mean_absolute_error(m1, m2, elements=None):
     if elements is not None:
         elements = np.array(elements)
         assert elements.shape[1] == 2
-        mse = np.sum(np.abs(m1[elements[:, 0], elements[:, 1]] - m2[elements[:, 0], elements[:, 1]])) / len(elements)
+        mae = np.sum(np.abs(m1[elements[:, 0], elements[:, 1]] - m2[elements[:, 0], elements[:, 1]])) / len(elements)
     else:
         mae = np.sum(np.abs(m1 - m2)) / np.prod(m1.shape)
     return mae
