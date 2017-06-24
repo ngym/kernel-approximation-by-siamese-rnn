@@ -78,48 +78,38 @@ class KFold_UCItctodd(KFold):
 
 
 
-dataset_settings = [
-    ("UCItctodd", "LSTM",
-     #[([5], [2]), ([10], [3]), ([30], [10]), ([50], [16]), ([100], [33])],
-     [([10], [3])],
-     0.3,
-     False,
-     os.path.join(EXPERIMENTS_DIR,
-                  "original_gram_files/gram_UCItctodd_sigma12.000.mat"),
-     KFold_UCItctodd),
-    ("UCIcharacter", "LSTM",
-     #[([5], [2]), ([10], [3]), ([30], [10]), ([50], [16]), ([100], [33])],
-     [([10], [3])],
-     0.3,
-     False,
-     os.path.join(EXPERIMENTS_DIR,
-                  "original_gram_files/gram_UCIcharacter_sigma20.000.mat"),
-     KFold),
-    ("6DMG", "LSTM",
-     #[([5], [2]), ([10], [3]), ([30], [10]), ([50], [16]), ([100], [33])],
-     [([10], [3])],
-     0.3,
-     False,
-     os.path.join(EXPERIMENTS_DIR,
-                  "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat"),
-     KFold)
+experiments = [
+    {"dataset": "UCItctodd", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False},
+    {"dataset": "UCIcharacter", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False},
+    {"dataset": "6DMG", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False}]
 ]
 
-for (dataset, rnn, unit_settings, dropout, bidirectional,
-     orig_gram_file_path, generator) in dataset_settings:
-    if bidirectional:
-        direc = os.path.join(dataset, rnn, "Bidirectional")
+for exp in experiments:
+    if exp['dataset'] is "UCItctodd":
+        mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCItctodd_sigma12.000.mat"),
+        kfold = KFold_UCItctodd
+    elif exp['dataset'] is "UCIcharacter":
+        mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIcharacter_sigma20.000.mat"),
+        kfold = KFold
+    elif exp['dataset'] is "6DMG":
+        mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat"),
+        kfold = KFold
     else:
-        direc = os.path.join(dataset, rnn, "Unidirectional")
-    for lstm_units, dense_units in unit_settings:
-        gen = generator(orig_gram_file_path)
+        raise ValueError("dataset must be one of UCItctodd, UCIcharacter or 6DMG")
+
+    if exp['bidirectional']:
+        direc = os.path.join(exp['dataset'], exp['rnn'], "Bidirectional")
+    else:
+        direc = os.path.join(exp['dataset'], exp['rnn'], "Forward")
+    for lstm_units, dense_units in exp['units']:
+        folds = kfold(mat_file_path)
         k = 0
-        for indices_to_drop in gen:
+        for fold in folds:
             k_dir = os.path.join(EXPERIMENTS_DIR,
                                  direc,
                                  str(lstm_units),
                                  str(dense_units),
-                                 str(dropout),
+                                 str(exp['dropout']),
                                  str(k))
 
             try:
@@ -127,25 +117,25 @@ for (dataset, rnn, unit_settings, dropout, bidirectional,
             except FileExistsError:
                 pass
 
-            orig_gram_file = orig_gram_file_path.split("/")[-1]
+            mat_file = mat_file_path.split("/")[-1]
 
-            subprocess.run(["ln", "-s", orig_gram_file_path, k_dir])
-            gram_file = os.path.join(k_dir, orig_gram_file)
+            subprocess.run(["ln", "-s", mat_file_path, k_dir])
+            gram_file = os.path.join(k_dir, mat_file)
             completionanalysisfile = gram_file.replace(".mat", ".timelog")
 
             json_dict = dict(gram_file=gram_file,
-                             indices_to_drop=indices_to_drop,
+                             indices_to_drop=fold,
                              completionanalysisfile=os.path.join(k_dir,
                                                                  completionanalysisfile),
                              epochs=100,
                              patience=2,
-                             dataset=dataset,
-                             rnn=rnn,
+                             dataset=exp['dataset'],
+                             rnn=exp['rnn'],
                              lstm_units=lstm_units,
                              dense_units=dense_units,
-                             dropout=dropout,
+                             dropout=exp['dropout'],
                              implementation=IMPLEMENTATION,
-                             bidirectional=bidirectional)
+                             bidirectional=exp['bidirectional'])
 
             json_file_name = os.path.join(k_dir, "config_rnn_conpletion.json")
             fd = open(json_file_name, "w")
@@ -154,7 +144,7 @@ for (dataset, rnn, unit_settings, dropout, bidirectional,
 
             if os.uname().nodename.split('.')[0] in {'procyon', 'pollux', 'capella',
                                                      'aldebaran', 'rigel'}:
-                job_file_name = os.path.join(k_dir, orig_gram_file + "_k" + str(k) + ".job")
+                job_file_name = os.path.join(k_dir, mat_file + "_k" + str(k) + ".job")
                 fd = open(job_file_name, "w")
                 time_file_name = os.path.join(k_dir, "time_command.output")
 
