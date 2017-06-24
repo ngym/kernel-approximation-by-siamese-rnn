@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 def plot(file_name, gram, files, separators, labels,
          sigma, drop_percent):
-    """Plot Gram matrix to pdf with matplotlib.
+    """Plot Gram matrix and save as pdf file with matplotlib.
     
     :param file_name: Output pdf file name
     :param gram: Gram matrix to be plotted
