@@ -49,10 +49,10 @@ def relative_error(m1, m2, elements=None):
     if elements is not None:
         elements = np.array(elements)
         assert elements.shape[1] == 2
-        re = np.linalg.norm(m1[elements[:, 0], elements[:, 1]] - m2[elements[:, 0], elements[:, 1]]) \
-              / np.linalg.norm(m1[elements[:, 0], elements[:, 1]])
+        re = np.sqrt(np.sum(np.square(m1[elements[:, 0], elements[:, 1]] - m2[elements[:, 0], elements[:, 1]]))) \
+              / np.sqrt(np.sum(np.square(m1[elements[:, 0], elements[:, 1]])) + 1e-8)
     else:
-        re = np.linalg.norm(m1 - m2) / np.linalg.norm(m1)
+        re = np.sqrt(np.sum(np.square(m1 - m2))) / np.sqrt(np.sum(np.square(m1)) + 1e-8)
     return re
     
 def mean_absolute_error(m1, m2, elements=None):
