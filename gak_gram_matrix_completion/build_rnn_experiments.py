@@ -126,7 +126,7 @@ experiments = [
 
 
 
-"""This part of the code creates directories, symbolic links to mat files, k-fold cross-validation, json files, and timing for experiments.
+"""Creates directories, symbolic links to mat files, k-fold cross-validation, json files, and timing for experiments.
 """
 
 for exp in experiments:

@@ -4,6 +4,12 @@ import numpy as np
 import scipy as sp
 from scipy import io
 
+
+
+
+""" Configuration
+"""
+
 if 'nipg' in os.uname().nodename:
     EXPERIMENTS_DIR = "~/shota/USE_CASE_RNN_COMPLETION"
 elif os.uname().nodename == 'Regulus.local':
@@ -15,26 +21,35 @@ else:
     print("unsupported server")
     exit -1
 
-original_gram_files = [
-    ("UCIcharacter", os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIcharacter_sigma20.000.mat")),
-    ("UCItctodd", os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCItctodd_sigma12.000.mat")),
-    ("6DMG", os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat"))]
 
+""" Gram matrix .mat file paths
+"""
+gram_file_paths = {"UCIcharacter": os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIcharacter_sigma20.000.mat"),
+                   "UCIauslan": os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIauslan_sigma12.000.mat"),
+                   "gram_path": os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat")}
+
+""" Configuration
+"""
 units_list = [(10, 3), (50, 15), (100, 33), (200, 66), (300, 100)]
 
-np.random.seed(1)
 
-for (direc, orig_gram_file_path) in original_gram_files:
-    mat = io.loadmat(orig_gram_file_path)
+
+
+"""Creates directories, symbolic links to mat files, k-fold cross-validation, json files, and timing for experiments.
+"""
+np.random.seed(1)
+for dataset, mat_file_path in gram_file_paths.items():
+
+    mat = io.loadmat(mat_file_path)
     length = len(mat['gram'])
 
-    bloch_size = length // 10
+    block_size = length // 10
 
-    permutated_indices = np.random.permutation([i for i in range(length)])
+    permutated_indices = np.random.permutation(length)
 
     for units, hidden_units in units_list:
-        for k in range(10):
-            dataset_dir = os.path.join(EXPERIMENTS_DIR, direc, str(units))
+        for k in range(10): # k-fold????
+            dataset_dir = os.path.join(EXPERIMENTS_DIR, dataset, str(units))
             k_dir = os.path.join(dataset_dir, str(k))
             
             try:
@@ -42,11 +57,11 @@ for (direc, orig_gram_file_path) in original_gram_files:
             except FileExistsError:
                 pass
 
-            indices_to_drop = permutated_indices[k * bloch_size : (k+1) * bloch_size]
-            orig_gram_file = orig_gram_file_path.split("/")[-1]
+            indices_to_drop = permutated_indices[k * block_size : (k+1) * block_size]
+            mat_file_name = mat_file_path.split("/")[-1]
 
-            subprocess.run(["ln", "-s", orig_gram_file_path, k_dir])
-            gram_file = os.path.join(k_dir, orig_gram_file)
+            subprocess.run(["ln", "-s", mat_file_path, k_dir])
+            gram_file = os.path.join(k_dir, mat_file_name)
             completionanalysisfile = gram_file.replace(".mat", ".error")
             
             json_dict = dict(gram_file=gram_file,
@@ -63,7 +78,7 @@ for (direc, orig_gram_file_path) in original_gram_files:
             fd.close()
 
             if os.uname().nodename.split('.')[0] in {'procyon', 'pollux', 'capella', 'aldebaran', 'rigel'}:
-                job_file_name = os.path.join(k_dir, orig_gram_file + "_k" + str(k) + ".job")
+                job_file_name = os.path.join(k_dir, mat_file_name + "_k" + str(k) + ".job")
                 fd = open(job_file_name, "w")
                 time_file_name = os.path.join(k_dir, "time_command.output")
                 
