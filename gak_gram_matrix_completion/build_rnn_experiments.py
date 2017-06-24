@@ -5,24 +5,24 @@ from scipy import io
 
 from functools import reduce
 
-if os.uname().nodename == 'Regulus.local':
-    USE_CASE_RNN_COMPLETION_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
+if 'nipg' in os.uname().nodename:
+    EXPERIMENTS_DIR = "~/shota/USE_CASE_RNN_COMPLETION"
+    PROGRAM = "~/shota/fast-time-series-data-classification/gak_gram_matrix_completion/matrix_completion_rnn.py"
+    TIME = "/usr/bin/time"
+    IMPLEMENTATION = 2
+elif os.uname().nodename == 'Regulus.local':
+    EXPERIMENTS_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
     PROGRAM = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/matrix_completion_rnn.py"
     TIME = "gtime"
     IMPLEMENTATION = 1
-elif os.uname().nodename == 'nipgcore1':
-    USE_CASE_RNN_COMPLETION_DIR = "/home/milacski/shota/USE_CASE_RNN_COMPLETION"
-    PROGRAM = "/home/milacski/shota/fast-time-series-data-classification/gak_gram_matrix_completion/matrix_completion_rnn.py"
-    TIME = "/usr/bin/time"
-    IMPLEMENTATION = 2
 elif os.uname().nodename.split('.')[0] in {'procyon', 'pollux', 'capella',
                                            'aldebaran', 'rigel'}:
-    USE_CASE_RNN_COMPLETION_DIR = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
+    EXPERIMENTS_DIR = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
     PROGRAM = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/matrix_completion_rnn.py"
     IMPLEMENTATION = 1
 else:
     if len(sys.argv) == 3:
-        USE_CASE_RNN_COMPLETION_DIR = sys.argv[1]
+        EXPERIMENTS_DIR = sys.argv[1]
         IMPLEMENTATION = int(sys.argv[2])
         assert IMPLEMENTATION in {0, 1, 2}
     else:
@@ -104,7 +104,7 @@ dataset_settings = [
      [([10], [3])],
      0.3,
      False,
-     os.path.join(USE_CASE_RNN_COMPLETION_DIR,
+     os.path.join(EXPERIMENTS_DIR,
                   "original_gram_files/gram_UCItctodd_sigma12.000.mat"),
      Drop_generator_UCItctodd),
     ("UCIcharacter", "LSTM",
@@ -112,7 +112,7 @@ dataset_settings = [
      [([10], [3])],
      0.3,
      False,
-     os.path.join(USE_CASE_RNN_COMPLETION_DIR,
+     os.path.join(EXPERIMENTS_DIR,
                   "original_gram_files/gram_UCIcharacter_sigma20.000.mat"),
      Drop_generator_UCIcharacter),
     ("6DMG", "LSTM",
@@ -120,7 +120,7 @@ dataset_settings = [
      [([10], [3])],
      0.3,
      False,
-     os.path.join(USE_CASE_RNN_COMPLETION_DIR,
+     os.path.join(EXPERIMENTS_DIR,
                   "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat"),
      Drop_generator_6DMG)
 ]
@@ -135,7 +135,7 @@ for (dataset, rnn, unit_settings, dropout, bidirectional,
         gen = generator(orig_gram_file_path)
         k = 0
         for indices_to_drop in gen:
-            k_dir = os.path.join(USE_CASE_RNN_COMPLETION_DIR,
+            k_dir = os.path.join(EXPERIMENTS_DIR,
                                  direc,
                                  str(lstm_units),
                                  str(dense_units),

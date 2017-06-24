@@ -4,21 +4,21 @@ import numpy as np
 import scipy as sp
 from scipy import io
 
-if os.uname().nodename == 'Regulus.local':
-    USE_CASE_RNN_COMPLETION_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
-elif os.uname().nodename == 'nipgcore1':
-    USE_CASE_RNN_COMPLETION_DIR = "/home/milacski/shota/USE_CASE_RNN_COMPLETION"
+if 'nipg' in os.uname().nodename:
+    EXPERIMENTS_DIR = "~/shota/USE_CASE_RNN_COMPLETION"
+elif os.uname().nodename == 'Regulus.local':
+    EXPERIMENTS_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
 elif os.uname().nodename.split('.')[0] in {'procyon', 'pollux', 'capella', 'aldebaran', 'rigel'}:
-    USE_CASE_RNN_COMPLETION_DIR = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
+    EXPERIMENTS_DIR = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
     PROGRAM = "/home/ngym/NFSshare/Lorincz_Lab/fast-time-series-data-classification/gak_gram_matrix_completion/matrix_completion_rnn_residual.py"
 else:
     print("unsupported server")
     exit -1
 
 original_gram_files = [
-    ("UCIcharacter", os.path.join(USE_CASE_RNN_COMPLETION_DIR, "original_gram_files/gram_UCIcharacter_sigma20.000.mat")),
-    ("UCItctodd", os.path.join(USE_CASE_RNN_COMPLETION_DIR, "original_gram_files/gram_UCItctodd_sigma12.000.mat")),
-    ("6DMG", os.path.join(USE_CASE_RNN_COMPLETION_DIR, "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat"))]
+    ("UCIcharacter", os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIcharacter_sigma20.000.mat")),
+    ("UCItctodd", os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCItctodd_sigma12.000.mat")),
+    ("6DMG", os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat"))]
 
 units_list = [(10, 3), (50, 15), (100, 33), (200, 66), (300, 100)]
 
@@ -34,7 +34,7 @@ for (direc, orig_gram_file_path) in original_gram_files:
 
     for units, hidden_units in units_list:
         for k in range(10):
-            dataset_dir = os.path.join(USE_CASE_RNN_COMPLETION_DIR, direc, str(units))
+            dataset_dir = os.path.join(EXPERIMENTS_DIR, direc, str(units))
             k_dir = os.path.join(dataset_dir, str(k))
             
             try:
