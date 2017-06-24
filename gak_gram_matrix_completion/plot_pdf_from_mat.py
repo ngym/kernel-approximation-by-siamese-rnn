@@ -9,7 +9,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-def plot(file_name, similarities, files, separators, labels,
+def plot(file_name, gram, files, separators, labels,
          sigma, drop_percent):
     assert len(separators) == len(labels) - 1
 
@@ -17,7 +17,7 @@ def plot(file_name, similarities, files, separators, labels,
     cmap.set_bad('black')
     
     fig, ax = plt.subplots()
-    f1 = ax.imshow(similarities,
+    f1 = ax.imshow(gram,
                    interpolation='nearest',
                    cmap=cmap,
                    vmax=1, vmin=0
@@ -39,7 +39,7 @@ def plot(file_name, similarities, files, separators, labels,
     ## to corresponding place, the center of each group of data
     plt.axis('off')
     size = len(files) // len(labels) // 10
-    separators_ = [0] + separators + [len(similarities)]
+    separators_ = [0] + separators + [len(gram)]
     for i in range(len(labels)):
         label = labels[i]
         x = -len(files)//100
@@ -77,7 +77,7 @@ def plot(file_name, similarities, files, separators, labels,
 def main():
     filename = sys.argv[1]
     mat = io.loadmat(filename)
-    similarities = mat['gram']
+    gram = mat['gram']
     files = mat['indices']
     seqs = {}
 
@@ -151,7 +151,7 @@ def main():
     
     # OUTPUT
     plot(pdf_out,
-         similarities,
+         gram,
          files,
          separators,
          labels,
@@ -179,3 +179,4 @@ def main():
     
 if __name__ == "__main__":
     main()
+
