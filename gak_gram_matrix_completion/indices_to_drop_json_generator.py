@@ -20,9 +20,10 @@ else:
     if len(sys.argv) == 3:
         USE_CASE_RNN_COMPLETION_DIR = sys.argv[1]
         IMPLEMENTATION = int(sys.argv[2])
+        assert IMPLEMENTATION in {0, 1, 2}
     else:
         print("Specify an existing directory to build directies for experiments and" +\
-              "\"implementation\" which specifies to use CPU(1) or GPU(2).")
+              "\"implementation\" which specifies to use CPU(0) or GPU(2) or any (1).")
         exit -1
 
 class Drop_generator_UCItctodd():
@@ -95,24 +96,34 @@ class Drop_generator_6DMG():
 
 dataset_settings = [
     ("UCItctodd", "LSTM",
-     [(5, 2), (10, 3), (30, 10), (50, 16), (100, 33)],
+     [([5], [2]), ([10], [3]), ([30], [10]), ([50], [16]), ([100], [33])],
+     0.3,
+     False,
      os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                   "original_gram_files/gram_UCItctodd_sigma12.000.mat"),
      Drop_generator_UCItctodd),
     ("UCIcharacter", "LSTM",
-     [(5, 2), (10, 3), (30, 10), (50, 16), (100, 33)],
+     [([5], [2]), ([10], [3]), ([30], [10]), ([50], [16]), ([100], [33])],
+     0.3,
+     False,
      os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                   "original_gram_files/gram_UCIcharacter_sigma20.000.mat"),
      Drop_generator_UCIcharacter),
     ("6DMG", "LSTM",
-     [(5, 2), (10, 3), (30, 10), (50, 16), (100, 33)],
+     [([5], [2]), ([10], [3]), ([30], [10]), ([50], [16]), ([100], [33])],
+     0.3,
+     False,
      os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                   "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat"),
      Drop_generator_6DMG)
 ]
 
-for (dataset, rnn, unit_settings, orig_gram_file_path, generator) in dataset_settings:
-    direc = os.path.join(dataset, rnn)
+for (dataset, rnn, unit_settings, dropout, bidirectional,
+     orig_gram_file_path, generator) in dataset_settings:
+    if bidirectional:
+        direc = os.path.join(dataset, rnn, "Bidirectional")
+    else:
+        direc = os.path.join(dataset, rnn, "Unidirectional")
     for lstm_units, dense_units in unit_settings:
         gen = generator(orig_gram_file_path)
         k = 0
@@ -120,6 +131,8 @@ for (dataset, rnn, unit_settings, orig_gram_file_path, generator) in dataset_set
             k_dir = os.path.join(USE_CASE_RNN_COMPLETION_DIR,
                                  direc,
                                  str(lstm_units),
+                                 str(dense_units),
+                                 str(dropout),
                                  str(k))
 
             try:
@@ -143,9 +156,11 @@ for (dataset, rnn, unit_settings, orig_gram_file_path, generator) in dataset_set
                              rnn=rnn,
                              lstm_units=lstm_units,
                              dense_units=dense_units,
-                             implementation=IMPLEMENTATION)
+                             dropout=dropout,
+                             implementation=IMPLEMENTATION,
+                             bidirectional=bidirectional)
 
-            json_file_name = os.path.join(k_dir, "indices_to_drop.json")
+            json_file_name = os.path.join(k_dir, "config_rnn_conpletion.json")
             fd = open(json_file_name, "w")
             json.dump(json_dict, fd)
             fd.close()
