@@ -13,6 +13,18 @@ from scipy.io import wavfile
 from scipy import signal
 
 def find_and_read_sequences(filename, files):
+    """Data set loader.
+    Parse time series from files
+    TODO: automatic files from data set name
+    
+    :param filename: Data set name
+    :param files: List of files to parse
+    :type filename: str
+    :type files: list of str
+    :returns: List of time series
+    :rtype: list of np.ndarray
+    """
+    
     seqs = OrderedDict()
     if filename.find("upperChar") != -1 or filename.find("velocity") != -1:
         for f in files:
@@ -48,7 +60,7 @@ def find_and_read_sequences(filename, files):
         for l in labels:
             seqs[l + str(i)] = dataset['mixout'][0][i].T
             i += 1
-    elif filename.find("UCItctodd") != -1:
+    elif filename.find("UCIauslan") != -1:
         for f in files:
             if 'nipg' in os.uname().nodename:
                 reader = csv.reader(open(f.replace(' ', '')\
@@ -71,7 +83,8 @@ def find_and_read_sequences(filename, files):
             seq = []
             for r in reader:
                 seq.append(r)
-            seqs[f] = np.float64(np.array(seq))
+            seqs[f] = np.array(seq).astype(np.float32)
     else:
         assert False
     return seqs
+
