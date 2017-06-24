@@ -5,6 +5,13 @@ from scipy import io
 
 from functools import reduce
 
+
+
+
+
+""" Configuration
+"""
+
 if 'nipg' in os.uname().nodename:
     EXPERIMENTS_DIR = "~/shota/USE_CASE_RNN_COMPLETION"
     PROGRAM = "~/shota/fast-time-series-data-classification/gak_gram_matrix_completion/matrix_completion_rnn.py"
@@ -30,8 +37,19 @@ else:
               "\"implementation\" which is recommended to be 0 for CPU, 2 for GPU, 1 for any.")
         exit -1
 
+
+
+
+
+
+
+
+
+""" k-fold cross-validation generators
+"""
+
 class KFold():
-    """Base class for K-Fold Cross-Validation Test Set Generator.
+    """Base class for k-fold cross-validation test set generator.
     Puts ith sample into fold (i modulo fold count)
     I.e. each new sample goes to next fold
     Assumes that mat['indices'] is sorted wrt classes
@@ -64,7 +82,7 @@ class KFold():
         return retval    
 
 class KFold_UCIauslan(KFold):
-    """Class for K-Fold Cross-Validation Test Set Generator on UCI AUSLAN data set.
+    """Class for k-fold cross-validation test set generator on UCI AUSLAN data set.
     This data set has 9 trials (recorded over 9 days) which defines a natural 9-fold separation.
  
     :param mat_file_path: .mat file path for original Gram matrix
@@ -85,11 +103,31 @@ class KFold_UCIauslan(KFold):
 
 
 
+
+
+
+
+
+""" List of experiments to conduct.
+"""
+
 experiments = [
     {"dataset": "UCIauslan", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False},
     {"dataset": "UCIcharacter", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False},
     {"dataset": "6DMG", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False}]
 ]
+
+
+
+
+
+
+
+
+
+
+"""This part of the code creates directories, symbolic links to mat files, k-fold cross-validation, json files, and timing for experiments.
+"""
 
 for exp in experiments:
     if exp['dataset'] is "UCIauslan":
