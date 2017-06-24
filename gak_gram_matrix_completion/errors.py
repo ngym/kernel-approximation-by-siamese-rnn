@@ -24,9 +24,9 @@ def mean_squared_error(m1, m2, elements=None):
     if elements is not None:
         elements = np.array(elements)
         assert elements.shape[1] == 2
-        mse = np.square(np.linalg.norm(m1[elements[:, 0], elements[:, 1]] - m2[elements[:, 0], elements[:, 1]])) / len(elements)
+        mse = np.sum(np.square(m1[elements[:, 0], elements[:, 1]] - m2[elements[:, 0], elements[:, 1]])) / len(elements)
     else:
-        mse = np.square(np.linalg.norm(m1 - m2)) / np.prod(m1.shape)
+        mse = np.sum(np.square(m1 - m2)) / np.prod(m1.shape)
     return mse
 
 def relative_error(m1, m2, elements=None):
