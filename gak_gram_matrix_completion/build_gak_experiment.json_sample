@@ -1,0 +1,27 @@
+{
+     "env": {
+         "program": "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/calculate_gram_matrix_by_gak.py",
+         "root_dir": "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/",
+	   "python": "python3",
+	   "time": "gtime",
+	   "num_thread": 12
+    },
+    "dataset": {
+        "6DMGupperChar": {
+	  	  "output_filename_format": "gram_upperChar_${data_attribute_type}_sigma${gak_sigma}",
+	  	  "gak_sigma": [0.4, 1, 2, 5, 10, 20],
+		  "data_mat_files": ["/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset/6DMG_mat_112712/matR_char/upper_*.mat"],
+	  	  "data_attribute_type": ["all"]
+	  },
+	  "UCIauslan": {
+		  "output_filename_format": "gram_UCIauslan_sigma${gak_sigma}",
+	  	  "gak_sigma": [0.4, 1, 2, 5, 10, 20],
+	  	  "data_tsd_files": ["/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset/UCI/AUSLAN/all/*tsd"]
+        },
+	  "UCIcharacter": {
+	  	  "output_filename_format": "gram_UCIcharacter_sigma${gak_sigma}",
+		  "gak_sigma": [0.4, 1, 2, 5, 10, 20],
+	  	  "data_mat_file": "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset/UCI/mixoutALL_shifted.mat"
+        }
+    }
+}
