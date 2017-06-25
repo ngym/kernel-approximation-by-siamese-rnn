@@ -237,6 +237,8 @@ def predict(model, te_indices, gram_drop, seqs):
     :type te_indices: list of tuples
     :type gram_drop: list of lists
     :type seqs: list of np.ndarrays
+    :returns: List of predicted network outputs
+    :rtype: list of lists
     """
     
     te_gen = generator_sequence_pairs(te_indices, gram_drop, seqs)
@@ -292,6 +294,8 @@ def rnn_matrix_completion(gram_drop, seqs,
     :type implementation: int
     :type bidirectional: bool
     :type batchnormalization: bool
+    :returns: Filled in Gram matrix, training and prediction start and end times
+    :rtype: list of lists, float, float, float, float
     """
 
     num_seqs = len(seqs_)
