@@ -9,9 +9,6 @@ from scipy import signal
 import subprocess, functools, sys, threading, glob, json, csv
 import concurrent.futures
 
-from python_speech_features import mfcc
-from python_speech_features import logfbank
-
 from plot_gram_matrix import plot
 
 from string import Template
@@ -55,45 +52,10 @@ gram = None
 
 seqs = {}
 
-def read_and_resample_worker(f, frequency):
-    mat_filename = f.replace(".wav", ("_freq" + str(frequency) + ".mat"))
-    print(mat_filename)
-    try:
-        mat = io.loadmat(mat_filename)
-        resampled_data = mat['resampled_data']
-        print("read from mat")
-    except:
-        rate, data = io.wavfile.read(f)
-        data = logfbank(data, rate)
-        length = frequency * data.__len__() // rate
-        print("read from wav")
-        resampled_data = signal.resample(data, length)
-    return resampled_data
-
-def audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency):
-    with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:
-        future_to_file = {executor.submit(read_and_resample_worker, f, audioset_resampling_frequency): f
-                           for f in files}
-        print("reading %d files." % future_to_file.__len__())
-        for future in concurrent.futures.as_completed(future_to_file):
-            f = future_to_file[future]
-            resampled_data = future.result()
-            if resampled_data.ndim > 1:
-                # stereo
-                # convert stereo to mono
-                # https://librosa.github.io/librosa/_modules/librosa/core/audio.html          
-                seqs[f] = np.array([[np.mean([np.float64(elem) for elem in sample], axis=0)] for sample in resampled_data])
-            else:
-                # mono
-                seqs[f] = np.array([[np.float64(sample)] for sample in resampled_data])
-            #print(seqs[f])
-            print(str(seqs.__len__()) + " " + f)
-            sys.stdout.flush()
-
 def SixDMG_read_mats_and_build_seqs(files, attribute_type):
     for f in files:
         mat = io.loadmat(f)
-        seqs[f] = np.array(SixDMG_pick_attribute(mat['gest'].transpose(), attribute_type)).astype('float64')
+        seqs[f] = np.array(SixDMG_pick_attribute(mat['gest'].transpose(), attribute_type)).astype(np.float32)
 
 def SixDMG_pick_attribute(ll, attribute_type):
     retval = []
@@ -141,7 +103,7 @@ def UCIauslan_read_tsd_and_build_seqs(files):
         seq = []
         for r in reader:
             seq.append(r)
-        seqs[f] = np.float64(np.array(seq))
+        seqs[f] = np.array(seq).astype(np.float32)
     
 def worker_for_f1(files, f1index, f2indices, gak_sigma, triangular):
     f1 = files[f1index]
@@ -161,7 +123,7 @@ def main():
 
     dataset_type = config_dict['dataset_type']
 
-    gak_sigma = np.float64(config_dict['gak_sigma'])
+    gak_sigma = config_dict['gak_sigma'].astype(np.float32)
 
     output_dir = config_dict['output_dir']
     
@@ -172,22 +134,6 @@ def main():
         output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
             dict(dataset_type=dataset_type,
                  data_attribute_type=data_attribute_type,
-                 gak_sigma=("%.3f" % gak_sigma)))
-        files = []
-        for df in data_files:
-            files_ = glob.glob(df)
-            print(files_[:3])
-            print("...")
-            print(files_[-3:])
-            files += files_
-        files = sorted(files)
-    elif dataset_type == "audioset":
-        # audioset
-        data_files = config_dict['data_mat_files']
-        audioset_resampling_frequency = config_dict['audioset_resampling_frequency']
-        output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
-            dict(dataset_type=dataset_type,
-                 audioset_resampling_frequency=audioset_resampling_frequency,
                  gak_sigma=("%.3f" % gak_sigma)))
         files = []
         for df in data_files:
@@ -227,9 +173,6 @@ def main():
     if dataset_type in {"num", "upperChar", "6DMGupperChar"}:
         # 6DMG
         SixDMG_read_mats_and_build_seqs(files, data_attribute_type)
-    elif dataset_type == "audioset":
-        # audioset
-        audioset_read_wavs_and_build_seqs(files, audioset_resampling_frequency)
     elif dataset_type == "UCIcharacter":
         UCIcharacter_read_mat_and_build_seqs(data_file)
         files = sorted(seqs.keys())
