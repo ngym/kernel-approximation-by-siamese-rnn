@@ -145,11 +145,11 @@ def train_and_validate(model, tr_indices, val_indices,
     
     list_ave_tr_loss = []
     list_tr_loss_batch = []
-    list_ave_v_loss = []
-    list_v_loss_batch = []
+    list_ave_val_loss = []
+    list_val_loss_batch = []
     wait = 0
-    best_v_loss = np.inf
-    fd_losses.write("epoch, num_batch_iteration, ave_tr_loss, tr_loss_batch, ave_v_loss, v_loss_batch\n")
+    best_val_loss = np.inf
+    fd_losses.write("epoch, num_batch_iteration, ave_tr_loss, tr_loss_batch, ave_val_loss, val_loss_batch\n")
     for epoch in range(1, epochs + 1):
         # training
         num_trained_samples = 0
@@ -185,35 +185,35 @@ def train_and_validate(model, tr_indices, val_indices,
 
         # validation
         num_validated_samples = 0
-        ave_v_loss = 0
-        v_gen  = generator_sequence_pairs(val_indices, gram_drop, seqs)
-        v_start = cur_time = time.time()
+        ave_val_loss = 0
+        val_gen  = generator_sequence_pairs(val_indices, gram_drop, seqs)
+        val_start = cur_time = time.time()
         while num_validated_samples < len(val_indices):
             # validation batch
-            x, y = next(v_gen)
-            v_loss_batch = model.test_on_batch(x,y)
-            ave_v_loss = (ave_v_loss * num_validated_samples + v_loss_batch * y.shape[0]) / \
+            x, y = next(val_gen)
+            val_loss_batch = model.test_on_batch(x,y)
+            ave_val_loss = (ave_val_loss * num_validated_samples + val_loss_batch * y.shape[0]) / \
                        (num_validated_samples + y.shape[0])
             num_validated_samples += y.shape[0]
             prev_time = cur_time
             cur_time = time.time()
             print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
                   (epoch, epochs, num_validated_samples,
-                   len(val_indices), cur_time - v_start,
-                   ((cur_time - prev_time) * len(val_indices) / y.shape[0]) - (cur_time - v_start),
-                   ave_v_loss, v_loss_batch), end='\r')
-            list_ave_v_loss.append(ave_v_loss)
-            list_v_loss_batch.append(v_loss_batch)
-            fd_losses.write("%d, %d, nan, nan, %.5f, %.5f\n" % (epoch, num_batch_iteration, ave_v_loss, v_loss_batch))
+                   len(val_indices), cur_time - val_start,
+                   ((cur_time - prev_time) * len(val_indices) / y.shape[0]) - (cur_time - val_start),
+                   ave_val_loss, val_loss_batch), end='\r')
+            list_ave_val_loss.append(ave_val_loss)
+            list_val_loss_batch.append(val_loss_batch)
+            fd_losses.write("%d, %d, nan, nan, %.5f, %.5f\n" % (epoch, num_batch_iteration, ave_val_loss, val_loss_batch))
             fd_losses.flush()
             num_batch_iteration += 1
         print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
               (epoch, epochs, num_validated_samples,
-               len(val_indices), cur_time - v_start,
-               ((cur_time - prev_time) * len(val_indices) / y.shape[0]) - (cur_time - v_start),
-               ave_v_loss, v_loss_batch))
-        if ave_v_loss < best_v_loss:
-            best_v_loss = ave_v_loss
+               len(val_indices), cur_time - val_start,
+               ((cur_time - prev_time) * len(val_indices) / y.shape[0]) - (cur_time - val_start),
+               ave_val_loss, val_loss_batch))
+        if ave_val_loss < best_val_loss:
+            best_val_loss = ave_val_loss
             model.save_weights(logfile_hdf5)
             best_weights = model.get_weights()
             wait = 0
@@ -298,17 +298,13 @@ def rnn_matrix_completion(gram_drop, seqs,
     :rtype: list of lists, float, float, float, float
     """
 
-    num_seqs = len(seqs_)
-    incomplete_matrix = np.array(incomplete_matrix_)
-    time_dim = max([seq_.shape[0] for seq_ in seqs_.values()])
-
     # pre-processing
     num_seqs = len(seqs)
     gram_drop = np.array(gram_drop)
     time_dim = max([seq.shape[0] for seq in seqs.values()])
 
     pad_value = -123456789
-    seqs = pad_sequences([s.tolist() for s in seqs.values()],
+    seqs = pad_sequences([seq.tolist() for seq in seqs.values()],
                          maxlen=time_dim, dtype='float32',
                          padding='post', value=pad_value)
 
