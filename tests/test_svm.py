@@ -30,6 +30,8 @@ class Test_separate_gram(unittest.TestCase):
             matched, unmatched = svm.separate_gram(self.mat,
                                              self.data_attributes,
                                                    k_group)
+            print(unmatched.__len__())
+            print(unmatched[0].__len__())
             self.assertEqual(unmatched.__len__(), 18)
             self.assertEqual(unmatched[0].__len__(), 18)
             for unmatched_row in unmatched:
@@ -48,3 +50,7 @@ class Test_separate_gram(unittest.TestCase):
                 print(r)
     def tearDown(self):
         pass
+        
+if __name__ == '__main__':
+    unittest.main()
+
