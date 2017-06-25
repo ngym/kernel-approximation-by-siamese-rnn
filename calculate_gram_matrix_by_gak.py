@@ -1,3 +1,5 @@
+import sys, os
+
 import numpy as np
 from collections import OrderedDict
 from scipy import io
@@ -45,12 +47,12 @@ gram = None
 
 seqs = {}
 
-def 6DMG_read_mats_and_build_seqs(files, attribute_type):
+def sixDMG_read_mats_and_build_seqs(files, attribute_type):
     for f in files:
         mat = io.loadmat(f)
-        seqs[f] = np.array(6DMG_pick_attribute(mat['gest'].transpose(), attribute_type)).astype(np.float32)
+        seqs[f] = np.array(sixDMG_pick_attribute(mat['gest'].transpose(), attribute_type)).astype(np.float32)
 
-def 6DMG_pick_attribute(ll, attribute_type):
+def sixDMG_pick_attribute(ll, attribute_type):
     retval = []
     if attribute_type == "position":
         for l in ll:
@@ -116,7 +118,7 @@ def main():
 
     dataset_type = config_dict['dataset_type']
 
-    gak_sigma = config_dict['gak_sigma'].astype(np.float32)
+    gak_sigma = np.float32(config_dict['gak_sigma'])
 
     output_dir = config_dict['output_dir']
     
@@ -141,7 +143,7 @@ def main():
         output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
             dict(dataset_type=dataset_type,
                  gak_sigma=("%.3f" % gak_sigma)))
-    elif dataset_type == "UCIauslan":
+    elif dataset_type in {"UCIauslan", "UCItctodd"}:
         data_files = config_dict['data_tsd_files']
         output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
              dict(dataset_type=dataset_type,
@@ -165,7 +167,7 @@ def main():
 
     if dataset_type in {"num", "upperChar", "6DMGupperChar"}:
         # 6DMG
-        6DMG_read_mats_and_build_seqs(files, data_attribute_type)
+        sixDMG_read_mats_and_build_seqs(files, data_attribute_type)
     elif dataset_type == "UCIcharacter":
         UCIcharacter_read_mat_and_build_seqs(data_file)
         files = sorted(seqs.keys())

@@ -112,9 +112,12 @@ class KFold_UCIauslan(KFold):
 """
 
 experiments = [
-    {"dataset": "UCIauslan", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False},
-    {"dataset": "UCIcharacter", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False},
-    {"dataset": "6DMG", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False}
+    {"dataset": "UCIauslan", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3,
+     "bidirectional": False, "batchnormalization": True},
+    {"dataset": "UCIcharacter", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3,
+     "bidirectional": False, "batchnormalization": True},
+    {"dataset": "6DMG", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3,
+     "bidirectional": False, "batchnormalization": True}
 ]
 
 
@@ -146,8 +149,13 @@ for exp in experiments:
         direc = os.path.join(exp['dataset'], exp['rnn'], "Bidirectional")
     else:
         direc = os.path.join(exp['dataset'], exp['rnn'], "Forward")
+
+    if exp['batchnormalization']:
+        direc = os.path.join(direc, "BatchNormalization")
+    else:
+        direc = os.path.join(direc, "NoBatchNormalization")
+        
     for lstm_units, dense_units in exp['units']:
-        print(mat_file_path)
         folds = kfold(mat_file_path)
         k = 0
         for fold in folds:
@@ -181,7 +189,8 @@ for exp in experiments:
                              dense_units=dense_units,
                              dropout=exp['dropout'],
                              implementation=IMPLEMENTATION,
-                             bidirectional=exp['bidirectional'])
+                             bidirectional=exp['bidirectional'],
+                             batchnormalization=exp['batchnormalization'])
 
             json_file_name = os.path.join(k_dir, "config_rnn_conpletion.json")
             fd = open(json_file_name, "w")

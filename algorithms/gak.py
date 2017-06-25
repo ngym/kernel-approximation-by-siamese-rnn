@@ -1,8 +1,8 @@
-import sys
+import sys, os
 import numpy as np
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import global_align as ga
-
 
 def gak(seq1, seq2, sigma, triangular):
     """Triangular Global Alignment (TGA) kernel computation between two time series.

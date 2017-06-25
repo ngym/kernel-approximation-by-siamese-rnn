@@ -90,7 +90,7 @@ def drop_in_sample_random(gram, index, percent):
     length = len(gram)
 
     permutated_indices = np.random.permutation(length)
-    num_to_drop = int(length * loss_persentage * 0.01)
+    num_to_drop = int(length * percent * 0.01)
     subindices_drop = permutated_indices[:num_to_drop]
 
     gram_drop = copy.deepcopy(gram)
@@ -115,9 +115,9 @@ def drop_in_samples_random(gram, indices, percent):
     """
     
     gram_drop = copy.deepcopy(gram)
-    incies_drop = []
+    indices_drop = []
     for index in indices:
-        gram_drop, indices_drop_i = drop_in_sample_random(similarities, index, percent)
+        gram_drop, indices_drop_i = drop_in_sample_random(gram_drop, index, percent)
         indices_drop += indices_drop_i
     return gram_drop, indices_drop
 

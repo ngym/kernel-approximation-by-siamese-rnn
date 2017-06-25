@@ -11,11 +11,11 @@ dataset_type = None
 attribute_type = None
 
 def convert_index_to_attributes(index):
-    if dataset_type == "upperChar":
+    if dataset_type in {"upperChar", "6DMGupperChar"}:
         # 6DMG
         index_ = index.split('/')[-1]
         type_, ground_truth, k_group, trial = index_.split('_')
-    elif dataset_type == "UCItctodd":
+    elif dataset_type in {"UCItctodd", "UCIauslan"}:
         # UCI AUSLAN
         index_ = index.split('/')[-1]
         k_group = int(index_.split('-')[-2])
@@ -144,14 +144,15 @@ def crossvalidation(mat_file_names, costs):
                                              gtruths,
                                              validation_indices,
                                              test_indices))
-
     print("ROC_AUCs:")
     print([rocauc_f1[0] for rocauc_f1 in errors])
     print("F1s:")
     print([rocauc_f1[1] for rocauc_f1 in errors])
-    scores = np.average([rocauc_f1[0] for rocauc_f1 in errors]),\
-             np.average([rocauc_f1[1] for rocauc_f1 in errors])
-    print("Average ROC_AUC:%.5f, Average F1:%.5f" % scores)
+    ave_roc = np.average([rocauc_f1[0] for rocauc_f1 in errors])
+    ave_f1 = np.average([rocauc_f1[1] for rocauc_f1 in errors])
+    print("Average ROC_AUC:%.5f, Average F1:%.5f" % (ave_roc, ave_f1))
+
+    return ave_roc, ave_f1
 
 def main():
     config_json_file = sys.argv[1]
@@ -161,6 +162,7 @@ def main():
 
     data_dir = config_dict['data_dir']
     l2regularization_costs = config_dict['l2regularization_costs']
+    output_file = config_dict['output_file']
 
     mat_file_names = []
     for file_name_for_glob in config_dict['completed_matrices_for_glob']:
@@ -169,7 +171,14 @@ def main():
             mat_file_names.append(mat_file_name)
             print(mat_file_name)
 
-    crossvalidation(mat_file_names, l2regularization_costs)
+    ave_roc, ave_f1 = crossvalidation(mat_file_names, l2regularization_costs)
+
+    json_dict = {}
+    json_dict['ROC_AUC'] = ave_roc
+    json_dict['F1'] = ave_f1
+    fd = open(output_file, "w")
+    json.dump(json_dict, fd)
+    fd.close()
 
 if __name__ == "__main__":
     main()

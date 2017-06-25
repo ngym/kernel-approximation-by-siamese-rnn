@@ -25,7 +25,7 @@ ngpus = 2
 def create_LSTM_base_network(input_shape, mask_value,
                              lstm_units=[5], dense_units=[2],
                              dropout=0.3,
-                             implementation=2, bidirectional=False):
+                             implementation=2, bidirectional=False, batchnormalization=True):
     """Keras Deep LSTM network to be used as Siamese branch.
     Stacks some LSTM and some Dense layers on top of each other
 
@@ -36,6 +36,7 @@ def create_LSTM_base_network(input_shape, mask_value,
     :param dropout: Dropout probability
     :param implementation: LSTM implementation (0: CPU, 2: GPU, 1: any)
     :param bidirectional: Flag to switch between Forward and Bidirectional LSTM
+    :param batchnormalization: Flag to switch Batch Normalization on/off
     :type input_shape: tuple
     :type mask_value: float
     :type lstm_units: list of ints
@@ -43,6 +44,7 @@ def create_LSTM_base_network(input_shape, mask_value,
     :type dropout: float
     :type implementation: int
     :type bidirectional: bool
+    :type batchnormalization: bool
     :returns: Keras Deep LSTM network
     :rtype: keras.engine.training.Model
     """
@@ -64,14 +66,18 @@ def create_LSTM_base_network(input_shape, mask_value,
         seq.add(f(LSTM(lstm_unit,
                        dropout=dropout, implementation=implementation,
                        return_sequences=return_sequences)))
-
+        if batchnormalization:
+            seq.add(BatchNormalization())
     for i in range(len(dense_units)):
         dense_unit = dense_units[i]
         if i == len(dense_units) - 1:
-            activation='linear'
+            activation = 'linear'
         else:
-            activation='relu'
-        seq.add(Dense(dense_unit, activation=activation))
+            activation = 'relu'
+        seq.add(Dense(dense_unit, activation='linear'))
+        if batchnormalization:
+            seq.add(BatchNormalization())
+        seq.add(Activation(activation))
     return seq
 
 def generator_sequence_pairs(indices, gram_drop, seqs):
@@ -87,7 +93,7 @@ def generator_sequence_pairs(indices, gram_drop, seqs):
     :returns: Minibatch of data for Siamese RNN
     :rtype: list of np.ndarrays
     """
-    
+
     indices_copy = copy.deepcopy(indices)
     batch_size = 512 * ngpus
     input_0 = []
@@ -219,7 +225,7 @@ def train_and_validate(model, tr_indices, val_indices,
     fd_losses.close()
 
 def predict(model, te_indices, gram_drop, seqs):
-    """Keras Siamese RNN testing function.
+    """Keras Siamese RNN prediction function.
     Carries out predicting for given data
     Logs results and network parameters
 
@@ -250,20 +256,47 @@ def rnn_matrix_completion(gram_drop, seqs,
                           lstm_units, dense_units,
                           dropout,
                           implementation,
-                          bidirectional):
+                          bidirectional,
+                          batchnormalization):
     """Fill in Gram matrix with dropped elements with Keras Siamese RNN.
     Trains the network on given part of Gram matrix and the corresponding sequences
     Fills in missing elements by network prediction
 
-    :param model: Keras Siamese RNN to be tested
+    :param gram_drop: Gram matrix with dropped elements
+    :param seqs: List of time series
+    :param epochs: Number of passes over data set
+    :param patience: Early Stopping parameter
+    :param logfile_loss: Log file name for results
+    :param logfile_hdf5: Log file name for network structure and weights in HDF5 format
+    :param rnn: Base Network mode, currently must be LSTM
+    :param lstm_units: LSTM layer sizes
+    :param dense_units: Dense layer sizes
+    :param dropout: Dropout probability
+    :param implementation: LSTM implementation (0: CPU, 2: GPU, 1: any)
+    :param bidirectional: Flag to switch between Forward and Bidirectional LSTM    
+    :param batchnormalization: Flag to switch Batch Normalization on/off
+    :param gram_drop: Keras Siamese RNN to be tested
     :param te_indices: Testing 2-tuples of time series index pairs
     :param gram_drop: Gram matrix with dropped elements
     :param seqs: List of time series
-    :type model: keras.engine.training.Model
-    :type te_indices: list of tuples
     :type gram_drop: list of lists
     :type seqs: list of np.ndarrays
+    :type epochs: int
+    :type patience: int
+    :type logfile_loss: str
+    :type logfile_hdf5: str
+    :type rnn: str
+    :type lstm_units: int
+    :type dense_units: int
+    :type dropout: float
+    :type implementation: int
+    :type bidirectional: bool
+    :type batchnormalization: bool
     """
+
+    num_seqs = len(seqs_)
+    incomplete_matrix = np.array(incomplete_matrix_)
+    time_dim = max([seq_.shape[0] for seq_ in seqs_.values()])
 
     # pre-processing
     num_seqs = len(seqs)
@@ -285,7 +318,8 @@ def rnn_matrix_completion(gram_drop, seqs,
                                                 lstm_units, dense_units,
                                                 dropout,
                                                 implementation,
-                                                bidirectional)
+                                                bidirectional,
+                                                batchnormalization)
     else:
         print("invalid RNN network.")
         assert False
@@ -294,8 +328,10 @@ def rnn_matrix_completion(gram_drop, seqs,
     processed_a = base_network(input_a)
     processed_b = base_network(input_b)
     con = Concatenate()([processed_a, processed_b])
-    dns = Dense(units=1, activation='linear')(con)
-    out = Activation('sigmoid')(dns)
+    parent = Dense(units=1, activation='linear')(con)
+    if batchnormalization:
+        parent = BatchNormalization()(parent)
+    out = Activation('sigmoid')(parent)
 
     model = Model([input_a, input_b], out)
 
@@ -359,6 +395,7 @@ def main():
         dropout = 0.3
         implementation = 2
         bidirectional = False
+        batchnormalization = True
     else:
         random_drop = False
         config_json_file = sys.argv[1]
@@ -375,6 +412,7 @@ def main():
         dropout = config_dict['dropout']
         implementation = config_dict['implementation']
         bidirectional = config_dict['bidirectional']
+        batchnormalization = config_dict['batchnormalization']
 
     mat = io.loadmat(gram_filename)
     gram = mat['gram']
@@ -388,16 +426,16 @@ def main():
 
     if random_drop:
         gram_drop, dropped_elements = drop_gram_random(seed, gram, percentage)
-        logfile_html = gram_filename.replace(".mat", "_loss" + str(percentage) + "_RNN_LSTM.html")
-        logfile_mat  = gram_filename.replace(".mat", "_loss" + str(percentage) + "_RNN_LSTM.mat")
-        logfile_hdf5  = gram_filename.replace(".mat", "_loss" + str(percentage) + "_RNN_LSTM.hdf5")
+        logfile_html = gram_filename.replace(".mat", "_loss" + str(percentage) + "_RNN_" + rnn + ".html")
+        logfile_mat  = gram_filename.replace(".mat", "_loss" + str(percentage) + "_RNN_" + rnn + ".mat")
+        logfile_hdf5  = gram_filename.replace(".mat", "_loss" + str(percentage) + "_RNN_" + rnn + ".hdf5")
     else:
         gram_drop, dropped_elements = drop_samples(gram, indices_to_drop)
-        logfile_html = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_LSTM.html")
-        logfile_mat  = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_LSTM.mat")
-        logfile_hdf5  = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_LSTM.hdf5")
+        logfile_html = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".html")
+        logfile_mat  = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".mat")
+        logfile_hdf5  = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".hdf5")
 
-    # "RnnCompletion"
+    # RNN Completion
     gram_completed, fit_start, fit_end, pred_start, \
         pred_end = rnn_matrix_completion(gram_drop, seqs,
                                             epochs, patience,
@@ -406,7 +444,8 @@ def main():
                                             lstm_units, dense_units,
                                             dropout,
                                             implementation,
-                                            bidirectional)
+                                            bidirectional,
+                                            batchnormalization)
     gram_completed = np.array(gram_completed)
     # eigenvalue check
     npsd_start = time.time()
@@ -430,7 +469,7 @@ def main():
                                      orig_gram=gram,
                                      indices=files))
 
-    print("RnnCompletion files are output.")
+    print("RNN Completion files are output.")
 
     mse = mean_squared_error(gram, gram_completed_npsd)
     msede = mean_squared_error(gram,
