@@ -24,8 +24,27 @@ def create_LSTM_base_network(input_shape, mask_value,
                              lstm_units=[5], dense_units=[2],
                              dropout=0.3,
                              implementation=2, bidirectional=False):
-    '''Base network to be shared (eq. to feature extraction).
-    '''
+    """Keras Deep LSTM network to be used as Siamese branch.
+    Stacks some LSTM and some Dense layers on top of each other
+
+    :param input_shape: Keras input shape
+    :param mask_value: Padding value to be skipped among time steps
+    :param lstm_units: LSTM layer sizes
+    :param dense_units: Dense layer sizes
+    :param dropout: Dropout probability
+    :param implementation: LSTM implementation (0: CPU, 2: GPU, 1: any)
+    :param bidirectional: Flag to switch between Forward and Bidirectional LSTM
+    :type input_shape: tuple
+    :type mask_value: float
+    :type lstm_units: list of ints
+    :type dense_units: list of ints
+    :type dropout: float
+    :type implementation: int
+    :type bidirectional: bool
+    :returns: Keras Deep LSTM network
+    :rtype: keras.engine.training.Model
+    """
+
     seq = Sequential()
     seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
 
@@ -53,16 +72,29 @@ def create_LSTM_base_network(input_shape, mask_value,
         seq.add(Dense(dense_unit, activation=activation))
     return seq
 
-def generator_sequence_pairs(indices_list_, incomplete_matrix, seqs):
-    indices_list = copy.deepcopy(indices_list_)
+def generator_sequence_pairs(indices, gram_drop, seqs):
+    """Siamese RNN data batch generator.
+    Yields minibatches of 2 time series and their corresponding output value (Triangular Global Alignment kernel in our case)
+
+    :param indices: 2-tuples of time series index pairs
+    :param gram_drop: Gram matrix with dropped elements
+    :param seqs: List of time series
+    :type indices: tuple
+    :type gram_drop: list of lists
+    :type seqs: list of np.ndarrays
+    :returns: Minibatch of data for Siamese RNN
+    :rtype: list of np.ndarrays
+    """
+    
+    indices_copy = copy.deepcopy(indices)
     batch_size = 512 * ngpus
     input_0 = []
     input_1 = []
     y = []
-    for i, j in indices_list:
+    for i, j in indices_copy:
         input_0.append(seqs[i])
         input_1.append(seqs[j])
-        y.append([incomplete_matrix[i][j]])
+        y.append([gram_drop[i][j]])
         if len(input_0) == batch_size:
             yield ([np.array(input_0), np.array(input_1)], np.array(y))
             input_0 = []
