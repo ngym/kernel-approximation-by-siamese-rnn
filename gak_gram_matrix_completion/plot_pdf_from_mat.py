@@ -141,7 +141,7 @@ def main():
             while files[i].split('/')[-1].find(l) != -1:
                 i += 1
             separators.append(i)
-    elif filename.find("UCItctodd") != -1:
+    elif filename.find("UCIauslan") != -1:
         labels = []
         for f in files:
             l = reduce(lambda a, b: a + "-" + b, f.split('/')[-1].split('-')[:-2])

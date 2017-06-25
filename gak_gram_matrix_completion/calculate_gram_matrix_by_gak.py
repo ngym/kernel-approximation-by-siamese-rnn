@@ -135,7 +135,7 @@ def UCIcharacter_read_mat_and_build_seqs(mat_filename):
         i += 1
     gram = GRAMmatrix(sorted(seqs.keys()))
 
-def UCItctodd_read_tsd_and_build_seqs(files):
+def UCIauslan_read_tsd_and_build_seqs(files):
     for f in files:
         reader = csv.reader(open(f, "r"), delimiter='\t')
         seq = []
@@ -233,8 +233,8 @@ def main():
     elif dataset_type == "UCIcharacter":
         UCIcharacter_read_mat_and_build_seqs(data_file)
         files = sorted(seqs.keys())
-    elif dataset_type == "UCItctodd":
-        UCItctodd_read_tsd_and_build_seqs(files)
+    elif dataset_type == "UCIauslan":
+        UCIauslan_read_tsd_and_build_seqs(files)
     else:
         assert False
     

@@ -21,7 +21,7 @@ TIME = "~/NFSshare/tflib/lib64/ld-2.17.so /usr/bin/time"
 mats = []
 mats += glob.glob(ROOT_DIR + "OUTPUT6DMG/*0.mat")
 mats += glob.glob(ROOT_DIR + "OUTPUT_UCIcharacter/*0.mat")
-mats += glob.glob(ROOT_DIR + "OUTPUT_UCItctodd/*0.mat")
+mats += glob.glob(ROOT_DIR + "OUTPUT_UCIauslan/*0.mat")
 
 for mat in mats:
     for CALG in COMPLETION_ALG:
