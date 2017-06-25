@@ -1,4 +1,6 @@
-import sys, copy, time, json
+import sys, os, copy, time, json
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
 import numpy as np
 from scipy import io
 

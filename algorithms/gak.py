@@ -31,8 +31,8 @@ def gak(seq1, seq2, sigma, triangular):
     return kval
 
 def main():
-    seq1 = sys.argv[1]
-    seq2 = sys.argv[2]
+    seq1 = np.array(eval(sys.argv[1])).astype(np.double)
+    seq2 = np.array(eval(sys.argv[2])).astype(np.double)
 
     val = gak(seq1, seq2, 0.4, 500)
     print(val)

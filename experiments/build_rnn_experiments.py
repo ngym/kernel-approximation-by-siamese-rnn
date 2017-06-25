@@ -18,8 +18,8 @@ if 'nipg' in os.uname().nodename:
     TIME = "/usr/bin/time"
     IMPLEMENTATION = 2
 elif os.uname().nodename == 'Regulus.local':
-    EXPERIMENTS_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/USE_CASE_RNN_COMPLETION"
-    PROGRAM = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/matrix_completion_rnn.py"
+    EXPERIMENTS_DIR = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/USE_CASE_RNN_COMPLETION"
+    PROGRAM = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/algorithms/matrix_completion_rnn.py"
     TIME = "gtime"
     IMPLEMENTATION = 1
 elif os.uname().nodename.split('.')[0] in {'procyon', 'pollux', 'capella',
@@ -61,13 +61,13 @@ class KFold():
     def __init__(self, mat_file_path):
         # assume mat['indices'] is sorted with ground truth
         mat = io.loadmat(mat_file_path)
-        indices = mat['indices']
+        self.indices = mat['indices']
         self.generate_folds()
         
-    def generate_folds():
+    def generate_folds(self):
         self.num_folds = 10
         self.fold = [[] for i in range(self.num_folds)]
-        for i in range(len(indices)):
+        for i in range(len(self.indices)):
             self.fold[i % self.num_folds].append(i)
 
     def __iter__(self):
@@ -92,11 +92,11 @@ class KFold_UCIauslan(KFold):
     def __init__(self, mat_file_path):
         super(KFold_UCIauslan, self).__init__(mat_file_path)
 
-    def generate_folds():
+    def generate_folds(self):
         self.num_folds = 9
         self.fold = [[] for i in range(self.num_folds)]
-        for i in range(len(indices)):
-            index = indices[i]
+        for i in range(len(self.indices)):
+            index = self.indices[i]
             index_ = index.split('/')[-1]
             k = int(index_.split('-')[-2])
             self.fold[k - 1].append(i)
@@ -114,7 +114,7 @@ class KFold_UCIauslan(KFold):
 experiments = [
     {"dataset": "UCIauslan", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False},
     {"dataset": "UCIcharacter", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False},
-    {"dataset": "6DMG", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False}]
+    {"dataset": "6DMG", "rnn": "LSTM", "units": [([10], [3])], "dropout": 0.3, "bidirectional": False}
 ]
 
 
@@ -131,13 +131,13 @@ experiments = [
 
 for exp in experiments:
     if exp['dataset'] is "UCIauslan":
-        mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIauslan_sigma12.000.mat"),
+        mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIauslan_sigma12.000.mat")
         kfold = KFold_UCIauslan
     elif exp['dataset'] is "UCIcharacter":
-        mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIcharacter_sigma20.000.mat"),
+        mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIcharacter_sigma20.000.mat")
         kfold = KFold
     elif exp['dataset'] is "6DMG":
-        mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat"),
+        mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat")
         kfold = KFold
     else:
         raise ValueError("dataset must be one of UCIauslan, UCIcharacter or 6DMG")
@@ -147,6 +147,7 @@ for exp in experiments:
     else:
         direc = os.path.join(exp['dataset'], exp['rnn'], "Forward")
     for lstm_units, dense_units in exp['units']:
+        print(mat_file_path)
         folds = kfold(mat_file_path)
         k = 0
         for fold in folds:

@@ -1,7 +1,7 @@
 import sys, json
 from sklearn.svm import SVC
 from sklearn.preprocessing import LabelBinarizer 
-from sklearn.metrics as f1_score, roc_auc_score
+from sklearn.metrics import f1_score, roc_auc_score
 import scipy.io as io
 import numpy as np
 import functools
@@ -188,11 +188,11 @@ def crossvalidation(completion_alg, sigmas, costs):
     # ["A1", "C1", "C2", "C3", "C4", "E1", "G1", "G2", "G3", "I1", "I2", "I3",
     #  "J1", "J2", "J3", "L1", "M1", "S1", "T1", "U1", "Y1", "Y2", "Y3", "Z1", "Z2"]
     # actually participants/person ID.
-    if dataset_type == "upperChar":
+    if dataset_type in {"upperChar", "6DMGupperChar"}:
         k_groups = ["A1", "C1", "C2", "C3", "C4", "E1", "G1", "G2", "G3", "I1", "I2", "I3",
                     "J1", "J2", "J3", "L1", "M1", "S1", "T1", "U1", "Y1", "Y2", "Y3", "Z1", "Z2"]
         #k_groups = ["C1", "J1", "M1", "T1", "Y1", "Y2"]
-    elif dataset_type == "UCItctodd":
+    elif dataset_type in {"UCItctodd", "UCIauslan"}:
         k_groups = [i for i in range(1, 10)]
     elif dataset_type == "UCIcharacter":
         k_groups = [i for i in range(10)]
@@ -224,11 +224,15 @@ def main():
     config_json_file = sys.argv[1]
     config_dict = json.load(open(config_json_file, 'r'))
 
+    global dataset_type
+    global attribute_type 
+    global loss_percentage 
     dataset_type = config_dict['dataset_type']
     attribute_type = config_dict['attribute_type']
     loss_percentage = config_dict['loss_percentage']
     sigmas_ = config_dict['gak_sigmas']
     l2regularization_costs = config_dict['l2regularization_costs']
+    global data_dir
     data_dir = config_dict['data_dir']
     
     compare_completion_algorithms(sigmas_, l2regularization_costs)
