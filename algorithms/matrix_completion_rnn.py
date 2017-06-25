@@ -1,5 +1,5 @@
 import sys, os, copy, time, json
-sys.path.append("..")
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import numpy as np
 from scipy import io
@@ -25,7 +25,7 @@ ngpus = 2
 def create_LSTM_base_network(input_shape, mask_value,
                              lstm_units=[5], dense_units=[2],
                              dropout=0.3,
-                             implementation=2, bidirectional=False):
+                             implementation=2, bidirectional=False, batchnormalization=True):
     """Keras Deep LSTM network to be used as Siamese branch.
     Stacks some LSTM and some Dense layers on top of each other
 
@@ -64,14 +64,18 @@ def create_LSTM_base_network(input_shape, mask_value,
         seq.add(f(LSTM(lstm_unit,
                        dropout=dropout, implementation=implementation,
                        return_sequences=return_sequences)))
-
+        if batchnormalization:
+            seq.add(BatchNormalization())
     for i in range(len(dense_units)):
         dense_unit = dense_units[i]
         if i == len(dense_units) - 1:
-            activation='linear'
+            activation = 'linear'
         else:
-            activation='relu'
-        seq.add(Dense(dense_unit, activation=activation))
+            activation = 'relu'
+        seq.add(Dense(dense_unit, activation='linear'))
+        if batchnormalization:
+            seq.add(BatchNormalization())
+        seq.add(Activation(activation))
     return seq
 
 def generator_sequence_pairs(indices, gram_drop, seqs):
@@ -87,7 +91,7 @@ def generator_sequence_pairs(indices, gram_drop, seqs):
     :returns: Minibatch of data for Siamese RNN
     :rtype: list of np.ndarrays
     """
-    
+
     indices_copy = copy.deepcopy(indices)
     batch_size = 512 * ngpus
     input_0 = []
@@ -210,7 +214,8 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_,
                           lstm_units, dense_units,
                           dropout,
                           implementation,
-                          bidirectional):
+                          bidirectional,
+                          batchnormalization):
     num_seqs = len(seqs_)
     incomplete_matrix = np.array(incomplete_matrix_)
     time_dim = max([seq_.shape[0] for seq_ in seqs_.values()])
@@ -231,7 +236,8 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_,
                                                 lstm_units, dense_units,
                                                 dropout,
                                                 implementation,
-                                                bidirectional)
+                                                bidirectional,
+                                                batchnormalization)
     else:
         print("invalid RNN network.")
         assert False
@@ -246,8 +252,10 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_,
     processed_b = base_network(input_b)
 
     con = Concatenate()([processed_a, processed_b])
-    dns = Dense(units=1, activation='linear')(con)
-    out = Activation('sigmoid')(dns)
+    parent = Dense(units=1, activation='linear')(con)
+    if batchnormalization:
+        parent = BatchNormalization()(parent)
+    out = Activation('sigmoid')(parent)
 
     model = Model([input_a, input_b], out)
 
@@ -325,6 +333,7 @@ def main():
         dropout = 0.3
         implementation = 2
         bidirectional = False
+        batchnormalization = True
     else:
         random_drop = False
         config_json_file = sys.argv[1]
@@ -341,6 +350,7 @@ def main():
         dropout = config_dict['dropout']
         implementation = config_dict['implementation']
         bidirectional = config_dict['bidirectional']
+        batchnormalization = config_dict['batchnormalization']
 
     mat = io.loadmat(gram_filename)
     similarities = mat['gram']
@@ -372,7 +382,8 @@ def main():
                                             lstm_units, dense_units,
                                             dropout,
                                             implementation,
-                                            bidirectional)
+                                            bidirectional,
+                                            batchnormalization)
     completed_similarities = np.array(completed_similarities)
     # eigenvalue check
     npsd_start = time.time()
