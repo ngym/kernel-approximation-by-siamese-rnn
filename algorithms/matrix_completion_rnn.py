@@ -23,7 +23,7 @@ from utils.multi_gpu import make_parallel
 ngpus = 2
 
 def create_LSTM_base_network(input_shape, mask_value,
-                             lstm_units=[5], dense_units=[2],
+                             rnn_units=[5], dense_units=[2],
                              dropout=0.3,
                              implementation=2, bidirectional=False, batchnormalization=True):
     """Keras Deep LSTM network to be used as Siamese branch.
@@ -31,7 +31,7 @@ def create_LSTM_base_network(input_shape, mask_value,
 
     :param input_shape: Keras input shape
     :param mask_value: Padding value to be skipped among time steps
-    :param lstm_units: LSTM layer sizes
+    :param rnn_units: Recurrent layer sizes
     :param dense_units: Dense layer sizes
     :param dropout: Dropout probability
     :param implementation: LSTM implementation (0: CPU, 2: GPU, 1: any)
@@ -39,7 +39,7 @@ def create_LSTM_base_network(input_shape, mask_value,
     :param batchnormalization: Flag to switch Batch Normalization on/off
     :type input_shape: tuple
     :type mask_value: float
-    :type lstm_units: list of ints
+    :type rnn_units: list of ints
     :type dense_units: list of ints
     :type dropout: float
     :type implementation: int
@@ -57,13 +57,13 @@ def create_LSTM_base_network(input_shape, mask_value,
     else:
         f = lambda x: x
 
-    for i in range(len(lstm_units)):
-        lstm_unit = lstm_units[i]
-        if i == len(lstm_units) - 1:
+    for i in range(len(rnn_units)):
+        rnn_unit = rnn_units[i]
+        if i == len(rnn_units) - 1:
             return_sequences = False
         else:
             return_sequences = True
-        seq.add(f(LSTM(lstm_unit,
+        seq.add(f(LSTM(rnn_unit,
                        dropout=dropout, implementation=implementation,
                        return_sequences=return_sequences)))
         if batchnormalization:
@@ -255,7 +255,7 @@ def rnn_matrix_completion(gram_drop, seqs,
                           epochs, patience,
                           logfile_loss, logfile_hdf5,
                           rnn,
-                          lstm_units, dense_units,
+                          rnn_units, dense_units,
                           dropout,
                           implementation,
                           bidirectional,
@@ -271,7 +271,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     :param logfile_loss: Log file name for results
     :param logfile_hdf5: Log file name for network structure and weights in HDF5 format
     :param rnn: Base Network mode, currently must be LSTM
-    :param lstm_units: LSTM layer sizes
+    :param rnn_units: LSTM layer sizes
     :param dense_units: Dense layer sizes
     :param dropout: Dropout probability
     :param implementation: LSTM implementation (0: CPU, 2: GPU, 1: any)
@@ -288,7 +288,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     :type logfile_loss: str
     :type logfile_hdf5: str
     :type rnn: str
-    :type lstm_units: int
+    :type rnn_units: int
     :type dense_units: int
     :type dropout: float
     :type implementation: int
@@ -315,7 +315,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     K.clear_session()
     if rnn == "LSTM":
         base_network = create_LSTM_base_network(input_shape, pad_value,
-                                                lstm_units, dense_units,
+                                                rnn_units, dense_units,
                                                 dropout,
                                                 implementation,
                                                 bidirectional,
@@ -390,7 +390,7 @@ def main():
         epochs = 2
         patience = 2
         rnn = "LSTM"
-        lstm_units = [5]
+        rnn_units = [5]
         dense_units = [2]
         dropout = 0.3
         implementation = 2
@@ -407,7 +407,7 @@ def main():
         epochs = config_dict['epochs']
         patience = config_dict['patience']
         rnn = config_dict['rnn']
-        lstm_units = config_dict['lstm_units']
+        rnn_units = config_dict['rnn_units']
         dense_units = config_dict['dense_units']
         dropout = config_dict['dropout']
         implementation = config_dict['implementation']
@@ -441,7 +441,7 @@ def main():
                                             epochs, patience,
                                             logfile_loss, logfile_hdf5,
                                             rnn,
-                                            lstm_units, dense_units,
+                                            rnn_units, dense_units,
                                             dropout,
                                             implementation,
                                             bidirectional,
