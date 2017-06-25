@@ -31,8 +31,6 @@ from plot_gram_matrix import plot
 from make_matrix_incomplete import make_matrix_incomplete, drop_samples
 from find_and_read_sequences import find_and_read_sequences
 
-from kerassupervisedrnn import ResidualRNN
-
 from multi_gpu import make_parallel
 ngpus = 2
 
