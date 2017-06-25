@@ -5,7 +5,7 @@ import numpy as np
 from scipy import io
 
 from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Input, LSTM, Masking, Activation, BatchNormalization
+from keras.layers import Dense, Dropout, Input, SimpleRNN, LSTM, GRU, Masking, Activation, BatchNormalization
 from keras.optimizers import Adam
 from keras import backend as K
 from keras.preprocessing.sequence import pad_sequences
@@ -22,40 +22,52 @@ from utils.multi_gpu import make_parallel
 
 ngpus = 2
 
-def create_LSTM_base_network(input_shape, mask_value,
+def create_RNN_base_network(input_shape, mask_value,
                              rnn_units=[5], dense_units=[2],
+                             rnn="LSTM",
                              dropout=0.3,
                              implementation=2, bidirectional=False, batchnormalization=True):
-    """Keras Deep LSTM network to be used as Siamese branch.
-    Stacks some LSTM and some Dense layers on top of each other
+    """Keras Deep RNN network to be used as Siamese branch.
+    Stacks some Recurrent and some Dense layers on top of each other
 
     :param input_shape: Keras input shape
     :param mask_value: Padding value to be skipped among time steps
     :param rnn_units: Recurrent layer sizes
     :param dense_units: Dense layer sizes
+    :param rnn: Recurrent Layer type (SimpleRNN, LSTM or GRU)
     :param dropout: Dropout probability
-    :param implementation: LSTM implementation (0: CPU, 2: GPU, 1: any)
-    :param bidirectional: Flag to switch between Forward and Bidirectional LSTM
+    :param implementation: RNN implementation (0: CPU, 2: GPU, 1: any)
+    :param bidirectional: Flag to switch between Forward and Bidirectional RNN
     :param batchnormalization: Flag to switch Batch Normalization on/off
     :type input_shape: tuple
     :type mask_value: float
     :type rnn_units: list of ints
     :type dense_units: list of ints
+    :type rnn: str
     :type dropout: float
     :type implementation: int
     :type bidirectional: bool
     :type batchnormalization: bool
-    :returns: Keras Deep LSTM network
+    :returns: Keras Deep RNN network
     :rtype: keras.engine.training.Model
     """
 
     seq = Sequential()
     seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
 
+    if rnn is "SimpleRNN":
+        r = SimpleRNN
+    elif rnn is "LSTM":
+        r = LSTM
+    elif rnn is "GRU":
+        r = GRU
+    else
+        raise NotImplementedError("Currently rnn must be SimpleRNN, LSTM or GRU!")
+
     if bidirectional:
-        f = Bidirectional
+        b = Bidirectional
     else:
-        f = lambda x: x
+        b = lambda x: x
 
     for i in range(len(rnn_units)):
         rnn_unit = rnn_units[i]
@@ -63,9 +75,9 @@ def create_LSTM_base_network(input_shape, mask_value,
             return_sequences = False
         else:
             return_sequences = True
-        seq.add(f(LSTM(rnn_unit,
-                       dropout=dropout, implementation=implementation,
-                       return_sequences=return_sequences)))
+        seq.add(b(r(rnn_unit,
+                    dropout=dropout, implementation=implementation,
+                    return_sequences=return_sequences)))
         if batchnormalization:
             seq.add(BatchNormalization())
     for i in range(len(dense_units)):
@@ -254,8 +266,8 @@ def predict(model, te_indices, gram_drop, seqs):
 def rnn_matrix_completion(gram_drop, seqs,
                           epochs, patience,
                           logfile_loss, logfile_hdf5,
-                          rnn,
                           rnn_units, dense_units,
+                          rnn,
                           dropout,
                           implementation,
                           bidirectional,
@@ -270,12 +282,12 @@ def rnn_matrix_completion(gram_drop, seqs,
     :param patience: Early Stopping parameter
     :param logfile_loss: Log file name for results
     :param logfile_hdf5: Log file name for network structure and weights in HDF5 format
-    :param rnn: Base Network mode, currently must be LSTM
-    :param rnn_units: LSTM layer sizes
+    :param rnn_units: Recurrent layer sizes
     :param dense_units: Dense layer sizes
+    :param rnn: Recurrent Layer type (SimpleRNN, LSTM or GRU)
     :param dropout: Dropout probability
-    :param implementation: LSTM implementation (0: CPU, 2: GPU, 1: any)
-    :param bidirectional: Flag to switch between Forward and Bidirectional LSTM    
+    :param implementation: RNN implementation (0: CPU, 2: GPU, 1: any)
+    :param bidirectional: Flag to switch between Forward and Bidirectional RNN    
     :param batchnormalization: Flag to switch Batch Normalization on/off
     :param gram_drop: Keras Siamese RNN to be tested
     :param te_indices: Testing 2-tuples of time series index pairs
@@ -290,6 +302,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     :type rnn: str
     :type rnn_units: int
     :type dense_units: int
+    :type rnn: str
     :type dropout: float
     :type implementation: int
     :type bidirectional: bool
@@ -313,13 +326,13 @@ def rnn_matrix_completion(gram_drop, seqs,
 
     # build network
     K.clear_session()
-    if rnn == "LSTM":
-        base_network = create_LSTM_base_network(input_shape, pad_value,
-                                                rnn_units, dense_units,
-                                                dropout,
-                                                implementation,
-                                                bidirectional,
-                                                batchnormalization)
+    base_network = create_RNN_base_network(input_shape, pad_value,
+                                            rnn_units, dense_units,
+                                            rnn,
+                                            dropout,
+                                            implementation,
+                                            bidirectional,
+                                            batchnormalization)
     else:
         print("invalid RNN network.")
         assert False
