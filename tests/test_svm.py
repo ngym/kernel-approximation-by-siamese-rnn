@@ -2,6 +2,7 @@ import numpy as np
 import unittest
 from algorithms.svm import separate_gram
 
+
 class Test_separate_gram(unittest.TestCase):
     """Unit test for Gram matrix cross-validation splitting.
     """
