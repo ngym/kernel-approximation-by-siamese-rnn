@@ -336,10 +336,10 @@ def rnn_matrix_completion(gram_drop, seqs,
     model = Model([input_a, input_b], out)
 
     # training
-    rms = Adam(clipnorm=1.)
+    optimizer = Adam(clipnorm=1.)
     if ngpus > 1:
         model = make_parallel(model, ngpus)
-    model.compile(loss='mse', optimizer=rms)
+    model.compile(loss='mse', optimizer=optimizer)
     # make 90% + 10% training validation random split
     trval_indices = np.random.permutation([(i, j)
                                         for i in range(num_seqs)
