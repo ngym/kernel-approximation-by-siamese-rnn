@@ -1,21 +1,14 @@
-import sys, random
-
-import numpy as np
-import scipy as sp
-from scipy import io
-from scipy.io import wavfile
-from scipy import signal
-
-from sklearn.metrics import mean_squared_error
-
-from fancyimpute import BiScaler, KNN, NuclearNormMinimization, SoftImpute
-
-from nearest_positive_semidefinite import nearest_positive_semidefinite
-from mean_squared_error_of_dropped_elements import mean_squared_error_of_dropped_elements
-from plot_gram_matrix import plot
-from make_matrix_incomplete import make_matrix_incomplete
-
+import sys
 import time
+import numpy as np
+from scipy import io
+from fancyimpute import SoftImpute
+
+from utils.nearest_positive_semidefinite import nearest_positive_semidefinite
+from utils.errors import mean_squared_error
+from utils.plot_gram_matrix import plot
+from utils.make_matrix_incomplete import drop_gram_random
+
 
 def softimpute_matrix_completion(incomplete_similarities_):
     """
@@ -36,7 +29,7 @@ def main():
         
     fd = open(completionanalysisfile, "w")
     
-    incomplete_similarities, dropped_elements = make_matrix_incomplete(seed, similarities, incomplete_percentage)
+    incomplete_similarities, dropped_elements = drop_gram_random(seed, similarities, incomplete_percentage)
 
     fd.write("number of dropped elements: " + str(len(dropped_elements)))
     fd.write("\n")
@@ -61,7 +54,7 @@ def main():
     print("SoftImpute is output")
 
     mse = mean_squared_error(similarities, psd_completed_similarities)
-    msede = mean_squared_error_of_dropped_elements(similarities, psd_completed_similarities, dropped_elements)
+    msede = mean_squared_error(similarities, psd_completed_similarities, dropped_elements)
     fd.write("start: " + str(t_start))
     fd.write("\n")
     fd.write("finish: " + str(t_finish))

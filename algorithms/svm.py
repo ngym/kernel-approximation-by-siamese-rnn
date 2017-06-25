@@ -1,9 +1,8 @@
 import sys, json
-
 from sklearn.svm import SVC
 from sklearn.preprocessing import LabelBinarizer 
-import sklearn.metrics as metrics
-import scipy.io as sio
+from sklearn.metrics as f1_score, roc_auc_score
+import scipy.io as io
 import numpy as np
 import functools
 
@@ -116,15 +115,15 @@ def tryout1hyperparameter(cost, train, train_gtruths, validation_or_test, v_or_t
     clf = SVC(C=cost, kernel='precomputed', probability=True)
     clf.fit(np.array(train), np.array(train_gtruths))
     pred = clf.predict(validation_or_test)
-    f1_score = metrics.f1_score(v_or_t_gtruths, pred, average='weighted')
+    f1_ = f1_score(v_or_t_gtruths, pred, average='weighted')
     pred_prob = clf.predict_proba(validation_or_test)
     lb = LabelBinarizer()
     y_true = lb.fit_transform(v_or_t_gtruths)
     assert all(lb.classes_ == clf.classes_)
-    roc_auc_score = metrics.roc_auc_score(y_true=y_true, y_score=pred_prob)
+    auc_ = roc_auc_score(y_true=y_true, y_score=pred_prob)
     print("l2regularization_costs: " + repr(cost))
-    print("f1_score: " + repr(f1_score))
-    print("roc_auc_score:" + repr(roc_auc_score))
+    print("f1_score: " + repr(f1_))
+    print("roc_auc_score:" + repr(auc_))
     #print([int(n) for n in list(pred)])
     #print([int(n) for n in v_or_t_gtruths])
     print(" " + functools.reduce(lambda a,b: a + "  " + b, [t for t in v_or_t_gtruths]))
@@ -133,7 +132,7 @@ def tryout1hyperparameter(cost, train, train_gtruths, validation_or_test, v_or_t
                                  ["!" if z[0] != z[1] else " "
                                   for z in zip(list(pred), v_or_t_gtruths)]))
     print("---")
-    return (roc_auc_score, f1_score)
+    return (auc_, f1_)
 
 def optimizehyperparameter(completion_alg,
                            sigmas, # [sigma]
@@ -145,7 +144,7 @@ def optimizehyperparameter(completion_alg,
     def train_validation_test_split(sigma):
         # sigma and completion_alg determines gram matrix file
         mat_file = mat_file_name(sigma, completion_alg) 
-        mat = sio.loadmat(mat_file)
+        mat = io.loadmat(mat_file)
         gram = mat['gram']
         indices = mat['indices']
 

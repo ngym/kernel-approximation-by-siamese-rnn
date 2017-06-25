@@ -1,11 +1,8 @@
 import sys
-import global_align as ga
 import numpy as np
 
-import scipy as sp
-from scipy import io
-from scipy.io import wavfile
-from scipy import signal
+import global_align as ga
+
 
 def gak(seq1, seq2, sigma, triangular):
     """Triangular Global Alignment (TGA) kernel computation between two time series.
@@ -43,3 +40,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -1,42 +1,24 @@
-import sys, random, copy, os, gc, time, csv, json
-import os.path as path
-from collections import OrderedDict
-from tempfile import mkdtemp
-
-import plotly.offline as po
-import plotly.graph_objs as pgo
-
+import sys, copy, time, json
 import numpy as np
-import scipy as sp
 from scipy import io
-from scipy.io import wavfile
-from scipy import signal
 
-from sklearn.metrics.pairwise import rbf_kernel
-
-from keras.datasets import mnist
 from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Input, Lambda, LSTM, GRU, Masking, Activation, BatchNormalization
-from keras.optimizers import RMSprop, Adam
+from keras.layers import Dense, Dropout, Input, LSTM, Masking, Activation, BatchNormalization
+from keras.optimizers import Adam
 from keras import backend as K
 from keras.preprocessing.sequence import pad_sequences
-from keras.regularizers import l2
-from keras.callbacks import ModelCheckpoint, EarlyStopping, History
 from keras.layers.wrappers import Bidirectional
 from keras.layers.merge import Concatenate
 
-from nearest_positive_semidefinite import nearest_positive_semidefinite
-from errors import mean_squared_error, mean_absolute_error, relative_error
-from plot_gram_matrix import plot
-from make_matrix_incomplete import make_matrix_incomplete, drop_samples
-from find_and_read_sequences import find_and_read_sequences
+from utils.nearest_positive_semidefinite import nearest_positive_semidefinite
+from utils.errors import mean_squared_error, mean_absolute_error, relative_error
+from utils.plot_gram_matrix import plot
+from utils.make_matrix_incomplete import drop_gram_random, drop_samples
+from datasets.find_and_read_sequences import find_and_read_sequences
+from utils.multi_gpu import make_parallel
 
-from multi_gpu import make_parallel
+
 ngpus = 2
-
-def batch_dot(vects):
-    x, y = vects
-    return K.batch_dot(x, y, axes=1)
 
 def create_LSTM_base_network(input_shape, mask_value,
                              lstm_units=[5], dense_units=[2],
@@ -229,8 +211,6 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_,
     processed_a = base_network(input_a)
     processed_b = base_network(input_b)
 
-    #dot = Lambda(batch_dot)([processed_a, processed_b])
-    #out = Activation('sigmoid')(dot)
     con = Concatenate()([processed_a, processed_b])
     dns = Dense(units=1, activation='linear')(con)
     out = Activation('sigmoid')(dns)
@@ -243,9 +223,6 @@ def rnn_matrix_completion(incomplete_matrix_, seqs_,
     if ngpus > 1:
         model = make_parallel(model, ngpus)
     model.compile(loss='mse', optimizer=rms)
-    #model_checkpoint = ModelCheckpoint(hdf5_out_rnn, save_best_only=True)#, save_weights_only=True)
-    #early_stopping = EarlyStopping(patience=15)
-    #history = History()
     # need to pad train data nad validation data
 
     """
@@ -342,7 +319,7 @@ def main():
     seed = 1
 
     if random_drop:
-        incomplete_similarities, dropped_elements = make_matrix_incomplete(seed, similarities, incomplete_percentage)
+        incomplete_similarities, dropped_elements = drop_gram_random(seed, similarities, incomplete_percentage)
         html_out_rnn = gram_filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN_LSTM.html")
         mat_out_rnn  = gram_filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN_LSTM.mat")
         hdf5_out_rnn  = gram_filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_RNN_LSTM.hdf5")
