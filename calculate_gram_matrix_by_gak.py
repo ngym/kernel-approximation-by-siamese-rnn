@@ -1,19 +1,12 @@
 import numpy as np
 from collections import OrderedDict
-
-import scipy as sp
 from scipy import io
-from scipy.io import wavfile
-from scipy import signal
-
 import subprocess, functools, sys, threading, glob, json, csv
 import concurrent.futures
-
-from plot_gram_matrix import plot
-
 from string import Template
 
-from gak import gak
+from utils.plot_gram_matrix import plot
+from algorithms.gak import gak
 
 class Logger:
     def __init__(self, log_file):
@@ -52,12 +45,12 @@ gram = None
 
 seqs = {}
 
-def SixDMG_read_mats_and_build_seqs(files, attribute_type):
+def 6DMG_read_mats_and_build_seqs(files, attribute_type):
     for f in files:
         mat = io.loadmat(f)
-        seqs[f] = np.array(SixDMG_pick_attribute(mat['gest'].transpose(), attribute_type)).astype(np.float32)
+        seqs[f] = np.array(6DMG_pick_attribute(mat['gest'].transpose(), attribute_type)).astype(np.float32)
 
-def SixDMG_pick_attribute(ll, attribute_type):
+def 6DMG_pick_attribute(ll, attribute_type):
     retval = []
     if attribute_type == "position":
         for l in ll:
@@ -172,7 +165,7 @@ def main():
 
     if dataset_type in {"num", "upperChar", "6DMGupperChar"}:
         # 6DMG
-        SixDMG_read_mats_and_build_seqs(files, data_attribute_type)
+        6DMG_read_mats_and_build_seqs(files, data_attribute_type)
     elif dataset_type == "UCIcharacter":
         UCIcharacter_read_mat_and_build_seqs(data_file)
         files = sorted(seqs.keys())
@@ -227,3 +220,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

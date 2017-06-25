@@ -1,8 +1,11 @@
-import unittest
-import svm
 import numpy as np
+import unittest
+from algorithms.svm import separate_gram
 
 class Test_separate_gram(unittest.TestCase):
+    """Unit test for Gram matrix cross-validation splitting.
+    """
+    
     def setUp(self):
         self.mat = []
         for i in range(10):
@@ -27,9 +30,7 @@ class Test_separate_gram(unittest.TestCase):
             self.data_attributes.append(dict(k_group=i))
     def test_separate_gram(self):
         for k_group in range(10):
-            matched, unmatched = svm.separate_gram(self.mat,
-                                             self.data_attributes,
-                                                   k_group)
+            matched, unmatched = separate_gram(self.mat, self.data_attributes, k_group)
             print(unmatched.__len__())
             print(unmatched[0].__len__())
             self.assertEqual(unmatched.__len__(), 18)
