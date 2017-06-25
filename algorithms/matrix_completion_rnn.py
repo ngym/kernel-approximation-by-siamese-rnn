@@ -1,5 +1,5 @@
 import sys, os, copy, time, json
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append("..")
 
 import numpy as np
 from scipy import io

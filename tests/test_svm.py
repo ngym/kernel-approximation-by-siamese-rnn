@@ -1,3 +1,6 @@
+import sys
+sys.path.append("..")
+
 import numpy as np
 import unittest
 from algorithms.svm import separate_gram

@@ -175,12 +175,18 @@ def optimizehyperparameter(completion_alg,
             error_to_hyperparameters[tryout1hyperparameter(cost, train_matrix, train_gtruths,
                                                            validation_matrix, validation_gtruths)] = (sigma, cost)
             #/* indices in the gram matrix is passed to the function to indicate the split. */
-    best_sigma, best_cost = error_to_hyperparameters[max(list(error_to_hyperparameters.keys()))]
+    auc_, f1_ = max(list(error_to_hyperparameters.keys()))
+    best_sigma, best_cost = error_to_hyperparameters[(auc_, f1_)]
+    """
     test_matrix, train_validation_matrix, validation_matrix, train_matrix,\
     train_gtruths, validation_gtruths, train_validation_gtruths, test_gtruths\
     = train_validation_test_split(best_sigma)
-    print("test")
-    return tryout1hyperparameter(best_cost, train_validation_matrix, train_validation_gtruths, test_matrix, test_gtruths)
+    """
+    print("best")
+    print(auc_, f1_, best_sigma, best_cost)
+    print("---------------")
+    return auc_, f1_, best_sigma, best_cost
+    #return tryout1hyperparameter(best_cost, train_validation_matrix, train_validation_gtruths, test_matrix, test_gtruths)
 
 def crossvalidation(completion_alg, sigmas, costs):
     #for each split of gram into train/validation/test (for loop for 22 test subjects):
@@ -207,26 +213,33 @@ def crossvalidation(completion_alg, sigmas, costs):
         # /* indices in the gram matrix is passed to the function to indicate the split. */
     return np.average([rocauc_f1[0] for rocauc_f1 in errors]), np.average([rocauc_f1[1] for rocauc_f1 in errors])
 
-def compare_completion_algorithms(sigmas, costs):
+def compare_completion_algorithms(sigmas, costs, completion_algorithms, output_file):
+    json_dict = {}
     if loss_percentage == 0:
         result_ground_truth = crossvalidation("", sigmas, costs)
         print("Ground Truth: ROC_AUC:%.5f, F1:%.5f" % result_ground_truth)
+        json_dict['Ground Truth'] = {}
+        json_dict['Ground Truth']['ROC_AUC'] = result_ground_truth[0]
+        json_dict['Ground Truth']['F1'] = result_ground_truth[1]
     else:
-        result_soft_impute = crossvalidation("SoftImpute", sigmas, costs)
-        print("SoftImpute: ROC_AUC:%.5f, F1:%.5f" % result_soft_impute)
-        #result_RNN_residual = crossvalidation("RNN_residual", sigmas, costs)
-        #print("RNN_residual: ROC_AUC:%.5f, F1:%.5f" % result_RNN_residual)
-        
-        #result_nuclear_norm_minimization = crossvalidation("NuclearNormMinimization", sigmas, costs)
-        #print("NuclearNormMinimization: " + repr(result_nuclear_norm_minimization))
+        for completion_alg in completion_algorithms:
+            result = crossvalidation(completion_alg, sigmas, costs)
+            print(completion_alg + ": ROC_AUC:%.5f, F1:%.5f" % result)
+            json_dict[completion_alg] = {}
+            json_dict[completion_alg]['ROC_AUC'] = result[0]
+            json_dict[completion_alg]['F1'] = result[1]
+
+    fd = open(output_file, "w")
+    json.dump(json_dict, fd)
+    fd.close()
 
 def main():
     config_json_file = sys.argv[1]
     config_dict = json.load(open(config_json_file, 'r'))
 
     global dataset_type
-    global attribute_type 
-    global loss_percentage 
+    global attribute_type
+    global loss_percentage
     dataset_type = config_dict['dataset_type']
     attribute_type = config_dict['attribute_type']
     loss_percentage = config_dict['loss_percentage']
@@ -234,8 +247,10 @@ def main():
     l2regularization_costs = config_dict['l2regularization_costs']
     global data_dir
     data_dir = config_dict['data_dir']
-    
-    compare_completion_algorithms(sigmas_, l2regularization_costs)
+    completion_algorithms = config_dict['completion_algorithms']
+    output_file = config_dict['output_file']
+
+    compare_completion_algorithms(sigmas_, l2regularization_costs, completion_algorithms, output_file)
 
 if __name__ == "__main__":
     main()
