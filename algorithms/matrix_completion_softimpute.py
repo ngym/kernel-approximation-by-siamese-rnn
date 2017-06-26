@@ -2,7 +2,6 @@ import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import time
-import numpy as np
 from scipy import io
 from fancyimpute import SoftImpute
 
@@ -12,51 +11,51 @@ from utils.plot_gram_matrix import plot
 from utils.make_matrix_incomplete import drop_gram_random
 
 
-def softimpute_matrix_completion(incomplete_similarities_):
+def softimpute_matrix_completion(gram_drop):
     """
     Instead of solving the nuclear norm objective directly, instead
     induce sparsity using singular value thresholding
     """
-    return SoftImpute().complete(incomplete_similarities_)
+    return SoftImpute().complete(gram_drop)
 
 def main():
     filename = sys.argv[1]
-    incomplete_percentage = int(sys.argv[2])
+    drop_percent = int(sys.argv[2])
     completionanalysisfile = sys.argv[3]
     mat = io.loadmat(filename)
-    similarities = mat['gram']
+    gram = mat['gram']
     files = mat['indices']
 
     seed = 1
         
     fd = open(completionanalysisfile, "w")
     
-    incomplete_similarities, dropped_elements = drop_gram_random(seed, similarities, incomplete_percentage)
+    gram_drop, dropped_elements = drop_gram_random(seed, gram, drop_percent)
 
     fd.write("number of dropped elements: " + str(len(dropped_elements)))
     fd.write("\n")
 
-    html_out_soft_impute = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_SoftImpute.html")
-    mat_out_soft_impute = filename.replace(".mat", "_loss" + str(incomplete_percentage) + "_SoftImpute.mat")
+    html_out_soft_impute = filename.replace(".mat", "_drop" + str(drop_percent) + "_SoftImpute.html")
+    mat_out_soft_impute = filename.replace(".mat", "_drop" + str(drop_percent) + "_SoftImpute.mat")
 
     t_start = time.time()
-    # "SOFT_IMPUTE"
-    completed_similarities = softimpute_matrix_completion(incomplete_similarities)
+    # Soft Impute
+    gram_completed = softimpute_matrix_completion(gram_drop)
     # eigenvalue check
-    psd_completed_similarities = nearest_positive_semidefinite(completed_similarities)
+    gram_completed_npsd = nearest_positive_semidefinite(gram_completed)
     t_finish = time.time()
 
     # OUTPUT
     io.savemat(mat_out_soft_impute,
-               dict(gram=psd_completed_similarities,
-                    dropped_gram=incomplete_similarities,
+               dict(gram=gram_completed_npsd,
+                    dropped_gram=gram_drop,
                     indices=files))
     plot(html_out_soft_impute,
-         psd_completed_similarities, files)
+         gram_completed_npsd, files)
     print("SoftImpute is output")
 
-    mse = mean_squared_error(similarities, psd_completed_similarities)
-    msede = mean_squared_error(similarities, psd_completed_similarities, dropped_elements)
+    mse = mean_squared_error(gram, gram_completed_npsd)
+    msede = mean_squared_error(gram, gram_completed_npsd, dropped_elements)
     fd.write("start: " + str(t_start))
     fd.write("\n")
     fd.write("finish: " + str(t_finish))

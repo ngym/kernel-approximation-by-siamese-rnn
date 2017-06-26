@@ -402,7 +402,7 @@ def main():
             sample_dir = "/home/ngym/NFSshare/Lorincz_Lab/"
         else:
             sample_dir = sys.argv[4]
-        percentage = int(sys.argv[2])
+        drop_percent = int(sys.argv[2])
         completionanalysisfile = sys.argv[3]
         epochs = 2
         patience = 2
@@ -452,15 +452,15 @@ def main():
     seed = 1
 
     if random_drop:
-        gram_drop, dropped_elements = drop_gram_random(seed, gram, percentage)
-        logfile_html = gram_filename.replace(".mat", "_loss" + str(percentage) + "_RNN_" + rnn + ".html")
-        logfile_pkl  = gram_filename.replace(".mat", "_loss" + str(percentage) + "_RNN_" + rnn + ".pkl")
-        logfile_hdf5  = gram_filename.replace(".mat", "_loss" + str(percentage) + "_RNN_" + rnn + ".hdf5")
+        gram_drop, dropped_elements = drop_gram_random(seed, gram, drop_percent)
+        logfile_html = gram_filename.replace(".mat", "_drop" + str(drop_percent) + "_RNN_" + rnn + ".html")
+        logfile_pkl  = gram_filename.replace(".mat", "_drop" + str(drop_percent) + "_RNN_" + rnn + ".pkl")
+        logfile_hdf5  = gram_filename.replace(".mat", "_drop" + str(drop_percent) + "_RNN_" + rnn + ".hdf5")
     else:
         gram_drop, dropped_elements = drop_gram_samples(gram, indices_to_drop)
-        logfile_html = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".html")
-        logfile_pkl  = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".pkl")
-        logfile_hdf5  = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".hdf5")
+        logfile_html = gram_filename.replace(".mat", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".html")
+        logfile_pkl  = gram_filename.replace(".mat", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".pkl")
+        logfile_hdf5  = gram_filename.replace(".mat", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".hdf5")
 
     # RNN Completion
     gram_completed, fit_start, fit_end, pred_start, \

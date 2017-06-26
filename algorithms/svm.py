@@ -8,12 +8,12 @@ import functools
 
 dataset_type = None
 attribute_type = None
-loss_percentage = None
+drop_percent = None
 data_dir = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/OUTPUT/"
 
 def mat_file_name(sigma, completion_alg):
     # gram_dataset_completionalg_sigma.mat
-    #print("loss:" + str(loss_percentage))
+    #print("drop:" + str(drop_percent))
     if dataset_type == "upperChar":
         if completion_alg == "":
             return data_dir + \
@@ -28,7 +28,7 @@ def mat_file_name(sigma, completion_alg):
         dataset_type + "_" + \
         attribute_type + "_" + \
         "sigma" + ("%.3f" % sigma) + "_t1-t3" + \
-        "_loss" + str(loss_percentage) + "_" + \
+        "_drop" + str(drop_percent) + "_" + \
         completion_alg + ".mat"
         #"sigma" + ("%.3f" % sigma) + \
     elif dataset_type == "UCIcharacter":
@@ -42,7 +42,7 @@ def mat_file_name(sigma, completion_alg):
         "gram_" + \
         dataset_type + "_" + \
         "sigma" + ("%.3f" % sigma) + \
-        "_loss" + str(loss_percentage) + "_" + \
+        "_drop" + str(drop_percent) + "_" + \
         completion_alg + ".mat"
     elif dataset_type == "UCItctodd":
         if completion_alg == "":
@@ -55,7 +55,7 @@ def mat_file_name(sigma, completion_alg):
         "gram_" + \
         dataset_type + "_" + \
         "sigma" + ("%.3f" % sigma) + \
-        "_loss" + str(loss_percentage) + "_" + \
+        "_drop" + str(drop_percent) + "_" + \
         completion_alg + ".mat"
     else:
         assert False
@@ -215,7 +215,7 @@ def crossvalidation(completion_alg, sigmas, costs):
 
 def compare_completion_algorithms(sigmas, costs, completion_algorithms, output_file):
     json_dict = {}
-    if loss_percentage == 0:
+    if drop_percent == 0:
         result_ground_truth = crossvalidation("", sigmas, costs)
         print("Ground Truth: ROC_AUC:%.5f, F1:%.5f" % result_ground_truth)
         json_dict['Ground Truth'] = {}
@@ -239,10 +239,10 @@ def main():
 
     global dataset_type
     global attribute_type
-    global loss_percentage
+    global drop_percent
     dataset_type = config_dict['dataset_type']
     attribute_type = config_dict['attribute_type']
-    loss_percentage = config_dict['loss_percentage']
+    drop_percent = config_dict['drop_percent']
     sigmas_ = config_dict['gak_sigmas']
     l2regularization_costs = config_dict['l2regularization_costs']
     global data_dir
@@ -254,3 +254,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

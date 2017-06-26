@@ -81,7 +81,7 @@ def plot(file_name, gram, files, separators, labels,
                     rotation='vertical',
                     xy=(0,0), xytext=(x, y))
 
-    # Title of the graph, displaying the sigma and the drop percentage
+    # Title of the graph, displaying the sigma and the drop percent
     titletext = "σ =" + str(sigma) + "    drop=" + drop_percent #+ "%\n "
     ax.set_title(titletext,
                  horizontalalignment='center')
