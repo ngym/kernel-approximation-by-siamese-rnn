@@ -33,7 +33,7 @@ def drop_gram_random(seed, gram, percent):
         
     return gram_drop, indices_drop
 
-def drop_one_sample(gram, index):
+def drop_gram_one_sample(gram, index):
     """Drop ith row and ith column from Gram matrix.
 
     :param gram: Gram matrix to be dropped
@@ -55,7 +55,7 @@ def drop_one_sample(gram, index):
 
     return gram_drop, indices_drop
 
-def drop_samples(gram, indices):
+def drop_gram_samples(gram, indices):
     """Drop multiple rows and columns from Gram matrix.
 
     :param gram: Gram matrix to be dropped
@@ -69,12 +69,12 @@ def drop_samples(gram, indices):
     gram_drop = copy.deepcopy(gram)
     indices_drop = []
     for index in indices:
-        gram_drop, indices_drop_i = drop_one_sample(gram_drop, index)
+        gram_drop, indices_drop_i = drop_gram_one_sample(gram_drop, index)
         indices_drop += indices_drop_i
     return gram_drop, indices_drop
 
 
-def drop_in_sample_random(gram, index, percent):
+def drop_gram_in_sample_random(gram, index, percent):
     """Drop random part of ith row and ith column from Gram matrix.
 
     :param gram: Gram matrix to be dropped
@@ -103,7 +103,7 @@ def drop_in_sample_random(gram, index, percent):
 
     return gram_drop, indices_drop
 
-def drop_in_samples_random(gram, indices, percent):
+def drop_gram_in_samples_random(gram, indices, percent):
     """Drop random parts of multiple rows and columns from Gram matrix.
 
     :param gram: Gram matrix to be dropped
@@ -117,8 +117,7 @@ def drop_in_samples_random(gram, indices, percent):
     gram_drop = copy.deepcopy(gram)
     indices_drop = []
     for index in indices:
-        gram_drop, indices_drop_i = drop_in_sample_random(gram_drop, index, percent)
+        gram_drop, indices_drop_i = drop_gram_in_sample_random(gram_drop, index, percent)
         indices_drop += indices_drop_i
     return gram_drop, indices_drop
 
-    
