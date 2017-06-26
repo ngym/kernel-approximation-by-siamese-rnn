@@ -1,13 +1,7 @@
-import sys, random, copy, os, gc, time, csv
+import sys, os
 import os.path as path
-from collections import OrderedDict
-from tempfile import mkdtemp
 
-import numpy as np
-import scipy as sp
 from scipy import io
-from scipy.io import wavfile
-from scipy import signal
 
 def main():
     filename = sys.argv[1]
