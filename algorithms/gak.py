@@ -98,10 +98,11 @@ def gram_gak(seqs, sigma=None, triangular=None):
         gram[:i, i] = gram[i, :i].T
         num_finished_job = (i + l) * (l - i) / 2
         current_time = time.time()
-        duration_time = current_time - current_time
+        duration_time = current_time - start_time
         eta = duration_time * num_job / num_finished_job
         print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, duration_time, eta), end='\r')
     pool.close()
+    print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, duration_time, eta))
     return gram
 
 def gram_complete_gak(gram, seqs, indices, sigma=None, triangular=None):
