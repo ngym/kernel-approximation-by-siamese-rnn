@@ -1,6 +1,6 @@
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-import json, pickle
+import json, pickle, time
 from string import Template
 
 import numpy as np
@@ -88,13 +88,19 @@ def gram_gak(seqs, sigma=None, triangular=None):
 
     l = len(seqs)
     gram = -1 * np.ones((l, l), dtype=np.float32)
-    
+
+    start_time = time.time()
+    num_job = (1 + l) * l / 2
     pool = ProcessingPool()
     for i in reversed(range(l)):
         gram[i, :i] = pool.map(lambda j: gak(seqs[i], seqs[j], sigma, triangular), range(i)) 
         gram[i, i] = 1.
         gram[:i, i] = gram[i, :i].T
-        print("%d/%d" % (i, l))
+        num_finished_job = (i + l) * (l - i) / 2
+        current_time = time.time()
+        duration_time = current_time - current_time
+        eta = duration_time * num_job / num_finished_job
+        print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, duration_time, eta), end='\r')
     pool.close()
     return gram
 
