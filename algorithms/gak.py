@@ -119,7 +119,7 @@ def main():
         mat = output_dir + output_filename_format.replace("${completion_alg}", "GAK") + ".mat" 
 
         seqs, seq_names = read_sequences(dataset_type, sample_dir)
-        gram_grak(seqs)
+        gram_gak(seqs)
         plot_html_gram(html,
                        gram.tolist(), seq_names)
         io.savemat(mat, dict(gram=gram.tolist(), seq_names=seq_names))
