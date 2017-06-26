@@ -94,6 +94,7 @@ def gram_gak(seqs, sigma=None, triangular=None):
         gram[i, :i] = pool.map(lambda j: gak(seqs[i], seqs[j], sigma, triangular), range(i)) 
         gram[i, i] = 1.
         gram[:i, i] = gram[i, :i].T
+        print("%d/%d" % (i, l))
     pool.close()
     return gram
 
