@@ -1,6 +1,7 @@
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import numpy as np
+from scipy import io
 
 import global_align as ga
 from datasets.read_sequences import read_sequences
