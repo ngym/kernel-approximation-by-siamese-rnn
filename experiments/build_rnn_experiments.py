@@ -13,8 +13,8 @@ from functools import reduce
 """
 
 if 'nipg' in os.uname().nodename:
-    EXPERIMENTS_DIR = "~/shota/USE_CASE_RNN_COMPLETION"
-    PROGRAM = "~/shota/fast-time-series-data-classification/gak_gram_matrix_completion/matrix_completion_rnn.py"
+    EXPERIMENTS_DIR = "/home/milacski/shota/USE_CASE_RNN_COMPLETION"
+    PROGRAM = "/home/milacski/shota/fast-time-series-data-classification/algorithms/matrix_completion_rnn.py"
     TIME = "/usr/bin/time"
     IMPLEMENTATION = 2
 elif os.uname().nodename == 'Regulus.local':
