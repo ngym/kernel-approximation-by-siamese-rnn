@@ -1,6 +1,5 @@
 import sys
 import numpy as np
-import scipy as sp
 from scipy import io
 
 from functools import reduce

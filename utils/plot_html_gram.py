@@ -1,10 +1,5 @@
 import sys
-
-import numpy as np
-import scipy as sp
 from scipy import io
-from scipy.io import wavfile
-from scipy import signal
 
 import plotly.offline as po
 import plotly.graph_objs as pgo
