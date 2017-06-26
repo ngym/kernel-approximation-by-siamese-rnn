@@ -34,7 +34,7 @@ def create_RNN_base_network(input_shape, mask_value,
     :param mask_value: Padding value to be skipped among time steps
     :param rnn_units: Recurrent layer sizes
     :param dense_units: Dense layer sizes
-    :param rnn: Recurrent Layer type (SimpleRNN, LSTM or GRU)
+    :param rnn: Recurrent Layer type (Vanilla, LSTM or GRU)
     :param dropout: Dropout probability
     :param implementation: RNN implementation (0: CPU, 2: GPU, 1: any)
     :param bidirectional: Flag to switch between Forward and Bidirectional RNN
@@ -55,14 +55,14 @@ def create_RNN_base_network(input_shape, mask_value,
     seq = Sequential()
     seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
 
-    if rnn == "SimpleRNN":
+    if rnn == "Vanilla":
         r = SimpleRNN
     elif rnn == "LSTM":
         r = LSTM
     elif rnn == "GRU":
         r = GRU
     else:
-        raise NotImplementedError("Currently rnn must be SimpleRNN, LSTM or GRU!")
+        raise NotImplementedError("Currently rnn must be Vanilla, LSTM or GRU!")
 
     if bidirectional:
         b = Bidirectional
@@ -280,7 +280,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     :param logfile_hdf5: Log file name for network structure and weights in HDF5 format
     :param rnn_units: Recurrent layer sizes
     :param dense_units: Dense layer sizes
-    :param rnn: Recurrent Layer type (SimpleRNN, LSTM or GRU)
+    :param rnn: Recurrent Layer type (Vanilla, LSTM or GRU)
     :param dropout: Dropout probability
     :param implementation: RNN implementation (0: CPU, 2: GPU, 1: any)
     :param bidirectional: Flag to switch between Forward and Bidirectional RNN    
