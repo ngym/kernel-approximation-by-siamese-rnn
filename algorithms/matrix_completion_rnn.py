@@ -15,7 +15,7 @@ from keras.layers.merge import Concatenate
 from utils.nearest_positive_semidefinite import nearest_positive_semidefinite
 from utils.errors import mean_squared_error, mean_absolute_error, relative_error
 from utils.plot_gram_to_html import plot_gram_to_html
-from utils.make_matrix_incomplete import drop_gram_random, drop_gram_samples
+from utils.make_matrix_incomplete import gram_drop_random, gram_drop_samples
 from datasets.read_sequences import read_sequences
 from utils.multi_gpu import make_parallel
 
@@ -452,12 +452,12 @@ def main():
     seed = 1
 
     if random_drop:
-        gram_drop, dropped_elements = drop_gram_random(seed, gram, drop_percent)
+        gram_drop, dropped_elements = gram_drop_random(seed, gram, drop_percent)
         logfile_html = gram_filename.replace(".mat", "_drop" + str(drop_percent) + "_RNN_" + rnn + ".html")
         logfile_pkl  = gram_filename.replace(".mat", "_drop" + str(drop_percent) + "_RNN_" + rnn + ".pkl")
         logfile_hdf5  = gram_filename.replace(".mat", "_drop" + str(drop_percent) + "_RNN_" + rnn + ".hdf5")
     else:
-        gram_drop, dropped_elements = drop_gram_samples(gram, indices_to_drop)
+        gram_drop, dropped_elements = gram_drop_samples(gram, indices_to_drop)
         logfile_html = gram_filename.replace(".mat", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".html")
         logfile_pkl  = gram_filename.replace(".mat", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".pkl")
         logfile_hdf5  = gram_filename.replace(".mat", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".hdf5")

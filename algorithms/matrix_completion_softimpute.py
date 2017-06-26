@@ -8,7 +8,7 @@ from fancyimpute import SoftImpute
 from utils.nearest_positive_semidefinite import nearest_positive_semidefinite
 from utils.errors import mean_squared_error
 from utils.plot_gram_to_html import plot_gram_to_html
-from utils.make_matrix_incomplete import drop_gram_random
+from utils.make_matrix_incomplete import gram_drop_random
 
 
 def softimpute_matrix_completion(gram_drop):
@@ -37,7 +37,7 @@ def main():
         
     fd = open(completionanalysisfile, "w")
     
-    gram_drop, dropped_elements = drop_gram_random(seed, gram, drop_percent)
+    gram_drop, dropped_elements = gram_drop_random(seed, gram, drop_percent)
 
     fd.write("number of dropped elements: " + str(len(dropped_elements)))
     fd.write("\n")
