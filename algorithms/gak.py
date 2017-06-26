@@ -50,7 +50,9 @@ def gram_gak(seqs, sigma=None, triangular=None):
     if sigma is None:
         seq_ts = np.array([item for sublist in [[seq_t for seq_t in seq] for seq in seqs] for item in sublist])
         seq_ts_diff_norms = np.sqrt(np.sum(np.square(seq_ts[:, None, :] - seq_ts[None, :, :]), axis=-1))
+        del seq_ts
         sigma = np.median(seq_ts_diff_norms) * np.median([len(seq) for seq in seqs]) * 5.
+        del seq_ts_diff_norms
     if triangular is None:
         triangular = np.median([len(seq) for seq in seqs]) * 0.5
 
