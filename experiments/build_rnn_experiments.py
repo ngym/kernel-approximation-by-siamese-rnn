@@ -1,14 +1,5 @@
 import sys, json, os, subprocess, pickle
 
-import numpy as np
-from scipy import io
-
-from functools import reduce
-
-
-
-
-
 """ Configuration
 """
 

@@ -12,12 +12,19 @@ from utils.make_matrix_incomplete import drop_gram_random
 
 
 def softimpute_matrix_completion(gram_drop):
-    """
-    Instead of solving the nuclear norm objective directly, instead
-    induce sparsity using singular value thresholding
-    """
-    return SoftImpute().complete(gram_drop)
+    """Fill in Gram matrix with dropped elements with Soft Impute Matrix Completion.
+    Optimizes the Matrix Completion objective using Singular Value Thresholding
 
+    :param gram_drop: Gram matrix with dropped elements
+    :type gram_drop: list of lists
+    :returns: Filled in Gram matrix, optimization start and end times
+    :rtype: list of lists, float, float, float, float
+    """
+    t_start = time.time()
+    gram_completed = SoftImpute().complete(gram_drop)
+    t_end = time.time()
+    return gram_completed, t_start, t_end
+    
 def main():
     filename = sys.argv[1]
     drop_percent = int(sys.argv[2])
@@ -38,12 +45,12 @@ def main():
     html_out_soft_impute = filename.replace(".mat", "_drop" + str(drop_percent) + "_SoftImpute.html")
     mat_out_soft_impute = filename.replace(".mat", "_drop" + str(drop_percent) + "_SoftImpute.mat")
 
-    t_start = time.time()
-    # Soft Impute
-    gram_completed = softimpute_matrix_completion(gram_drop)
+    # Soft Impute 
+    gram_completed, t_start, t_end = softimpute_matrix_completion(gram_drop)
     # eigenvalue check
+    npsd_start = time.time()
     gram_completed_npsd = nearest_positive_semidefinite(gram_completed)
-    t_finish = time.time()
+    npsd_end = time.time()
 
     # OUTPUT
     io.savemat(mat_out_soft_impute,
@@ -58,9 +65,9 @@ def main():
     msede = mean_squared_error(gram, gram_completed_npsd, dropped_elements)
     fd.write("start: " + str(t_start))
     fd.write("\n")
-    fd.write("finish: " + str(t_finish))
+    fd.write("end: " + str(t_end))
     fd.write("\n")
-    fd.write("duration: " + str(t_finish - t_start))
+    fd.write("duration: " + str(t_end - t_start))
     fd.write("\n")
     fd.write("Mean squared error: " + str(mse))
     fd.write("\n")
@@ -70,3 +77,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

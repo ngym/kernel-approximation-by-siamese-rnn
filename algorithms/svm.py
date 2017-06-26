@@ -44,7 +44,7 @@ def mat_file_name(sigma, completion_alg):
         "sigma" + ("%.3f" % sigma) + \
         "_drop" + str(drop_percent) + "_" + \
         completion_alg + ".mat"
-    elif dataset_type == "UCItctodd":
+    elif dataset_type in ["UCItctodd", "UCIauslan"]:
         if completion_alg == "":
             return data_dir + \
                 "gram_" + \
@@ -65,7 +65,7 @@ def convert_index_to_attributes(index):
         # 6DMG
         index_ = index.split('/')[-1]
         type_, ground_truth, k_group, trial = index_.split('_')
-    elif dataset_type == "UCItctodd":
+    elif dataset_type in ["UCItctodd", "UCIauslan"]:
         # UCI AUSLAN
         index_ = index.split('/')[-1]
         k_group = int(index_.split('-')[-2])
