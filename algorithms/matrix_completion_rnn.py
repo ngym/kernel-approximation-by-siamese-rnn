@@ -1,6 +1,7 @@
 import sys, os, copy, time, json
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import pickle
+from collections import OrderedDict
 
 import numpy as np
 
@@ -443,24 +444,26 @@ def main():
     else:
         gram = gram_matrices[-1]['gram_completed_npsd']
         
+    #sample_names = [sn.replace(' ', '') for sn in pkl['sample_names']]
     sample_names = pkl['sample_names']
 
     logfile_loss = completionanalysisfile.replace(".timelog", ".losses")
     
-    seqs = read_sequences(dataset_type, sample_dir, sample_names)
+    seqs = OrderedDict((k, v) for k, v in read_sequences(dataset_type, direc=sample_dir).items()
+                       if k.split('/')[-1] in sample_names)
     
     seed = 1
 
     if random_drop:
         gram_drop, dropped_elements = gram_drop_random(seed, gram, drop_percent)
-        logfile_html = gram_filename.replace(".mat", "_drop" + str(drop_percent) + "_RNN_" + rnn + ".html")
-        logfile_pkl  = gram_filename.replace(".mat", "_drop" + str(drop_percent) + "_RNN_" + rnn + ".pkl")
-        logfile_hdf5  = gram_filename.replace(".mat", "_drop" + str(drop_percent) + "_RNN_" + rnn + ".hdf5")
+        logfile_html = gram_filename.replace(".pkl", "_drop" + str(drop_percent) + "_RNN_" + rnn + ".html")
+        logfile_pkl  = gram_filename.replace(".pkl", "_drop" + str(drop_percent) + "_RNN_" + rnn + ".pkl")
+        logfile_hdf5  = gram_filename.replace(".pkl", "_drop" + str(drop_percent) + "_RNN_" + rnn + ".hdf5")
     else:
         gram_drop, dropped_elements = gram_drop_samples(gram, indices_to_drop)
-        logfile_html = gram_filename.replace(".mat", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".html")
-        logfile_pkl  = gram_filename.replace(".mat", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".pkl")
-        logfile_hdf5  = gram_filename.replace(".mat", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".hdf5")
+        logfile_html = gram_filename.replace(".pkl", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".html")
+        logfile_pkl  = gram_filename.replace(".pkl", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".pkl")
+        logfile_hdf5  = gram_filename.replace(".pkl", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".hdf5")
 
     # RNN Completion
     gram_completed, fit_start, fit_end, pred_start, \
