@@ -3,7 +3,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import pickle
 
 import numpy as np
-from scipy import io
 
 from keras.models import Sequential, Model
 from keras.layers import Dense, Dropout, Input, SimpleRNN, LSTM, GRU, Masking, Activation, BatchNormalization
@@ -83,14 +82,10 @@ def create_RNN_base_network(input_shape, mask_value,
             seq.add(BatchNormalization())
     for i in range(len(dense_units)):
         dense_unit = dense_units[i]
-        if i == len(dense_units) - 1:
-            activation = 'linear'
-        else:
-            activation = 'relu'
-        seq.add(Dense(dense_unit, activation='linear'))
+        seq.add(Dense(dense_unit, use_bias=False if batchnormalization else True))
         if batchnormalization:
             seq.add(BatchNormalization())
-        seq.add(Activation(activation))
+        seq.add(Activation('relu'))
     return seq
 
 def generator_sequence_pairs(indices, gram_drop, seqs):
@@ -339,7 +334,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     processed_a = base_network(input_a)
     processed_b = base_network(input_b)
     con = Concatenate()([processed_a, processed_b])
-    parent = Dense(units=1, activation='linear')(con)
+    parent = Dense(units=1, use_bias=False if batchnormalization else True)(con)
     if batchnormalization:
         parent = BatchNormalization()(parent)
     out = Activation('sigmoid')(parent)
