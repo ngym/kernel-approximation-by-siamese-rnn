@@ -1,7 +1,6 @@
-import sys
+import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-import numpy as np
 import unittest
 from algorithms.svm import separate_gram
 
@@ -9,7 +8,7 @@ from algorithms.svm import separate_gram
 class Test_separate_gram(unittest.TestCase):
     """Unit test for Gram matrix cross-validation splitting.
     """
-    
+
     def setUp(self):
         self.mat = []
         for i in range(10):
@@ -32,6 +31,7 @@ class Test_separate_gram(unittest.TestCase):
             self.data_attributes.append(dict(k_group=i))
         for i in range(10):
             self.data_attributes.append(dict(k_group=i))
+
     def test_separate_gram(self):
         for k_group in range(10):
             matched, unmatched = separate_gram(self.mat, self.data_attributes, k_group)
@@ -53,9 +53,10 @@ class Test_separate_gram(unittest.TestCase):
             print("matched")
             for r in matched:
                 print(r)
+
     def tearDown(self):
         pass
-        
+
 if __name__ == '__main__':
     unittest.main()
 
