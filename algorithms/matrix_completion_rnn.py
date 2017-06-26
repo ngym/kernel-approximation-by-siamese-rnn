@@ -6,7 +6,7 @@ import numpy as np
 from scipy import io
 
 from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Input, LSTM, Masking, Activation, BatchNormalization
+from keras.layers import Dense, Dropout, Input, SimpleRNN, LSTM, GRU, Masking, Activation, BatchNormalization
 from keras.optimizers import Adam
 from keras import backend as K
 from keras.preprocessing.sequence import pad_sequences
@@ -23,50 +23,62 @@ from utils.multi_gpu import make_parallel
 
 ngpus = 2
 
-def create_LSTM_base_network(input_shape, mask_value,
-                             lstm_units=[5], dense_units=[2],
+def create_RNN_base_network(input_shape, mask_value,
+                             rnn_units=[5], dense_units=[2],
+                             rnn="LSTM",
                              dropout=0.3,
                              implementation=2, bidirectional=False, batchnormalization=True):
-    """Keras Deep LSTM network to be used as Siamese branch.
-    Stacks some LSTM and some Dense layers on top of each other
+    """Keras Deep RNN network to be used as Siamese branch.
+    Stacks some Recurrent and some Dense layers on top of each other
 
     :param input_shape: Keras input shape
     :param mask_value: Padding value to be skipped among time steps
-    :param lstm_units: LSTM layer sizes
+    :param rnn_units: Recurrent layer sizes
     :param dense_units: Dense layer sizes
+    :param rnn: Recurrent Layer type (SimpleRNN, LSTM or GRU)
     :param dropout: Dropout probability
-    :param implementation: LSTM implementation (0: CPU, 2: GPU, 1: any)
-    :param bidirectional: Flag to switch between Forward and Bidirectional LSTM
+    :param implementation: RNN implementation (0: CPU, 2: GPU, 1: any)
+    :param bidirectional: Flag to switch between Forward and Bidirectional RNN
     :param batchnormalization: Flag to switch Batch Normalization on/off
     :type input_shape: tuple
     :type mask_value: float
-    :type lstm_units: list of ints
+    :type rnn_units: list of ints
     :type dense_units: list of ints
+    :type rnn: str
     :type dropout: float
     :type implementation: int
     :type bidirectional: bool
     :type batchnormalization: bool
-    :returns: Keras Deep LSTM network
+    :returns: Keras Deep RNN network
     :rtype: keras.engine.training.Model
     """
 
     seq = Sequential()
     seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
 
-    if bidirectional:
-        f = Bidirectional
-    else:
-        f = lambda x: x
+    if rnn is "SimpleRNN":
+        r = SimpleRNN
+    elif rnn is "LSTM":
+        r = LSTM
+    elif rnn is "GRU":
+        r = GRU
+    else
+        raise NotImplementedError("Currently rnn must be SimpleRNN, LSTM or GRU!")
 
-    for i in range(len(lstm_units)):
-        lstm_unit = lstm_units[i]
-        if i == len(lstm_units) - 1:
+    if bidirectional:
+        b = Bidirectional
+    else:
+        b = lambda x: x
+
+    for i in range(len(rnn_units)):
+        rnn_unit = rnn_units[i]
+        if i == len(rnn_units) - 1:
             return_sequences = False
         else:
             return_sequences = True
-        seq.add(f(LSTM(lstm_unit,
-                       dropout=dropout, implementation=implementation,
-                       return_sequences=return_sequences)))
+        seq.add(b(r(rnn_unit,
+                    dropout=dropout, implementation=implementation,
+                    return_sequences=return_sequences)))
         if batchnormalization:
             seq.add(BatchNormalization())
     for i in range(len(dense_units)):
@@ -146,11 +158,11 @@ def train_and_validate(model, tr_indices, val_indices,
     
     list_ave_tr_loss = []
     list_tr_loss_batch = []
-    list_ave_v_loss = []
-    list_v_loss_batch = []
+    list_ave_val_loss = []
+    list_val_loss_batch = []
     wait = 0
-    best_v_loss = np.inf
-    fd_losses.write("epoch, num_batch_iteration, ave_tr_loss, tr_loss_batch, ave_v_loss, v_loss_batch\n")
+    best_val_loss = np.inf
+    fd_losses.write("epoch, num_batch_iteration, ave_tr_loss, tr_loss_batch, ave_val_loss, val_loss_batch\n")
     for epoch in range(1, epochs + 1):
         # training
         num_trained_samples = 0
@@ -186,35 +198,35 @@ def train_and_validate(model, tr_indices, val_indices,
 
         # validation
         num_validated_samples = 0
-        ave_v_loss = 0
-        v_gen  = generator_sequence_pairs(val_indices, gram_drop, seqs)
-        v_start = cur_time = time.time()
+        ave_val_loss = 0
+        val_gen  = generator_sequence_pairs(val_indices, gram_drop, seqs)
+        val_start = cur_time = time.time()
         while num_validated_samples < len(val_indices):
             # validation batch
-            x, y = next(v_gen)
-            v_loss_batch = model.test_on_batch(x,y)
-            ave_v_loss = (ave_v_loss * num_validated_samples + v_loss_batch * y.shape[0]) / \
+            x, y = next(val_gen)
+            val_loss_batch = model.test_on_batch(x,y)
+            ave_val_loss = (ave_val_loss * num_validated_samples + val_loss_batch * y.shape[0]) / \
                        (num_validated_samples + y.shape[0])
             num_validated_samples += y.shape[0]
             prev_time = cur_time
             cur_time = time.time()
             print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
                   (epoch, epochs, num_validated_samples,
-                   len(val_indices), cur_time - v_start,
-                   ((cur_time - prev_time) * len(val_indices) / y.shape[0]) - (cur_time - v_start),
-                   ave_v_loss, v_loss_batch), end='\r')
-            list_ave_v_loss.append(ave_v_loss)
-            list_v_loss_batch.append(v_loss_batch)
-            fd_losses.write("%d, %d, nan, nan, %.5f, %.5f\n" % (epoch, num_batch_iteration, ave_v_loss, v_loss_batch))
+                   len(val_indices), cur_time - val_start,
+                   ((cur_time - prev_time) * len(val_indices) / y.shape[0]) - (cur_time - val_start),
+                   ave_val_loss, val_loss_batch), end='\r')
+            list_ave_val_loss.append(ave_val_loss)
+            list_val_loss_batch.append(val_loss_batch)
+            fd_losses.write("%d, %d, nan, nan, %.5f, %.5f\n" % (epoch, num_batch_iteration, ave_val_loss, val_loss_batch))
             fd_losses.flush()
             num_batch_iteration += 1
         print("                                                        epoch:[%d/%d] validation:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
               (epoch, epochs, num_validated_samples,
-               len(val_indices), cur_time - v_start,
-               ((cur_time - prev_time) * len(val_indices) / y.shape[0]) - (cur_time - v_start),
-               ave_v_loss, v_loss_batch))
-        if ave_v_loss < best_v_loss:
-            best_v_loss = ave_v_loss
+               len(val_indices), cur_time - val_start,
+               ((cur_time - prev_time) * len(val_indices) / y.shape[0]) - (cur_time - val_start),
+               ave_val_loss, val_loss_batch))
+        if ave_val_loss < best_val_loss:
+            best_val_loss = ave_val_loss
             model.save_weights(logfile_hdf5)
             best_weights = model.get_weights()
             wait = 0
@@ -238,6 +250,8 @@ def predict(model, te_indices, gram_drop, seqs):
     :type te_indices: list of tuples
     :type gram_drop: list of lists
     :type seqs: list of np.ndarrays
+    :returns: List of predicted network outputs
+    :rtype: list of lists
     """
     
     te_gen = generator_sequence_pairs(te_indices, gram_drop, seqs)
@@ -253,8 +267,8 @@ def predict(model, te_indices, gram_drop, seqs):
 def rnn_matrix_completion(gram_drop, seqs,
                           epochs, patience,
                           logfile_loss, logfile_hdf5,
+                          rnn_units, dense_units,
                           rnn,
-                          lstm_units, dense_units,
                           dropout,
                           implementation,
                           bidirectional,
@@ -269,12 +283,12 @@ def rnn_matrix_completion(gram_drop, seqs,
     :param patience: Early Stopping parameter
     :param logfile_loss: Log file name for results
     :param logfile_hdf5: Log file name for network structure and weights in HDF5 format
-    :param rnn: Base Network mode, currently must be LSTM
-    :param lstm_units: LSTM layer sizes
+    :param rnn_units: Recurrent layer sizes
     :param dense_units: Dense layer sizes
+    :param rnn: Recurrent Layer type (SimpleRNN, LSTM or GRU)
     :param dropout: Dropout probability
-    :param implementation: LSTM implementation (0: CPU, 2: GPU, 1: any)
-    :param bidirectional: Flag to switch between Forward and Bidirectional LSTM    
+    :param implementation: RNN implementation (0: CPU, 2: GPU, 1: any)
+    :param bidirectional: Flag to switch between Forward and Bidirectional RNN    
     :param batchnormalization: Flag to switch Batch Normalization on/off
     :param gram_drop: Keras Siamese RNN to be tested
     :param te_indices: Testing 2-tuples of time series index pairs
@@ -287,12 +301,15 @@ def rnn_matrix_completion(gram_drop, seqs,
     :type logfile_loss: str
     :type logfile_hdf5: str
     :type rnn: str
-    :type lstm_units: int
+    :type rnn_units: int
     :type dense_units: int
+    :type rnn: str
     :type dropout: float
     :type implementation: int
     :type bidirectional: bool
     :type batchnormalization: bool
+    :returns: Filled in Gram matrix, training and prediction start and end times
+    :rtype: list of lists, float, float, float, float
     """
 
     # pre-processing
@@ -310,13 +327,13 @@ def rnn_matrix_completion(gram_drop, seqs,
 
     # build network
     K.clear_session()
-    if rnn == "LSTM":
-        base_network = create_LSTM_base_network(input_shape, pad_value,
-                                                lstm_units, dense_units,
-                                                dropout,
-                                                implementation,
-                                                bidirectional,
-                                                batchnormalization)
+    base_network = create_RNN_base_network(input_shape, pad_value,
+                                            rnn_units, dense_units,
+                                            rnn,
+                                            dropout,
+                                            implementation,
+                                            bidirectional,
+                                            batchnormalization)
     else:
         print("invalid RNN network.")
         assert False
@@ -333,10 +350,10 @@ def rnn_matrix_completion(gram_drop, seqs,
     model = Model([input_a, input_b], out)
 
     # training
-    rms = Adam(clipnorm=1.)
+    optimizer = Adam(clipnorm=1.)
     if ngpus > 1:
         model = make_parallel(model, ngpus)
-    model.compile(loss='mse', optimizer=rms)
+    model.compile(loss='mse', optimizer=optimizer)
     # make 90% + 10% training validation random split
     trval_indices = np.random.permutation([(i, j)
                                         for i in range(num_seqs)
@@ -398,7 +415,7 @@ def main():
         epochs = 2
         patience = 2
         rnn = "LSTM"
-        lstm_units = [5]
+        rnn_units = [5]
         dense_units = [2]
         dropout = 0.3
         implementation = 2
@@ -416,7 +433,7 @@ def main():
         epochs = config_dict['epochs']
         patience = config_dict['patience']
         rnn = config_dict['rnn']
-        lstm_units = config_dict['lstm_units']
+        rnn_units = config_dict['rnn_units']
         dense_units = config_dict['dense_units']
         dropout = config_dict['dropout']
         implementation = config_dict['implementation']
@@ -459,7 +476,7 @@ def main():
                                             epochs, patience,
                                             logfile_loss, logfile_hdf5,
                                             rnn,
-                                            lstm_units, dense_units,
+                                            rnn_units, dense_units,
                                             dropout,
                                             implementation,
                                             bidirectional,
