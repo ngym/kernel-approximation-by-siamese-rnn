@@ -8,7 +8,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-def plot_pdf_from_mat(file_name, gram, files, separators, labels,
+def plot_gram_to_pdf(file_name, gram, files, separators, labels,
          sigma, drop_percent):
     """Plot Gram matrix and save as pdf file with matplotlib.
     
@@ -168,31 +168,31 @@ def main():
     filename_pdf = filename.replace(".mat", ".pdf")
     
     # OUTPUT
-    plot_pdf_from_mat(filename_pdf,
-                      gram,
-                      files,
-                      separators,
-                      labels,
-                      sigma,
-                      drop_percent)
+    plot_gram_to_pdf(filename_pdf,
+                     gram,
+                     files,
+                     separators,
+                     labels,
+                     sigma,
+                     drop_percent)
 
     filename_pdf_dropped = filename.replace(".mat", "_dropped.pdf")
-    plot_pdf_from_mat(filename_pdf_dropped,
-                      mat['dropped_gram'],
-                      files,
-                      separators,
-                      labels,
-                      sigma,
-                      drop_percent)
+    plot_gram_to_pdf(filename_pdf_dropped,
+                     mat['dropped_gram'],
+                     files,
+                     separators,
+                     labels,
+                     sigma,
+                     drop_percent)
     
     filename_pdf_orig = filename.replace(".mat", "_orig.pdf")
-    plot_pdf_from_mat(filename_pdf_orig,
-                      mat['orig_gram'],
-                      files,
-                      separators,
-                      labels,
-                      sigma,
-                      drop_percent)
+    plot_gram_to_pdf(filename_pdf_orig,
+                     mat['orig_gram'],
+                     files,
+                     separators,
+                     labels,
+                     sigma,
+                     drop_percent)
     
     
 if __name__ == "__main__":

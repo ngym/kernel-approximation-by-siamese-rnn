@@ -4,7 +4,7 @@ from scipy import io
 import plotly.offline as po
 import plotly.graph_objs as pgo
 
-def plot_html_gram(file_name, gram, files):
+def plot_gram_to_html(file_name, gram, files):
     """Plot Gram matrix to html with plotly.
     
     :param file_name: Output html file name
@@ -43,7 +43,7 @@ def main():
     files = mat['indices']
 
     filename_html = filename.replace('.mat', '.html')
-    plot_html_gram(filename_html, gram, files)
+    plot_gram_to_html(filename_html, gram, files)
 
 if __name__ == "__main__":
     main()
