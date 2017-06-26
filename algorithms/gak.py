@@ -2,6 +2,8 @@ import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import numpy as np
 from scipy import io
+import dill
+from pathos.multiprocessing import ProcessingPool
 
 import global_align as ga
 from datasets.read_sequences import read_sequences
@@ -35,6 +37,14 @@ def gak(seq1, seq2, sigma=0.4, triangular=500):
     return kval
 
 def calculate_gak_sigma(seqs):
+    """Calculate TGA sigma parameter setting.
+
+    :param seqs: List of time series to be processed
+    :type seqs: list of np.ndarrays
+    :returns: Sigma
+    :rtype: float
+    """
+
     seq_ts = np.array([item for sublist in [[seq_t for seq_t in seq] for seq in seqs] for item in sublist])
     seq_ts_diff_norms = np.sqrt(np.sum(np.square(seq_ts[:, None, :] - seq_ts[None, :, :]), axis=-1))
     del seq_ts
@@ -43,6 +53,14 @@ def calculate_gak_sigma(seqs):
     return sigma
 
 def calculate_gak_triangular(seqs):
+    """Calculate TGA triangular parameter setting.
+
+    :param seqs: List of time series to be processed
+    :type seqs: list of np.ndarrays
+    :returns: Triangular
+    :rtype: int
+    """
+
     triangular = np.median([len(seq) for seq in seqs]) * 0.5
     return triangular
 
@@ -62,15 +80,17 @@ def gram_gak(seqs, sigma=None, triangular=None):
     if sigma is None:
         sigma = calculate_gak_sigma(seqs)
     if triangular is None:
-        triangular = calculate_grak_triangular(seqs)
+        triangular = calculate_gak_triangular(seqs)
 
     l = len(seqs)
     gram = -1 * np.ones((l, l), dtype=np.float32)
-    for i in range(l):
-        for j in range(i):
-            gram[i, j] = gak(seqs[i], seqs[j], sigma, triangular)
+    
+    pool = ProcessingPool()
+    for i in range(l - 1, 0, -1):
+        gram[i, :i] = pool.map(lambda j: gak(seqs[i], seqs[j], sigma, triangular), range(i)) 
         gram[i, i] = 1.
         gram[:i, i] = gram[i, :i].T
+    pool.close()
     return gram
 
 def gram_complete_gak(gram, seqs, indices, sigma=None, triangular=None):
@@ -93,13 +113,14 @@ def gram_complete_gak(gram, seqs, indices, sigma=None, triangular=None):
     if sigma is None:
         sigma = calculate_gak_sigma(seqs)
     if triangular is None:
-        triangular = calculate_grak_triangular(seqs)
+        triangular = calculate_gak_triangular(seqs)
 
-    for index in indices:
-        for j in range(index):
-            gram[index, j] = gak(seqs[index], seqs[j], sigma, triangular)
+    pool = ProcessingPool()
+    for index in reversed(sorted(indices)):
+        gram[index, :index] = pool.map(lambda j: gak(seqs[i], seqs[j], sigma, triangular), range(index))
         gram[index, index] = 1.
         gram[:i, i] = gram[i, :i].T
+    pool.close()
     return gram
 
 def main():
