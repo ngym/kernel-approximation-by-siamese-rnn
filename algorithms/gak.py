@@ -157,9 +157,9 @@ def main():
         pkl = output_dir + output_filename_format.replace("${completion_alg}", "GAK") + ".pkl" 
 
         seqs = read_sequences(dataset_type, list_glob_arg=sample_glob_arg)
-        sample_names = seqs.keys()
+        sample_names = list(seqs.keys())
         
-        gram = gram_gak(seqs.values(), sigma=gak_sigma)
+        gram = gram_gak(list(seqs.values()), sigma=gak_sigma)
         plot_gram_to_html(html,
                           gram.tolist(), sample_names)
         dic = {}
