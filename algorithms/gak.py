@@ -78,7 +78,7 @@ def gram_complete_gak(gram, seqs, indices, sigma=None, triangular=None):
 
     :param gram: Gram matrix to be filled in
     :param seqs: List of time series to be used of filling in
-    :param indices: Row and column indices to be filled in
+    :param indices: Rows and columns to be filled in
     :param sigma: TGA kernel scale parameter
     :param triangular: TGA kernel band parameter
     :type gram: list of lists

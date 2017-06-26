@@ -37,7 +37,7 @@ def gram_drop_one_sample(gram, index):
     """Drop ith row and ith column from Gram matrix.
 
     :param gram: Gram matrix to be dropped
-    :param index: Row and column index to be dropped
+    :param index: Row and column to be dropped
     :type gram: list of lists
     :type index: int
     :returns: Dropped version of Gram matrix, dropped indices
@@ -59,7 +59,7 @@ def gram_drop_samples(gram, indices):
     """Drop multiple rows and columns from Gram matrix.
 
     :param gram: Gram matrix to be dropped
-    :param indices: Row and column indices to be dropped
+    :param indices: Rows and columns to be dropped
     :type gram: list of lists
     :type indices: list of ints
     :returns: Dropped version of Gram matrix, dropped indices
@@ -78,7 +78,7 @@ def gram_drop_in_sample_random(gram, index, percent):
     """Drop random part of ith row and ith column from Gram matrix.
 
     :param gram: Gram matrix to be dropped
-    :param index: Row and column indices to be dropped
+    :param index: Row and column to be dropped
     :param percent: Percent of row and column to be dropped
     :type gram: list of lists
     :type index: list of ints
@@ -107,7 +107,7 @@ def gram_drop_in_samples_random(gram, indices, percent):
     """Drop random parts of multiple rows and columns from Gram matrix.
 
     :param gram: Gram matrix to be dropped
-    :param indices: Row and column indices to be dropped
+    :param indices: Rows and columns to be dropped
     :type gram: list of lists
     :type indices: list of ints
     :returns: Dropped version of Gram matrix, dropped indices
