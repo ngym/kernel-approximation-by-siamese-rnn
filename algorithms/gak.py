@@ -1,5 +1,8 @@
 import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+import json, pickle
+from string import Template
+
 import numpy as np
 from scipy import io
 import dill
@@ -7,6 +10,7 @@ from pathos.multiprocessing import ProcessingPool
 
 import global_align as ga
 from datasets.read_sequences import read_sequences
+from utils.plot_gram_to_html import plot_gram_to_html
 
 def gak(seq1, seq2, sigma=0.4, triangular=500):
     """Triangular Global Alignment (TGA) kernel computation between two time series.
@@ -124,26 +128,49 @@ def gram_complete_gak(gram, seqs, indices, sigma=None, triangular=None):
     return gram
 
 def main():
-    if len(sys.argv) == 1:
+    if len(sys.argv) == 2:
         config_json_file = sys.argv[1]
         config_dict = json.load(open(config_json_file, 'r'))
         
         dataset_type = config_dict['dataset_type']
-        sample_dir = config_dict['sample_dir']
+        output_dir = config_dict['output_dir']
         if 'gak_sigma' in config_dict.keys():
             gak_sigma = np.float32(config_dict['gak_sigma'])
         if 'gak_triangular' in config_dict.keys():
             gak_triangular = np.float32(config_dict['gak_triangular'])
-        output_dir = config_dict['output_dir']
-
+        if dataset_type in {"6DMG", "6DMGupperChar", "upperChar"}:
+            sample_glob_arg = config_dict['data_mat_files']
+            if 'data_attribute_type' in config_dict.keys():
+                data_attribute_type = config_dict['data_attribute_type']
+        elif dataset_type == "UCIcharacter":
+            sample_glob_arg = config_dict['data_mat_file']
+        elif dataset_type == "UCIauslan":
+            sample_glob_arg = config_dict['data_tsd_files']
+        else:
+            assert False
+        output_filename_format = Template(config_dict['output_filename_format']).safe_substitute(
+            dict(dataset_type=dataset_type,
+                 data_attribute_type=data_attribute_type,
+                 gak_sigma=("%.3f" % gak_sigma)))
+        
         html = output_dir + output_filename_format.replace("${completion_alg}", "GAK") + ".html" 
-        mat = output_dir + output_filename_format.replace("${completion_alg}", "GAK") + ".mat" 
+        pkl = output_dir + output_filename_format.replace("${completion_alg}", "GAK") + ".pkl" 
 
-        seqs, seq_names = read_sequences(dataset_type, sample_dir)
-        gram_gak(seqs)
-        plot_html_gram(html,
-                       gram.tolist(), seq_names)
-        io.savemat(mat, dict(gram=gram.tolist(), seq_names=seq_names))
+        seqs = read_sequences(dataset_type, list_glob_arg=sample_glob_arg)
+        sample_names = seqs.keys()
+        
+        gram = gram_gak(seqs.values())
+        plot_gram_to_html(html,
+                          gram.tolist(), sample_names)
+        dic = {}
+        dic['dataset_type'] = dataset_type
+        dic['gram_matrices'] = [dict(gram_original=gram)]
+        dic['drop_indices'] = []
+        dic['sample_names'] = sample_names
+        dic['log'] = ["made by GAK"]
+        f = open(pkl, 'wb')
+        pickle.dump(dic, f)
+        f.close()
         
     else:
         seq1 = eval(sys.argv[1])

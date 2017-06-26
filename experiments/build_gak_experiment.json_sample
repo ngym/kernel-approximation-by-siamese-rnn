@@ -1,9 +1,10 @@
 {
      "env": {
-         "program": "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/algorithms/gak.py",
-         "root_dir": "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/gak_gram_matrix_completion/",
+         "program": "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/algorithms/gak.py",
+         "root_dir": "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/program/",
 	   "python": "python3",
-	   "time": "gtime"
+	   "time": "gtime",
+	   "num_thread": 12
     },
     "dataset": {
         "6DMGupperChar": {
