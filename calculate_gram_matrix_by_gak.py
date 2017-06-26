@@ -7,7 +7,7 @@ import subprocess, functools, sys, threading, glob, json, csv
 import concurrent.futures
 from string import Template
 
-from utils.plot_html_gram import plot
+from utils.plot_html_gram import plot_html_gram
 from algorithms.gak import gak
 
 class Logger:
@@ -215,8 +215,8 @@ def main():
         similarities.append(list(i.values()))
 
     # "FullGAK"
-    plot(html_out_full_gak,
-         similarities, files)
+    plot_html_gram(html_out_full_gak,
+                   similarities, files)
     io.savemat(mat_out_full_gak, dict(gram=similarities, indices=files))
     print("FullGAK files are output.")
 
