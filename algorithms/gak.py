@@ -90,7 +90,7 @@ def gram_gak(seqs, sigma=None, triangular=None):
     gram = -1 * np.ones((l, l), dtype=np.float32)
     
     pool = ProcessingPool()
-    for i in range(l - 1, 0, -1):
+    for i in reversed(range(l)):
         gram[i, :i] = pool.map(lambda j: gak(seqs[i], seqs[j], sigma, triangular), range(i)) 
         gram[i, i] = 1.
         gram[:i, i] = gram[i, :i].T
