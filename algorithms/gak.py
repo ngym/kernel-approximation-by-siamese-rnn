@@ -159,7 +159,7 @@ def main():
         seqs = read_sequences(dataset_type, list_glob_arg=sample_glob_arg)
         sample_names = seqs.keys()
         
-        gram = gram_gak(seqs.values())
+        gram = gram_gak(seqs.values(), sigma=gak_sigma)
         plot_gram_to_html(html,
                           gram.tolist(), sample_names)
         dic = {}
