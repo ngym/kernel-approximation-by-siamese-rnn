@@ -1,7 +1,6 @@
 import sys
 
 import numpy as np
-import scipy as sp
 from scipy import io
 
 def mean_squared_error(m1, m2, elements=None):

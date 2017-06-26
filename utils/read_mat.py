@@ -2,10 +2,10 @@
 """
 
 import numpy as np
-import scipy.io as sio
+from scipy import io
 import sys
 
-mat = sio.loadmat(sys.argv[1])
+mat = io.loadmat(sys.argv[1])
 num_to_show = int(sys.argv[2])
 
 for v in mat['gest'].transpose():
