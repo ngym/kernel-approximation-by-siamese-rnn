@@ -158,13 +158,13 @@ for exp in experiments:
     else:
         direc = os.path.join(direc, "NoBatchNormalization")
         
-    for lstm_units, dense_units in exp['units']:
+    for rnn_units, dense_units in exp['units']:
         folds = kfold(pkl_file_path)
         k = 0
         for fold in folds:
             k_dir = os.path.join(EXPERIMENTS_DIR,
                                  direc,
-                                 str(lstm_units),
+                                 str(rnn_units),
                                  str(dense_units),
                                  str(exp['dropout']),
                                  str(k))
@@ -189,7 +189,7 @@ for exp in experiments:
                              patience=2,
                              dataset=exp['dataset'],
                              rnn=exp['rnn'],
-                             lstm_units=lstm_units,
+                             rnn_units=rnn_units,
                              dense_units=dense_units,
                              dropout=exp['dropout'],
                              implementation=IMPLEMENTATION,

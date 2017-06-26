@@ -24,10 +24,10 @@ from utils.multi_gpu import make_parallel
 ngpus = 2
 
 def create_RNN_base_network(input_shape, mask_value,
-                             rnn_units=[5], dense_units=[2],
-                             rnn="LSTM",
-                             dropout=0.3,
-                             implementation=2, bidirectional=False, batchnormalization=True):
+                            rnn_units=[5], dense_units=[2],
+                            rnn="LSTM",
+                            dropout=0.3,
+                            implementation=2, bidirectional=False, batchnormalization=True):
     """Keras Deep RNN network to be used as Siamese branch.
     Stacks some Recurrent and some Dense layers on top of each other
 
@@ -56,13 +56,13 @@ def create_RNN_base_network(input_shape, mask_value,
     seq = Sequential()
     seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
 
-    if rnn is "SimpleRNN":
+    if rnn == "SimpleRNN":
         r = SimpleRNN
-    elif rnn is "LSTM":
+    elif rnn == "LSTM":
         r = LSTM
-    elif rnn is "GRU":
+    elif rnn == "GRU":
         r = GRU
-    else
+    else:
         raise NotImplementedError("Currently rnn must be SimpleRNN, LSTM or GRU!")
 
     if bidirectional:
@@ -267,8 +267,8 @@ def predict(model, te_indices, gram_drop, seqs):
 def rnn_matrix_completion(gram_drop, seqs,
                           epochs, patience,
                           logfile_loss, logfile_hdf5,
-                          rnn_units, dense_units,
                           rnn,
+                          rnn_units, dense_units,
                           dropout,
                           implementation,
                           bidirectional,
@@ -328,15 +328,12 @@ def rnn_matrix_completion(gram_drop, seqs,
     # build network
     K.clear_session()
     base_network = create_RNN_base_network(input_shape, pad_value,
-                                            rnn_units, dense_units,
-                                            rnn,
-                                            dropout,
-                                            implementation,
-                                            bidirectional,
-                                            batchnormalization)
-    else:
-        print("invalid RNN network.")
-        assert False
+                                           rnn_units, dense_units,
+                                           rnn,
+                                           dropout,
+                                           implementation,
+                                           bidirectional,
+                                           batchnormalization)
     input_a = Input(shape=input_shape)
     input_b = Input(shape=input_shape)
     processed_a = base_network(input_a)
