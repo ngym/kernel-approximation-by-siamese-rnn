@@ -7,7 +7,7 @@ import subprocess, functools, sys, threading, glob, json, csv
 import concurrent.futures
 from string import Template
 
-from utils.plot_gram_matrix import plot
+from utils.plot_html_gram import plot
 from algorithms.gak import gak
 
 class Logger:

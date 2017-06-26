@@ -14,7 +14,7 @@ from keras.layers.merge import Concatenate
 
 from utils.nearest_positive_semidefinite import nearest_positive_semidefinite
 from utils.errors import mean_squared_error, mean_absolute_error, relative_error
-from utils.plot_gram_matrix import plot
+from utils.plot_html_gram import plot
 from utils.make_matrix_incomplete import drop_gram_random, drop_gram_samples
 from datasets.find_and_read_sequences import read_sequences
 from utils.multi_gpu import make_parallel

@@ -7,7 +7,7 @@ from fancyimpute import SoftImpute
 
 from utils.nearest_positive_semidefinite import nearest_positive_semidefinite
 from utils.errors import mean_squared_error
-from utils.plot_gram_matrix import plot
+from utils.plot_html_gram import plot
 from utils.make_matrix_incomplete import drop_gram_random
 
 
