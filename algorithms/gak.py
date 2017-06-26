@@ -34,6 +34,18 @@ def gak(seq1, seq2, sigma=0.4, triangular=500):
     kval = np.exp(-val).astype(np.float32)
     return kval
 
+def calculate_gak_sigma(seqs):
+    seq_ts = np.array([item for sublist in [[seq_t for seq_t in seq] for seq in seqs] for item in sublist])
+    seq_ts_diff_norms = np.sqrt(np.sum(np.square(seq_ts[:, None, :] - seq_ts[None, :, :]), axis=-1))
+    del seq_ts
+    sigma = np.median(seq_ts_diff_norms) * np.median([len(seq) for seq in seqs]) * 5.
+    del seq_ts_diff_norms
+    return sigma
+
+def calculate_gak_triangular(seqs):
+    triangular = np.median([len(seq) for seq in seqs]) * 0.5
+    return triangular
+
 def gram_gak(seqs, sigma=None, triangular=None):
     """TGA Gram matrix computation for a list of time series.
 
@@ -48,21 +60,46 @@ def gram_gak(seqs, sigma=None, triangular=None):
     """
     
     if sigma is None:
-        seq_ts = np.array([item for sublist in [[seq_t for seq_t in seq] for seq in seqs] for item in sublist])
-        seq_ts_diff_norms = np.sqrt(np.sum(np.square(seq_ts[:, None, :] - seq_ts[None, :, :]), axis=-1))
-        del seq_ts
-        sigma = np.median(seq_ts_diff_norms) * np.median([len(seq) for seq in seqs]) * 5.
-        del seq_ts_diff_norms
+        sigma = calculate_gak_sigma(seqs)
     if triangular is None:
-        triangular = np.median([len(seq) for seq in seqs]) * 0.5
+        triangular = calculate_grak_triangular(seqs)
 
     l = len(seqs)
     gram = -1 * np.ones((l, l), dtype=np.float32)
     for i in range(l):
-        gram[i, i] = 1.
-        for j in range(i + 1, l):
+        for j in range(i):
             gram[i, j] = gak(seqs[i], seqs[j], sigma, triangular)
-        gram[i, :i] = gram[:i, i].T
+        gram[i, i] = 1.
+        gram[:i, i] = gram[i, :i].T
+    return gram
+
+def gram_complete_gak(gram, seqs, indices, sigma=None, triangular=None):
+    """Fill in multiple rows and columns of Gram matrix.
+
+    :param gram: Gram matrix to be filled in
+    :param seqs: List of time series to be used of filling in
+    :param indices: Row and column indices to be filled in
+    :param sigma: TGA kernel scale parameter
+    :param triangular: TGA kernel band parameter
+    :type gram: list of lists
+    :type seqs: list of np.ndarrays    
+    :type indices: list of ints
+    :type sigma: float
+    :type triangular: int
+    :returns: Filled in version of Gram matrix
+    :rtype: list of lists, list of tuples
+    """
+
+    if sigma is None:
+        sigma = calculate_gak_sigma(seqs)
+    if triangular is None:
+        triangular = calculate_grak_triangular(seqs)
+
+    for index in indices:
+        for j in range(index):
+            gram[index, j] = gak(seqs[index], seqs[j], sigma, triangular)
+        gram[index, index] = 1.
+        gram[:i, i] = gram[i, :i].T
     return gram
 
 def main():
