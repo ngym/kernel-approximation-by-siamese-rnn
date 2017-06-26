@@ -7,7 +7,7 @@ from fancyimpute import SoftImpute
 
 from utils.nearest_positive_semidefinite import nearest_positive_semidefinite
 from utils.errors import mean_squared_error
-from utils.plot_html_gram import plot
+from utils.plot_html_gram import plot_html_gram
 from utils.make_matrix_incomplete import drop_gram_random
 
 
@@ -50,8 +50,8 @@ def main():
                dict(gram=gram_completed_npsd,
                     dropped_gram=gram_drop,
                     indices=files))
-    plot(html_out_soft_impute,
-         gram_completed_npsd, files)
+    plot_html_gram(html_out_soft_impute,
+                   gram_completed_npsd, files)
     print("SoftImpute is output")
 
     mse = mean_squared_error(gram, gram_completed_npsd)
