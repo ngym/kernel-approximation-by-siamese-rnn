@@ -1,16 +1,9 @@
-import sys, random, copy, os, gc, time, csv, json
+import os, csv
 import os.path as path
 from collections import OrderedDict
-from tempfile import mkdtemp
-
-import plotly.offline as po
-import plotly.graph_objs as pgo
 
 import numpy as np
-import scipy as sp
 from scipy import io
-from scipy.io import wavfile
-from scipy import signal
 
 def read_sequences(dataset_type, direc, sample_names, attribute_type=None):
     """Time series loader.
@@ -24,8 +17,8 @@ def read_sequences(dataset_type, direc, sample_names, attribute_type=None):
     :type direc: str
     :type sample_names: str for UCIcharacter or list of str for others
     :type attribute_type: str
-    :returns: dictionary of list of time series
-    :rtype: dictionary of np.ndarray
+    :returns: dict of list of time series
+    :rtype: dict of np.ndarrays
     """
     
     seqs = OrderedDict()
