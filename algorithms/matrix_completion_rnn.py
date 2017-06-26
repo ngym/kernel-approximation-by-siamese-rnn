@@ -1,5 +1,6 @@
 import sys, os, copy, time, json
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+import pickle
 
 import numpy as np
 from scipy import io
@@ -16,7 +17,7 @@ from utils.nearest_positive_semidefinite import nearest_positive_semidefinite
 from utils.errors import mean_squared_error, mean_absolute_error, relative_error
 from utils.plot_gram_matrix import plot
 from utils.make_matrix_incomplete import drop_gram_random, drop_samples
-from datasets.find_and_read_sequences import find_and_read_sequences
+from datasets.find_and_read_sequences import find_and_read_sequences, read_sequences
 from utils.multi_gpu import make_parallel
 
 
@@ -294,17 +295,13 @@ def rnn_matrix_completion(gram_drop, seqs,
     :type batchnormalization: bool
     """
 
-    num_seqs = len(seqs_)
-    incomplete_matrix = np.array(incomplete_matrix_)
-    time_dim = max([seq_.shape[0] for seq_ in seqs_.values()])
-
     # pre-processing
     num_seqs = len(seqs)
     gram_drop = np.array(gram_drop)
     time_dim = max([seq.shape[0] for seq in seqs.values()])
 
     pad_value = -123456789
-    seqs = pad_sequences([s.tolist() for s in seqs.values()],
+    seqs = pad_sequences([seq.tolist() for seq in seqs.values()],
                          maxlen=time_dim, dtype='float32',
                          padding='post', value=pad_value)
 
@@ -385,6 +382,17 @@ def main():
     if len(sys.argv) != 2:
         random_drop = True
         gram_filename = sys.argv[1]
+        if 'nipg' in os.uname().nodename:
+            sample_dir = "~/shota/dataset"
+        elif os.uname().nodename == 'atlasz' or 'cn' in os.uname().nodename:
+            sample_dir = "/users/milacski/shota/dataset"
+        elif os.uname().nodename == 'Regulus.local':
+            sample_dir = "/Users/ngym/Lorincz-Lab/project/fast_time-series_data_classification/dataset"
+        elif os.uname().nodename.split('.')[0] in {'procyon', 'pollux', 'capella',
+                                                     'aldebaran', 'rigel'}:
+            sample_dir = "/home/ngym/NFSshare/Lorincz_Lab/"
+        else:
+            sample_dir = sys.argv[4]
         percentage = int(sys.argv[2])
         completionanalysisfile = sys.argv[3]
         epochs = 2
@@ -402,6 +410,7 @@ def main():
         config_dict = json.load(open(config_json_file, 'r'))
 
         gram_filename = config_dict['gram_file']
+        sample_dir = config_dict['sample_dir']
         indices_to_drop = config_dict['indices_to_drop']
         completionanalysisfile = config_dict['completionanalysisfile']
         epochs = config_dict['epochs']
@@ -414,25 +423,34 @@ def main():
         bidirectional = config_dict['bidirectional']
         batchnormalization = config_dict['batchnormalization']
 
-    mat = io.loadmat(gram_filename)
-    gram = mat['gram']
-    files = mat['indices']
+    fd = open(gram_filename, 'rb')
+    pkl = pickle.load(fd)
+    fd.close()
+    
+    dataset_type = pkl['dataset_type']
+    gram_matrices = pkl['gram_matrices']
+    if len(gram_matrices) == 1:
+        gram = gram_matrices[0]['gram_original']
+    else:
+        gram = gram_matrices[-1]['gram_completed_npsd']
+        
+    sample_names = pkl['sample_names']
 
     logfile_loss = completionanalysisfile.replace(".timelog", ".losses")
     
-    seqs = find_and_read_sequences(gram_filename, files)
-
+    seqs = read_sequences(dataset_type, sample_dir, sample_names)
+    
     seed = 1
 
     if random_drop:
         gram_drop, dropped_elements = drop_gram_random(seed, gram, percentage)
         logfile_html = gram_filename.replace(".mat", "_loss" + str(percentage) + "_RNN_" + rnn + ".html")
-        logfile_mat  = gram_filename.replace(".mat", "_loss" + str(percentage) + "_RNN_" + rnn + ".mat")
+        logfile_pkl  = gram_filename.replace(".mat", "_loss" + str(percentage) + "_RNN_" + rnn + ".pkl")
         logfile_hdf5  = gram_filename.replace(".mat", "_loss" + str(percentage) + "_RNN_" + rnn + ".hdf5")
     else:
         gram_drop, dropped_elements = drop_samples(gram, indices_to_drop)
         logfile_html = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".html")
-        logfile_mat  = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".mat")
+        logfile_pkl  = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".pkl")
         logfile_hdf5  = gram_filename.replace(".mat", "_lossfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".hdf5")
 
     # RNN Completion
@@ -454,20 +472,27 @@ def main():
 
     # OUTPUT
     plot(logfile_html,
-         gram_completed_npsd, files)
-    if random_drop:
-        io.savemat(logfile_mat, dict(gram_completed_npsd=gram_completed_npsd,
-                                     gram_completed=gram_completed,
-                                     gram_drop=gram_drop,
-                                     gram=gram,
-                                     indices=files))
-    else:
-        io.savemat(logfile_mat, dict(gram_completed_npsd=gram_completed_npsd,
-                                     gram_completed=gram_completed,
-                                     dropped_gram=gram_drop,
-                                     dropped_indices_number=indices_to_drop,
-                                     orig_gram=gram,
-                                     indices=files))
+         gram_completed_npsd, sample_names)
+
+    new_gram_matrices = {"gram_completed_npsd": np.array(gram_completed_npsd),
+                         "gram_completed": np.array(gram_completed),
+                         "gram_drop": np.array(gram_drop)}
+    gram_matrices.append(new_gram_matrices)
+    mat_log = pkl['log']
+    new_log = "command: " + "".join(sys.argv) + time.asctime(time.localtime())
+    mat_log.append(new_log)
+
+    drop_indices = pkl['drop_indices']
+    drop_indices.append(dropped_elements)
+
+    pkl_fd = open(logfile_pkl, 'wb')
+    dic = dict(gram_matrices=gram_matrices,
+               drop_indices=drop_indices,
+               dataset_type=dataset_type,
+               log=mat_log,
+               sample_names=sample_names)
+    pickle.dump(dic, pkl_fd)
+    pkl_fd.close()
 
     print("RNN Completion files are output.")
 

@@ -1,4 +1,4 @@
-import sys, json, os, subprocess
+import sys, json, os, subprocess, pickle
 
 import numpy as np
 from scipy import io
@@ -52,22 +52,23 @@ class KFold():
     """Base class for k-fold cross-validation test set generator.
     Puts ith sample into fold (i modulo fold count)
     I.e. each new sample goes to next fold
-    Assumes that mat['indices'] is sorted wrt classes
+    Assumes that pkl['sample_names'] is sorted wrt classes
 
-    :param mat_file_path: .mat file path for original Gram matrix
-    :type mat_file_path: str
+    :param pkl_file_path: .pkl file path for original Gram matrix
+    :type pkl_file_path: str
     """
     
-    def __init__(self, mat_file_path):
-        # assume mat['indices'] is sorted with ground truth
-        mat = io.loadmat(mat_file_path)
-        self.indices = mat['indices']
+    def __init__(self, pkl_file_path):
+        # assume pkl['sample_names'] is sorted with ground truth
+        fd = open(pkl_file_path, 'rb')
+        pkl = pickle.load(fd)
+        self.sample_names = pkl['sample_names']
         self.generate_folds()
         
     def generate_folds(self):
         self.num_folds = 10
         self.fold = [[] for i in range(self.num_folds)]
-        for i in range(len(self.indices)):
+        for i in range(len(self.sample_names)):
             self.fold[i % self.num_folds].append(i)
 
     def __iter__(self):
@@ -85,20 +86,19 @@ class KFold_UCIauslan(KFold):
     """Class for k-fold cross-validation test set generator on UCI AUSLAN data set.
     This data set has 9 trials (recorded over 9 days) which defines a natural 9-fold separation.
  
-    :param mat_file_path: .mat file path for original Gram matrix
-    :type mat_file_path: str
+    :param pkl_file_path: .pkl file path for original Gram matrix
+    :type pkl_file_path: str
     """
 
-    def __init__(self, mat_file_path):
-        super(KFold_UCIauslan, self).__init__(mat_file_path)
+    def __init__(self, pkl_file_path):
+        super(KFold_UCIauslan, self).__init__(pkl_file_path)
 
     def generate_folds(self):
         self.num_folds = 9
         self.fold = [[] for i in range(self.num_folds)]
-        for i in range(len(self.indices)):
-            index = self.indices[i]
-            index_ = index.split('/')[-1]
-            k = int(index_.split('-')[-2])
+        for i in range(len(self.sample_names)):
+            sample_name = self.sample_names[i]
+            k = int(sample_name.split('-')[-2])
             self.fold[k - 1].append(i)
 
 
@@ -129,18 +129,21 @@ experiments = [
 
 
 
-"""Creates directories, symbolic links to mat files, k-fold cross-validation, json files, and timing for experiments.
+"""Creates directories, symbolic links to pkl files, k-fold cross-validation, json files, and timing for experiments.
 """
 
 for exp in experiments:
     if exp['dataset'] is "UCIauslan":
-        mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIauslan_sigma12.000.mat")
+        pkl_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIauslan_sigma12.000.pkl")
+        sample_dir = os.path.join(EXPERIMENTS_DIR, "datasets/UCIauslan/all")
         kfold = KFold_UCIauslan
     elif exp['dataset'] is "UCIcharacter":
-        mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIcharacter_sigma20.000.mat")
+        pkl_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIcharacter_sigma20.000.pkl")
+        sample_dir = os.path.join(EXPERIMENTS_DIR, "datasets/UCIcharacter")
         kfold = KFold
     elif exp['dataset'] is "6DMG":
-        mat_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.mat")
+        pkl_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.pkl")
+        sample_dir = os.path.join(EXPERIMENTS_DIR, "datasets/6DMG_mat_112712/matR_char")
         kfold = KFold
     else:
         raise ValueError("dataset must be one of UCIauslan, UCIcharacter or 6DMG")
@@ -156,7 +159,7 @@ for exp in experiments:
         direc = os.path.join(direc, "NoBatchNormalization")
         
     for lstm_units, dense_units in exp['units']:
-        folds = kfold(mat_file_path)
+        folds = kfold(pkl_file_path)
         k = 0
         for fold in folds:
             k_dir = os.path.join(EXPERIMENTS_DIR,
@@ -171,13 +174,14 @@ for exp in experiments:
             except FileExistsError:
                 pass
 
-            mat_file = mat_file_path.split("/")[-1]
+            pkl_file = pkl_file_path.split("/")[-1]
 
-            subprocess.run(["ln", "-s", mat_file_path, k_dir])
-            gram_file = os.path.join(k_dir, mat_file)
-            completionanalysisfile = gram_file.replace(".mat", ".timelog")
+            subprocess.run(["ln", "-s", pkl_file_path, k_dir])
+            gram_file = os.path.join(k_dir, pkl_file)
+            completionanalysisfile = gram_file.replace(".pkl", ".timelog")
 
             json_dict = dict(gram_file=gram_file,
+                             sample_dir=sample_dir,
                              indices_to_drop=fold,
                              completionanalysisfile=os.path.join(k_dir,
                                                                  completionanalysisfile),
@@ -199,7 +203,7 @@ for exp in experiments:
 
             if os.uname().nodename.split('.')[0] in {'procyon', 'pollux', 'capella',
                                                      'aldebaran', 'rigel'}:
-                job_file_name = os.path.join(k_dir, mat_file + "_k" + str(k) + ".job")
+                job_file_name = os.path.join(k_dir, pkl_file + "_k" + str(k) + ".job")
                 fd = open(job_file_name, "w")
                 time_file_name = os.path.join(k_dir, "time_command.output")
 
