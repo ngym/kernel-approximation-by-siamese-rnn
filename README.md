@@ -12,7 +12,6 @@
 - the directory which holds the dataset you want to use in the file,
       - "data_mat_files" attribute for 6DMGupperChar, "data_tsd_files" attribute for UCIauslan and "data_mat_file" for UCIcharacter,
 - the variable for GAK in this file, "gak_sigma" attribute.
-
         $emacs (new_json_file_name)
 1. Run the command to build directories for every experiment.  
         $python3 build_gak_experiment.py (new_json_file_name)  
