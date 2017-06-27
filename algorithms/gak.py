@@ -139,7 +139,8 @@ def main():
     if len(sys.argv) == 2:
         config_json_file = sys.argv[1]
         config_dict = json.load(open(config_json_file, 'r'))
-        
+
+        data_attribute_type = None
         dataset_type = config_dict['dataset_type']
         output_dir = config_dict['output_dir']
         if 'gak_sigma' in config_dict.keys():
