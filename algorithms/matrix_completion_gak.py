@@ -41,7 +41,7 @@ def gram_complete_gak(gram, seqs, indices, sigma=None, triangular=None):
 
     pool = ProcessingPool()
     num_seqs = len(seqs)
-    num_job = len(indices) * num_seqs * 2 - len(indices) ** 2
+    num_job = len(indices) * (num_seqs - len(indices)) + (len(indices) ** 2 - len(indices)) / 2
     num_finished_job = 0
     start_time = time.time()
     not_indices = list(set(range(num_seqs))-set(indices))
