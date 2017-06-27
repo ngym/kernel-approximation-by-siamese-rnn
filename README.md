@@ -14,7 +14,7 @@
 - the variable for GAK in this file, "gak_sigma" attribute.  
         $emacs (new_json_file_name)
 1. Run the command to build directories for every experiment.  
-        $python3 build_gak_experiment.py (new_json_file_name)
+        $python3 build_gak_experiment.py (new_json_file_name)  
 Then you get structured directories such as "root directory"/GAK_EXPERIMENT/(dataset)/(gak_sigma). In each the deepest directory, you can find two files such as 
 - gram_upperChar_all_sigma20.json
 - gram_upperChar_all_sigma20.sh
