@@ -4,7 +4,8 @@
 # How to use.
 
 ## Global Alignment Kernel
-1. Copy build_gak_experiment.json_sample to any name what you want.```
+1. Copy build_gak_experiment.json_sample to any name what you want.
+```
     $cd experiments
     $cp build_gak_experiment.json_sample (new_json_file_name)
 ```
