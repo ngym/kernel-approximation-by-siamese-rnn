@@ -69,8 +69,7 @@ if __name__ == "__main__":
                                 num_thread=num_thread,
                                 output_dir=ex_dir,
                                 output_filename_format=output_filename_format,
-                                dataset_type=dataset_type,
-                                gak_sigma=gak_sigma)
+                                dataset_type=dataset_type)
     
                 if 'data_mat_files' in list(cnf_d.keys()): # 6DMG
                     job_dict['data_mat_files'] = cnf_d['data_mat_files']
