@@ -99,7 +99,7 @@ def gram_gak(seqs, sigma=None, triangular=None):
         num_finished_job = (i + l) * (l - i) / 2
         current_time = time.time()
         duration_time = current_time - start_time
-        eta = duration_time * num_job / num_finished_job
+        eta = duration_time * num_job / num_finished_job - duration_time
         print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, duration_time, eta), end='\r')
     pool.close()
     print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, duration_time, eta))
@@ -164,11 +164,16 @@ def main():
         
         html = output_dir + output_filename_format.replace("${completion_alg}", "GAK") + ".html" 
         pkl = output_dir + output_filename_format.replace("${completion_alg}", "GAK") + ".pkl" 
+        timelog = output_dir + output_filename_format.replace("${completion_alg}", "GAK") + ".timelog"
 
         seqs = read_sequences(dataset_type, list_glob_arg=sample_glob_arg)
         sample_names = list(seqs.keys())
-        
+
+        start_time = time.time()
         gram = gram_gak(list(seqs.values()), sigma=gak_sigma)
+        end_time = time.time()
+        num_samples = len(sample_names)
+        
         plot_gram_to_html(html,
                           gram.tolist(), sample_names)
         dic = {}
@@ -177,9 +182,18 @@ def main():
         dic['drop_indices'] = []
         dic['sample_names'] = sample_names
         dic['log'] = ["made by GAK"]
-        f = open(pkl, 'wb')
-        pickle.dump(dic, f)
-        f.close()
+        pkl_fd = open(pkl, 'wb')
+        pickle.dump(dic, pkl_fd)
+        pkl_fd.close()
+
+        duration_time = end_time - start_time
+        time_fd = open(timelog, 'w')
+        time_fd.write("start_time: %d\n" % start_time)
+        time_fd.write("end_time: %d\n" % end_time)
+        time_fd.write("duration_time: %d\n" % duration_time)
+        time_fd.write("num_samples: %d\n" % num_samples)
+        time_fd.write("average_time_per_gak: %.5f\n" % duration_time / (num_samples ** 2))
+        time_fd.close()
         
     else:
         seq1 = eval(sys.argv[1])
