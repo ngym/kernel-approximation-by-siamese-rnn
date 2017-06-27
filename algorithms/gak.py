@@ -128,12 +128,14 @@ def gram_complete_gak(gram, seqs, indices, sigma=None, triangular=None):
         triangular = calculate_gak_triangular(seqs)
 
     pool = ProcessingPool()
+    gak_start = time.time()
     for index in reversed(sorted(indices)):
         gram[index, :index] = pool.map(lambda j: gak(seqs[i], seqs[j], sigma, triangular), range(index))
         gram[index, index] = 1.
         gram[:i, i] = gram[i, :i].T
+    gak_end = time.time()
     pool.close()
-    return gram
+    return gram, gak_start, gak_end
 
 def main():
     if len(sys.argv) == 2:
@@ -169,9 +171,9 @@ def main():
         seqs = read_sequences(dataset_type, list_glob_arg=sample_glob_arg)
         sample_names = list(seqs.keys())
 
-        start_time = time.time()
+        gram_gak_start = time.time()
         gram = gram_gak(list(seqs.values()), sigma=gak_sigma)
-        end_time = time.time()
+        gram_gak_end = time.time()
         num_samples = len(sample_names)
         
         plot_gram_to_html(html,
@@ -186,13 +188,13 @@ def main():
         pickle.dump(dic, pkl_fd)
         pkl_fd.close()
 
-        duration_time = end_time - start_time
+        gram_gak_duration = gram_gak_end - gram_gak_start
         time_fd = open(timelog, 'w')
-        time_fd.write("start_time: %d\n" % start_time)
-        time_fd.write("end_time: %d\n" % end_time)
-        time_fd.write("duration_time: %d\n" % duration_time)
+        time_fd.write("gram_gak_start: %d\n" % gram_gak_start)
+        time_fd.write("gram_gak_end: %d\n" % gram_gak_end)
+        time_fd.write("gram_gak_duration: %d\n" % gram_gak_duration)
         time_fd.write("num_samples: %d\n" % num_samples)
-        time_fd.write("average_time_per_gak: %.5f\n" % duration_time / (num_samples ** 2))
+        time_fd.write("average_time_per_gak: %.5f\n" % gram_gak_duration / (num_samples ** 2))
         time_fd.close()
         
     else:
