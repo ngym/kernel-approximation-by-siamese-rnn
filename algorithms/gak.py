@@ -105,38 +105,6 @@ def gram_gak(seqs, sigma=None, triangular=None):
     print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, duration_time, eta))
     return gram
 
-def gram_complete_gak(gram, seqs, indices, sigma=None, triangular=None):
-    """Fill in multiple rows and columns of Gram matrix.
-
-    :param gram: Gram matrix to be filled in
-    :param seqs: List of time series to be used of filling in
-    :param indices: Rows and columns to be filled in
-    :param sigma: TGA kernel scale parameter
-    :param triangular: TGA kernel band parameter
-    :type gram: list of lists
-    :type seqs: list of np.ndarrays    
-    :type indices: list of ints
-    :type sigma: float
-    :type triangular: int
-    :returns: Filled in version of Gram matrix
-    :rtype: list of lists, list of tuples
-    """
-
-    if sigma is None:
-        sigma = calculate_gak_sigma(seqs)
-    if triangular is None:
-        triangular = calculate_gak_triangular(seqs)
-
-    pool = ProcessingPool()
-    gak_start = time.time()
-    for index in reversed(sorted(indices)):
-        gram[index, :index] = pool.map(lambda j: gak(seqs[i], seqs[j], sigma, triangular), range(index))
-        gram[index, index] = 1.
-        gram[:i, i] = gram[i, :i].T
-    gak_end = time.time()
-    pool.close()
-    return gram, gak_start, gak_end
-
 def main():
     if len(sys.argv) == 2:
         config_json_file = sys.argv[1]

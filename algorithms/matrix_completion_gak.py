@@ -7,11 +7,56 @@ import numpy as np
 from scipy import io
 import dill
 from pathos.multiprocessing import ProcessingPool
+from collections import OrderedDict
 
-import global_align as ga
+from utils.nearest_positive_semidefinite import nearest_positive_semidefinite
+from utils.errors import mean_squared_error, mean_absolute_error, relative_error
+from utils.plot_gram_to_html import plot_gram_to_html
+from utils.make_matrix_incomplete import gram_drop_random, gram_drop_samples
 from datasets.read_sequences import read_sequences
 from utils.plot_gram_to_html import plot_gram_to_html
-from algorithms.gak import gram_complete_gak
+from algorithms.gak import gak, calculate_gak_sigma, calculate_gak_triangular
+
+def gram_complete_gak(gram, seqs, indices, sigma=None, triangular=None):
+    """Fill in multiple rows and columns of Gram matrix.
+
+    :param gram: Gram matrix to be filled in
+    :param seqs: List of time series to be used of filling in
+    :param indices: Rows and columns to be filled in
+    :param sigma: TGA kernel scale parameter
+    :param triangular: TGA kernel band parameter
+    :type gram: list of lists
+    :type seqs: list of np.ndarrays    
+    :type indices: list of ints
+    :type sigma: float
+    :type triangular: int
+    :returns: Filled in version of Gram matrix
+    :rtype: list of lists, list of tuples
+    """
+
+    if sigma is None:
+        sigma = calculate_gak_sigma(seqs)
+    if triangular is None:
+        triangular = calculate_gak_triangular(seqs)
+
+    pool = ProcessingPool()
+    num_seqs = len(seqs)
+    num_job = sum(indices)
+    num_finished_job = 0
+    start_time = time.time()
+    for index in reversed(sorted(indices)):
+        gram[index, :index] = pool.map(lambda j: gak(seqs[index], seqs[j], sigma, triangular), range(num_seqs))
+        gram[index, index] = 1.
+        gram[:index, index] = gram[index, :index].T
+        num_finished_job += index
+        current_time = time.time()
+        duration_time = current_time - start_time
+        eta = duration_time * num_job / num_finished_job - duration_time
+        print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, duration_time, eta), end='\r')
+    end_time = time.time()
+    print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, duration_time, eta))
+    pool.close()
+    return gram, start_time, end_time
 
 def main():
     main_start = time.time()
@@ -74,8 +119,10 @@ def main():
         logfile_pkl  = gram_filename.replace(".pkl", "_dropfrom" + str(indices_to_drop[0]) + "_GAK_Completion.pkl")
 
     # GAK Completion
+    #row_dropped = list(set([i[0] for i in indices_to_drop]))
     gram_completed, gak_start, gak_end\
-        = gram_complete_gak(gram_drop, seqs, indices_to_drop, sigma=gak_sigma, triangular=None):
+        = gram_complete_gak(gram_drop, list(seqs.values()), indices_to_drop,
+                            sigma=gak_sigma, triangular=None)
     gak_duration = gak_end - gak_start
     num_samples = len(seqs)
     
