@@ -4,11 +4,9 @@
 # How to use.
 
 ## Global Alignment Kernel
-1. Copy build_gak_experiment.json_sample to any name what you want.<br>
-```
-    $cd experiments
-    $cp build_gak_experiment.json_sample (new_json_file_name)
-```
+1. Copy build_gak_experiment.json_sample to any name what you want.
+        $cd experiments
+        $cp build_gak_experiment.json_sample (new_json_file_name)
 1. Specify
 - "root directory" where the script create a new directory for experiments.
 - the directory which holds the dataset you want to use in the file,
