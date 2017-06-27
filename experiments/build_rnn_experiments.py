@@ -4,7 +4,7 @@ import sys, json, os, subprocess, pickle
 """
 
 if 'nipg' in os.uname().nodename:
-    EXPERIMENTS_DIR = "/home/milacski/shota/USE_CASE_RNN_COMPLETION"
+    EXPERIMENTS_DIR = "/home/milacski/shota/USE_CASE_RNN_COMPLETION_1_VALIDATION"
     PROGRAM = "/home/milacski/shota/fast-time-series-data-classification/algorithms/matrix_completion_rnn.py"
     TIME = "/usr/bin/time"
     IMPLEMENTATION = 2
