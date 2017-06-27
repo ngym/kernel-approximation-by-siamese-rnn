@@ -46,7 +46,10 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None):
             m = io.loadmat(sample_file)
             seqs[sample_file] = m['gest'].T
     elif dataset_type == "UCIcharacter":
-        mat_file_path = sample_files[0]
+        if isinstance(list_glob_arg, str):
+            mat_file_path = list_glob_arg
+        else:
+            mat_file_path = sample_files[0]
         data = io.loadmat(mat_file_path)
         displayname = [k[0] for k in data['consts']['key'][0][0][0]]
         classes = data['consts'][0][0][4][0]
