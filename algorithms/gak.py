@@ -162,7 +162,7 @@ def main():
         time_fd.write("gram_gak_end: %d\n" % gram_gak_end)
         time_fd.write("gram_gak_duration: %d\n" % gram_gak_duration)
         time_fd.write("num_samples: %d\n" % num_samples)
-        time_fd.write("average_time_per_gak: %.5f\n" % gram_gak_duration / (num_samples ** 2))
+        time_fd.write("average_time_per_gak: %.5f\n" % (gram_gak_duration / (num_samples ** 2)))
         time_fd.close()
         
     else:
