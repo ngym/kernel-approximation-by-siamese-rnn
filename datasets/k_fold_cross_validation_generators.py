@@ -80,8 +80,6 @@ class KFold_6DMGupperChar(KFold):
             for k in range(len(k_groups)):
                 if k_group in k_groups[k]:
                     self.fold[k].append(i)
-        for f in self.fold:
-            print(len(f))
 
 
 
