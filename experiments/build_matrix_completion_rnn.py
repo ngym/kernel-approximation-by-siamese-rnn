@@ -131,6 +131,14 @@ for exp in experiments:
             json.dump(json_dict, fd)
             fd.close()
 
+            command_file_name = os.path.join(k_dir, "command.sh")
+            time_file_name = os.path.join(k_dir, "time_command.output")
+            fd = open(command_file_name, "w")
+            fd.write(TIME + " -v -o " + time_file_name +\
+                     " python3 " +\
+                     PROGRAM + " " + json_file_name + "\n")
+            fd.close()
+
             ### use pretrained hdf5 file for constructing network and test
             json_file_name = os.path.join(k_dir, "config_rnn_completion_pretraining.json")
             json_dict['pretraining'] = True
@@ -138,27 +146,14 @@ for exp in experiments:
             json.dump(json_dict, fd)
             fd.close()
 
-            if os.uname().nodename.split('.')[0] in {'procyon', 'pollux', 'capella',
-                                                     'aldebaran', 'rigel'}:
-                job_file_name = os.path.join(k_dir, pkl_file + "_k" + str(k) + ".job")
-                fd = open(job_file_name, "w")
-                time_file_name = os.path.join(k_dir, "time_command.output")
+            command_file_name = os.path.join(k_dir, "command_pretraining.sh")
+            time_file_name = os.path.join(k_dir, "time_command_pretraining.output")
+            fd = open(command_file_name, "w")
+            fd.write(TIME + " -v -o " + time_file_name +\
+                     " python3 " +\
+                     PROGRAM + " " + json_file_name + "\n")
+            fd.close()
 
-                fd.write("echo $SHELL\n")
-                fd.write("setenv LD_LIBRARY_PATH /home/ngym/NFSshare/tflib/lib64/:/home/ngym/NFSshare/tflib/usr/lib64/\n")
-                fd.write("~/NFSshare/tflib/lib64/ld-2.17.so /usr/bin/time -v -o " +\
-                         time_file_name + \
-                         " ~/NFSshare/tflib/lib64/ld-2.17.so /usr/bin/python3 " +\
-                         PROGRAM + " " + json_file_name + "\n")
-                fd.close()
-            else:
-                command_file_name = os.path.join(k_dir, "command.sh")
-                time_file_name = os.path.join(k_dir, "time_command_pretraining.output")
-                fd = open(command_file_name, "w")
-                fd.write(TIME + " -v -o " + time_file_name +\
-                         " python3 " +\
-                         PROGRAM + " " + json_file_name + "\n")
-                fd.close()
-
+                
             k += 1
 
