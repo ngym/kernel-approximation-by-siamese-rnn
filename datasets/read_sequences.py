@@ -57,9 +57,12 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None):
         for c in classes:
             labels.append(displayname[c-1])
         i = 0
+        seqs_ = []
         for l in labels:
-            seqs[l + str(i)] = data['mixout'][0][i].T
+            seqs_.append((l + str(i), data['mixout'][0][i].T))
             i += 1
+        for k, v in sorted(seqs_):
+            seqs[k] = v
     elif dataset_type == "UCIauslan":
         for sample_file in sample_files:
             reader = csv.reader(open(sample_file.replace(' ', ''), "r"),
