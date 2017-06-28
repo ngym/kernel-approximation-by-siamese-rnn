@@ -27,18 +27,17 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None):
         print("Either list_glob_arg or direc is required.")
         return -1
 
+    sample_files = []
     if list_glob_arg is not None:
-        sample_files = []
         for glob_arg in list_glob_arg:
-            sample_files_ = glob.glob(glob_arg)
-            sample_files += sample_files_
-        sample_files = sorted(sample_files)
+            sample_files += glob.glob(glob_arg)
     elif direc is not None:
         if dataset_type in {"UCIauslan", "UCItctodd"}:
             extension = "*.tsd"
         else:
             extension = "*.mat"
-        sample_files = sorted(glob.glob(path.join(direc, extension)))
+        sample_files = glob.glob(path.join(direc, extension))
+    sample_files.sort(key=lambda fn: fn.split('/')[-1])
     
     seqs = OrderedDict()
     if dataset_type in {"6DMG", "6DMGupperChar", "upperChar"}:
@@ -73,5 +72,38 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None):
             seqs[sample_file] = np.array(seq).astype(np.float32)
     else:
         assert False
-    return seqs
+    key_to_str, key_to_int = get_labels(seqs, dataset_type)
+    return seqs, key_to_str, key_to_int
 
+
+def get_labels(seqs, dataset_type):
+    """Get labels from sequences.
+    :param seqs: A dictionary of list of time series.
+    :param dataset_type: 6DMGupperChar or UCIauslan or UCIcharacter.
+    :type seqs: collections.OrderedDict
+    :type dataset_type: str
+    :return: A dictionary pair which are represents the labels of the given sequences.
+    :rtype: (collections.OrderedDict, collections.OrderedDict)
+    """
+
+    # Lambdas to calculate labels from keys of the sequences
+    get_label = dict.fromkeys(["6DMG", "6DMGupperChar", "upperChar"], lambda fn: fn.split('/')[-1].split('_')[1])
+    get_label["UCIcharacter"] = lambda str: str[0]
+    get_label["UCIauslan"] = lambda fn: fn.split('/')[-1].split('-')[0]
+
+    if dataset_type not in get_label:
+        assert False
+
+    key_to_str = OrderedDict()
+    key_to_int = OrderedDict()
+    label_to_int = dict()
+    last_index = 0
+    for k, _ in seqs.items():
+        label = get_label[dataset_type](k)
+        if label not in label_to_int:
+            label_to_int[label] = last_index
+            last_index += 1
+        key_to_str[k] = label
+        key_to_int[k] = label_to_int[label]
+
+    return key_to_str, key_to_int
