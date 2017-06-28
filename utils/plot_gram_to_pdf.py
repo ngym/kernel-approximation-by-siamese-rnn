@@ -8,6 +8,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+import pickle
+
 def plot_gram_to_pdf(file_name, gram, files, separators, labels,
          sigma, drop_percent):
     """Plot Gram matrix and save as pdf file with matplotlib.
@@ -96,90 +98,113 @@ def main():
     """
     
     filename = sys.argv[1]
-    mat = io.loadmat(filename)
-    gram = mat['gram']
-    files = mat['indices']
-    seqs = {}
-
+    if filename[-4:] == ".mat":
+        mat = io.loadmat(filename)
+        gram = mat['gram']
+        sample_names = mat['indices']
+        dropped_gram = mat['dropped_gram']
+        original_gram = mat['orig_gram']
+        sigma = float(filename.split("sigma")[1]
+                      .split("_")[0]
+                      .replace(".mat", ""))
+        if filename.find("loss") == -1:
+            drop_percent = "0%"
+        else:
+            drop_percent = filename.split("loss")[1].split("_")[0].replace(".mat", "") + "%"
+        filename_pdf = filename.replace(".mat", ".pdf")
+    elif filename[-4:] == ".pkl":
+        fd = open(filename, 'rb')
+        pkl = pickle.load(fd)
+        fd.close()
+        dataset_type = pkl['dataset_type']
+        gram_matrices = pkl['gram_matrices']
+        sample_names = pkl['sample_names']
+        if len(gram_matrices) == 1:
+            gram = gram_matrices[0]['gram_original']
+        else:
+            gram = gram_matrices[-1]['gram_completed_npsd']
+            dropped_gram = gram_matrices[-1]['dropped_gram']
+            original_gram = gram_matrices[-1]['orig_gram']
+        sigma = float(filename.split("sigma")[1]
+                      .split("_")[0]
+                      .replace(".pkl", ""))
+        if filename.find("loss") == -1:
+            drop_percent = "0%"
+        else:
+            drop_percent = filename.split("loss")[1].split("_")[0].replace(".pkl", "") + "%"
+        filename_pdf = filename.replace(".pkl", ".pdf")
+    else:
+        assert False
+        
     if filename.find("audioset") != -1:
         i = 0
-        while files[i].find("Bark") != -1:
+        while sample_names[i].find("Bark") != -1:
             i += 1
             separators = [i]
         labels = ['Bark', 'Meow']
     elif filename.find("num") != -1:
         i = 0
-        while files[i].find("num_3") != -1:
+        while sample_names[i].find("num_3") != -1:
             i += 1
             separators = [i]
         labels = ['3', '4']
     elif filename.find("upperChar") != -1:
         labels = ["A", "B", "C", "D", "E", "F", "G",
-                     "H", "I", "J", "K", "L", "M", "N",
-                     "O", "P", "Q", "R", "S", "T", "U",
-                     "V", "W", "X", "Y", "Z"]
+                  "H", "I", "J", "K", "L", "M", "N",
+                  "O", "P", "Q", "R", "S", "T", "U",
+                  "V", "W", "X", "Y", "Z"]
         separators = []
-        for alph in alphabets[:-1]:
+        for label in labels[:-1]:
             i = 0
-            while files[i].find("upper_" + alph) == -1:
+            while sample_names[i].find("upper_" + label) == -1:
                 i += 1
-            while files[i].find("upper_" + alph) != -1:
+            while sample_names[i].find("upper_" + label) != -1:
                 i += 1
             separators.append(i)
     elif filename.find("UCIcharacter") != -1:
         labels = []
-        for f in files:
+        for f in sample_names:
             l = f[0]
             if l not in labels:
                 labels.append(l)
         separators = []
         for l in labels[:-1]:
             i = 0
-            while files[i].split('/')[-1].find(l) == -1:
+            while sample_names[i].split('/')[-1].find(l) == -1:
                 i += 1
-            while files[i].split('/')[-1].find(l) != -1:
+            while sample_names[i].split('/')[-1].find(l) != -1:
                 i += 1
             separators.append(i)
     elif filename.find("UCIauslan") != -1 or filename.find("UCItctodd") != -1:
         labels = []
-        for f in files:
+        for f in sample_names:
             l = reduce(lambda a, b: a + "-" + b, f.split('/')[-1].split('-')[:-2])
             if l not in labels:
                 labels.append(l)
         separators = []
         for l in labels[:-1]:
             i = 0
-            while reduce(lambda a, b: a + "-" + b, files[i].split('/')[-1].split('-')[:-2]) != l:
+            while reduce(lambda a, b: a + "-" + b, sample_names[i].split('/')[-1].split('-')[:-2]) != l:
                 i += 1
-            while reduce(lambda a, b: a + "-" + b, files[i].split('/')[-1].split('-')[:-2]) == l:
+            while reduce(lambda a, b: a + "-" + b, sample_names[i].split('/')[-1].split('-')[:-2]) == l:
                 i += 1
             separators.append(i)
     else:
         assert False    
         
-    sigma = float(filename.split("sigma")[1]
-                  .split("_")[0]
-                  .replace(".mat", ""))
-    if filename.find("loss") == -1:
-        drop_percent = "0%"
-    else:
-        drop_percent = filename.split("loss")[1].split("_")[0].replace(".mat", "") + "%"
-
-    filename_pdf = filename.replace(".mat", ".pdf")
-    
     # OUTPUT
     plot_gram_to_pdf(filename_pdf,
                      gram,
-                     files,
+                     sample_names,
                      separators,
                      labels,
                      sigma,
                      drop_percent)
-
+    """
     filename_pdf_dropped = filename.replace(".mat", "_dropped.pdf")
     plot_gram_to_pdf(filename_pdf_dropped,
                      mat['dropped_gram'],
-                     files,
+                     sample_names,
                      separators,
                      labels,
                      sigma,
@@ -188,11 +213,12 @@ def main():
     filename_pdf_orig = filename.replace(".mat", "_orig.pdf")
     plot_gram_to_pdf(filename_pdf_orig,
                      mat['orig_gram'],
-                     files,
+                     sample_names,
                      separators,
                      labels,
                      sigma,
                      drop_percent)
+    """
     
     
 if __name__ == "__main__":
