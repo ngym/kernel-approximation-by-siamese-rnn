@@ -56,10 +56,10 @@ if __name__ == "__main__":
             
             sh_file_name = os.path.join(ex_dir, output_filename_format + ".sh")
 
-            time_file_name = os.path.join(ex_dir, output_filename_format + ".time ")
+            time_file_name = os.path.join(ex_dir, output_filename_format + ".time")
             
             fd = open(sh_file_name, "w")
-            fd.write(time + " -v -o " + time_file_name+\
+            fd.write(time + " -v -o " + time_file_name + " " +\
                      python + " " + program + " " + json_file_name + "\n")
             fd.close()
             

@@ -125,7 +125,7 @@ for exp in experiments:
                              bidirectional=exp['bidirectional'],
                              batchnormalization=exp['batchnormalization'])
 
-            json_file_name = os.path.join(k_dir, "config_rnn_conpletion.json")
+            json_file_name = os.path.join(k_dir, "config_rnn_completion.json")
             fd = open(json_file_name, "w")
             json.dump(json_dict, fd)
             fd.close()
