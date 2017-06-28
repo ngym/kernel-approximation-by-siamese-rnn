@@ -1,7 +1,7 @@
 import sys, json, os, subprocess, pickle
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-import databases.k-fold_cross-validation_generators as kf
+from datasets.k_fold_cross_validation_generators import KFold_UCIauslan, KFold, KFold_6DMGupperChar
 
 """ Configuration
 """
@@ -65,15 +65,15 @@ for exp in experiments:
     if exp['dataset'] is "UCIauslan":
         pkl_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIauslan_sigma12.000.pkl")
         sample_dir = os.path.join(EXPERIMENTS_DIR, "datasets/UCIauslan/all")
-        kfold = kf.KFold_UCIauslan
+        kfold = KFold_UCIauslan
     elif exp['dataset'] is "UCIcharacter":
         pkl_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_UCIcharacter_sigma20.000.pkl")
         sample_dir = os.path.join(EXPERIMENTS_DIR, "datasets/UCIcharacter")
-        kfold = kf.KFold
+        kfold = KFold
     elif exp['dataset'] is "6DMG":
         pkl_file_path = os.path.join(EXPERIMENTS_DIR, "original_gram_files/gram_upperChar_all_sigma20.000_t1-t3.pkl")
         sample_dir = os.path.join(EXPERIMENTS_DIR, "datasets/6DMG_mat_112712/matR_char")
-        kfold = kf.KFold_6DMGupperChar
+        kfold = KFold_6DMGupperChar
     else:
         raise ValueError("dataset must be one of UCIauslan, UCIcharacter or 6DMG")
 
