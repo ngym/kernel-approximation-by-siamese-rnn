@@ -38,6 +38,7 @@ if __name__ == "__main__":
 
         output_filename_format_ = cnf_d['output_filename_format']
 
+        k = 0
         for fold in folds:
             if "data_attribute_type" in list(cnf_d.keys()): # 6DMG
                 settings = [(dat, gak_sigma, os.path.join(dat, str(gak_sigma)),
@@ -50,7 +51,8 @@ if __name__ == "__main__":
                             for gak_sigma in cnf_d['gak_sigma']]
                 
             for dat, gak_sigma, ex_dir_, output_filename_format in settings:
-                ex_dir = os.path.join(dataset_dir, ex_dir_)
+                ex_dir = os.path.join(dataset_dir, ex_dir_, str(k))
+                k += 1
                 try:
                     os.makedirs(ex_dir)
                 except FileExistsError:

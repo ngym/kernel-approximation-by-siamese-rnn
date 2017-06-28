@@ -57,9 +57,7 @@ class KFold_UCIauslan(KFold):
             self.fold[(k - 1) // 2].append(i)
 
 class KFold_6DMGupperChar(KFold):
-    """Class for k-fold cross-validation test set generator on UCI AUSLAN data set.
-    This data set has 9 trials (recorded over 9 days) which defines a natural 9-fold separation.
- 
+    """
     :param pkl_file_path: .pkl file path for original Gram matrix
     :type pkl_file_path: str
     """
@@ -73,7 +71,9 @@ class KFold_6DMGupperChar(KFold):
                     ["I2", "I3", "J1", "J2", "J3"],
                     ["L1", "M1", "S1", "T1", "U1"],
                     ["Y1", "Y2", "Y3", "Z1", "Z2"]]
-        self.num_folds = 5
+        self.num_folds = len(k_groups)
+        print(len(self.sample_names))
+        print(self.sample_names)
         self.fold = [[] for i in range(self.num_folds)]
         for i in range(len(self.sample_names)):
             sample_name = self.sample_names[i]
@@ -82,6 +82,8 @@ class KFold_6DMGupperChar(KFold):
             for k in range(len(k_groups)):
                 if k_group in k_groups[k]:
                     self.fold[k].append(i)
+        for f in self.fold:
+            print(len(f))
 
 
 
