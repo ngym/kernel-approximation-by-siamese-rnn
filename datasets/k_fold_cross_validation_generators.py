@@ -72,8 +72,6 @@ class KFold_6DMGupperChar(KFold):
                     ["L1", "M1", "S1", "T1", "U1"],
                     ["Y1", "Y2", "Y3", "Z1", "Z2"]]
         self.num_folds = len(k_groups)
-        print(len(self.sample_names))
-        print(self.sample_names)
         self.fold = [[] for i in range(self.num_folds)]
         for i in range(len(self.sample_names)):
             sample_name = self.sample_names[i]
