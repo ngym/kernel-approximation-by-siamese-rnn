@@ -125,7 +125,15 @@ for exp in experiments:
                              bidirectional=exp['bidirectional'],
                              batchnormalization=exp['batchnormalization'])
 
+            ### training to construct network and test
             json_file_name = os.path.join(k_dir, "config_rnn_completion.json")
+            fd = open(json_file_name, "w")
+            json.dump(json_dict, fd)
+            fd.close()
+
+            ### use pretrained hdf5 file for constructing network and test
+            json_file_name = os.path.join(k_dir, "config_rnn_completion_pretraining.json")
+            json_dict['pretraining'] = True
             fd = open(json_file_name, "w")
             json.dump(json_dict, fd)
             fd.close()
@@ -145,7 +153,7 @@ for exp in experiments:
                 fd.close()
             else:
                 command_file_name = os.path.join(k_dir, "command.sh")
-                time_file_name = os.path.join(k_dir, "time_command.output")
+                time_file_name = os.path.join(k_dir, "time_command_pretraining.output")
                 fd = open(command_file_name, "w")
                 fd.write(TIME + " -v -o " + time_file_name +\
                          " python3 " +\
