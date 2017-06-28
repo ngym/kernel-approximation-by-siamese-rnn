@@ -177,9 +177,11 @@ def main():
                          dropped_elements)
 
     main_end = time.time()
-    
+
     analysis_json = {}
     analysis_json['number_of_dropped_elements'] = len(dropped_elements)
+    num_calculated_elements = len(dropped_elements) - len(indices_to_drop) // 2
+    analysis_json['number_of_calculated_elements'] = num_calculated_elements
     analysis_json['gak_start'] = gak_start
     analysis_json['gak_end'] = gak_end
     analysis_json['gak_duration'] = gak_end - gak_start

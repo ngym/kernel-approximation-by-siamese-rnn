@@ -138,6 +138,7 @@ def main():
 
         seqs = read_sequences(dataset_type, list_glob_arg=sample_glob_arg)
         sample_names = list(seqs.keys())
+        print(sample_names)
 
         gram_gak_start = time.time()
         gram = gram_gak(list(seqs.values()), sigma=gak_sigma)

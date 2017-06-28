@@ -525,6 +525,8 @@ def main():
     
     analysis_json = {}
     analysis_json['number_of_dropped_elements'] = len(dropped_elements)
+    num_calculated_elements = len(dropped_elements) - len(indices_to_drop) // 2
+    analysis_json['number_of_calculated_elements'] = num_calculated_elements
     analysis_json['fit_start'] = fit_start
     analysis_json['fit_end'] = fit_end
     analysis_json['fit_duration'] = fit_end - fit_start
