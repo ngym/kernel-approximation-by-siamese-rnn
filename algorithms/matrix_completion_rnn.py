@@ -265,7 +265,8 @@ def rnn_matrix_completion(gram_drop, seqs,
                           dropout,
                           implementation,
                           bidirectional,
-                          batchnormalization):
+                          batchnormalization,
+                          pretraining=False):
     """Fill in Gram matrix with dropped elements with Keras Siamese RNN.
     Trains the network on given part of Gram matrix and the corresponding sequences
     Fills in missing elements by network prediction
@@ -287,6 +288,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     :param te_indices: Testing 2-tuples of time series index pairs
     :param gram_drop: Gram matrix with dropped elements
     :param seqs: List of time series
+    :param pretraining: Flag to switch training from training set/use pretrained weights in HDF5 format
     :type gram_drop: list of lists
     :type seqs: list of np.ndarrays
     :type epochs: int
@@ -301,6 +303,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     :type implementation: int
     :type bidirectional: bool
     :type batchnormalization: bool
+    :type pretraining: bool
     :returns: Filled in Gram matrix, training and prediction start and end times
     :rtype: list of lists, float, float, float, float
     """
@@ -352,13 +355,17 @@ def rnn_matrix_completion(gram_drop, seqs,
     tr_indices = trval_indices[:int(len(trval_indices) * 0.9)]
     val_indices = trval_indices[int(len(trval_indices) * 0.9):]
     tr_start = time.time()
-    train_and_validate(model, tr_indices, val_indices,
-                       gram_drop,
-                       seqs,
-                       epochs,
-                       patience,
-                       logfile_loss,
-                       logfile_hdf5)
+    if pretraining:
+        print("load from hdf5 file: %s", logfile_hdf5)
+        model.load_weights(logfile_hdf5)
+    else:
+        train_and_validate(model, tr_indices, val_indices,
+                           gram_drop,
+                           seqs,
+                           epochs,
+                           patience,
+                           logfile_loss,
+                           logfile_hdf5)
     tr_end = time.time()
 
     # prediction
@@ -386,6 +393,7 @@ def rnn_matrix_completion(gram_drop, seqs,
 
 def main():
     main_start = time.time()
+    pretraining = False
     if len(sys.argv) != 2:
         random_drop = True
         gram_filename = sys.argv[1]
@@ -429,6 +437,8 @@ def main():
         implementation = config_dict['implementation']
         bidirectional = config_dict['bidirectional']
         batchnormalization = config_dict['batchnormalization']
+        if 'pretraining' in config_dict.keys():
+            pretraining = config_dict['pretraining']
 
     fd = open(gram_filename, 'rb')
     pkl = pickle.load(fd)
@@ -465,14 +475,15 @@ def main():
     # RNN Completion
     gram_completed, fit_start, fit_end, pred_start, \
         pred_end = rnn_matrix_completion(gram_drop, seqs,
-                                            epochs, patience,
-                                            logfile_loss, logfile_hdf5,
-                                            rnn,
-                                            rnn_units, dense_units,
-                                            dropout,
-                                            implementation,
-                                            bidirectional,
-                                            batchnormalization)
+                                         epochs, patience,
+                                         logfile_loss, logfile_hdf5,
+                                         rnn,
+                                         rnn_units, dense_units,
+                                         dropout,
+                                         implementation,
+                                         bidirectional,
+                                         batchnormalization,
+                                         pretraining=pretraining)
     gram_completed = np.array(gram_completed)
     # eigenvalue check
     npsd_start = time.time()
