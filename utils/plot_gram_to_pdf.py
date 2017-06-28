@@ -119,7 +119,7 @@ def main():
                      "O", "P", "Q", "R", "S", "T", "U",
                      "V", "W", "X", "Y", "Z"]
         separators = []
-        for alph in alphabets[:-1]:
+        for alph in labels[:-1]:
             i = 0
             while files[i].find("upper_" + alph) == -1:
                 i += 1
