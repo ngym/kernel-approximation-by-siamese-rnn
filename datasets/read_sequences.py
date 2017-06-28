@@ -44,7 +44,7 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None):
     if dataset_type in {"6DMG", "6DMGupperChar", "upperChar"}:
         for sample_file in sample_files:
             m = io.loadmat(sample_file)
-            seqs[sample_file] = m['gest'].T
+            seqs[sample_file] = m['gest'].T[:, 1:]
     elif dataset_type == "UCIcharacter":
         if isinstance(list_glob_arg, str):
             mat_file_path = list_glob_arg
