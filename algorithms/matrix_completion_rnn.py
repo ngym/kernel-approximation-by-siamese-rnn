@@ -439,6 +439,7 @@ def main():
         batchnormalization = config_dict['batchnormalization']
         if 'pretraining' in config_dict.keys():
             pretraining = config_dict['pretraining']
+        assert type(pretraining) == bool
 
     fd = open(gram_filename, 'rb')
     pkl = pickle.load(fd)
