@@ -47,11 +47,11 @@ def gram_drop_one_sample(gram, index):
     gram_drop = copy.deepcopy(gram)
     indices_drop = []
     for i in range(len(gram)):
-        if np.isnan(gram_drop[i][index]):
+        if not np.isnan(gram_drop[i][index]):
             gram_drop[i][index] = np.nan
             indices_drop.append((i, index))
     for j in range(len(gram[0])):
-        if np.isnan(gram_drop[index][j]):
+        if not np.isnan(gram_drop[index][j]):
             gram_drop[index][j] = np.nan
             indices_drop.append((index, j))
 
