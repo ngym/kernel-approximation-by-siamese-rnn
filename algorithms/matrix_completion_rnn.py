@@ -72,14 +72,11 @@ def create_RNN_base_network(input_shape, mask_value,
 
     for i in range(len(rnn_units)):
         rnn_unit = rnn_units[i]
-        if i == len(rnn_units) - 1:
-            return_sequences = False
-        else:
-            return_sequences = True
+        return_sequences = (i < (len(rnn_units) -1))
         seq.add(b(r(rnn_unit,
                     dropout=dropout, implementation=implementation,
                     return_sequences=return_sequences)))
-        if batchnormalization:
+        if batchnormalization and return_sequences:
             seq.add(BatchNormalization())
     for i in range(len(dense_units)):
         dense_unit = dense_units[i]
