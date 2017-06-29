@@ -10,8 +10,7 @@ def main():
     for dataset_type, gram_file in [("6DMG", "gram_upperChar_all_sigma20.000_t1-t3_dropfrom0_RNN_LSTM.pkl"),
                                     ("UCIauslan", "gram_UCIauslan_sigma12.000_dropfrom0_RNN_LSTM.pkl"),
                                     ("UCIcharacter", "gram_UCIcharacter_sigma20.000_dropfrom0_RNN_LSTM.pkl")]:
-        data_dir = os.path.join(experiment_dir, dataset_type,
-                                "/LSTM/Forward/BatchNormalization/[10]/[3]/0.3/0")
+        data_dir = os.path.join(experiment_dir, dataset_type, "LSTM/Forward/BatchNormalization/[10]/[3]/0.3/0")
         output_file = gram_file.replace('.pkl', '_svm_out.json')
         json_dict = dict(dataset_type=dataset_type,
                          data_dir=data_dir,
