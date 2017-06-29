@@ -53,7 +53,7 @@ class KFold_UCIauslan(KFold):
         self.fold = [[] for i in range(self.num_folds)]
         for i in range(len(self.sample_names)):
             sample_name = self.sample_names[i]
-            k = int(sample_name.split('-')[-2])
+            k = int(sample_name.split('/')[-2][-1])
             self.fold[(k - 1) // 2].append(i)
 
 class KFold_6DMGupperChar(KFold):
@@ -75,8 +75,7 @@ class KFold_6DMGupperChar(KFold):
         self.fold = [[] for i in range(self.num_folds)]
         for i in range(len(self.sample_names)):
             sample_name = self.sample_names[i]
-            sample_name_ = sample_name.split('/')[-1]
-            type_, ground_truth, k_group, trial = sample_name_.split('_')
+            type_, ground_truth, k_group, trial = sample_name.split('/')[-1].split('_')
             for k in range(len(k_groups)):
                 if k_group in k_groups[k]:
                     self.fold[k].append(i)

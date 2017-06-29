@@ -16,14 +16,11 @@ def gram_drop_random(seed, gram, percent):
     """
     
     random.seed(seed)
-        
-    gram_drop = []
-    indices_drop = []
 
     half_indices = [(i, j) for i in range(len(gram))
                    for j in range(i + 1, len(gram[0]))]
     permutated_half_indices = np.random.permutation(half_indices)
-    num_to_drop = int(len(permutated_half_indices) * percent * 0.01)
+    num_to_drop = int(len(permutated_half_indices) * percent / 100)
     indices_drop = permutated_half_indices[:num_to_drop]
 
     gram_drop = copy.deepcopy(gram)
@@ -50,10 +47,9 @@ def gram_drop_one_sample(gram, index):
         if not np.isnan(gram_drop[i][index]):
             gram_drop[i][index] = np.nan
             indices_drop.append((i, index))
-    for j in range(len(gram[0])):
-        if not np.isnan(gram_drop[index][j]):
-            gram_drop[index][j] = np.nan
-            indices_drop.append((index, j))
+        if not np.isnan(gram_drop[index][i]):
+            gram_drop[index][i] = np.nan
+            indices_drop.append((index, i))
 
     return gram_drop, indices_drop
 

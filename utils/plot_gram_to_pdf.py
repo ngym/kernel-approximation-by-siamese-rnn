@@ -178,15 +178,15 @@ def main():
     elif filename.find("UCIauslan") != -1 or filename.find("UCItctodd") != -1:
         labels = []
         for f in sample_names:
-            l = reduce(lambda a, b: a + "-" + b, f.split('/')[-1].split('-')[:-2])
+            l = f.split('/')[-1].split('-')[0]
             if l not in labels:
                 labels.append(l)
         separators = []
         for l in labels[:-1]:
             i = 0
-            while reduce(lambda a, b: a + "-" + b, sample_names[i].split('/')[-1].split('-')[:-2]) != l:
+            while sample_names[i].split('/')[-1].split('-')[0] != l:
                 i += 1
-            while reduce(lambda a, b: a + "-" + b, sample_names[i].split('/')[-1].split('-')[:-2]) == l:
+            while sample_names[i].split('/')[-1].split('-')[0] == l:
                 i += 1
             separators.append(i)
     else:
