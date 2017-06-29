@@ -11,7 +11,7 @@ dataset_type = None
 attribute_type = None
 
 def convert_index_to_attributes(index):
-    if dataset_type in {"upperChar", "6DMGupperChar"}:
+    if dataset_type in {"upperChar", "6DMGupperChar", "6DMG"}:
         # 6DMG
         index_ = index.split('/')[-1]
         type_, ground_truth, k_group, trial = index_.split('_')
