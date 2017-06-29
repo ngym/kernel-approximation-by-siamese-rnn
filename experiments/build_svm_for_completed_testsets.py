@@ -24,9 +24,9 @@ def main():
         fd.close()
     
     experiment_dir = "/home/milacski/shota/USE_CASE_GAK_COMPLETION_1_VALIDATION"
-    for dataset_type, direc, gram_file in [("6DMG", "6DMGupperChar/all/20/0", "gram_upperChar_all_sigma20.000_t1-t3_dropfrom0_RNN_LSTM.pkl"),
-                                           ("UCIauslan", "UCIauslan/12/0", "gram_UCIauslan_sigma12.000_dropfrom0_RNN_LSTM.pkl"),
-                                           ("UCIcharacter", "UCIcharacter/20/0", "gram_UCIcharacter_sigma20.000_dropfrom0_RNN_LSTM.pkl")]:
+    for dataset_type, direc, gram_file in [("6DMG", "6DMGupperChar/all/20/0", "gram_upperChar_all_sigma20.000_t1-t3_dropfrom0_GAK_Completion.pkl"),
+                                           ("UCIauslan", "UCIauslan/12/0", "gram_UCIauslan_sigma12.000_dropfrom0_GAK_Completion.pkl"),
+                                           ("UCIcharacter", "UCIcharacter/20/0", "gram_UCIcharacter_sigma20.000_dropfrom0_GAK_Completion.pkl")]:
         data_dir = os.path.join(experiment_dir, direc)
         output_file = gram_file.replace('.pkl', '_svm_out.json')
         json_dict = dict(dataset_type=dataset_type,
@@ -41,9 +41,9 @@ def main():
         fd.close()
     
     experiment_dir = "/home/milacski/shota/USE_CASE_SOFTIMPUTE_COMPLETION_1_VALIDATION"
-    for dataset_type, direc, gram_file in [("6DMG", "6DMGupperChar/all/0", "gram_upperChar_all_sigma20.000_t1-t3_dropfrom0_RNN_LSTM.pkl"),
-                                           ("UCIauslan", "UCIauslan/0", "gram_UCIauslan_sigma12.000_dropfrom0_RNN_LSTM.pkl"),
-                                           ("UCIcharacter", "UCIcharacter/0", "gram_UCIcharacter_sigma20.000_dropfrom0_RNN_LSTM.pkl")]:
+    for dataset_type, direc, gram_file in [("6DMG", "6DMGupperChar/all/0", "gram_upperChar_all_sigma20.000_t1-t3_dropfrom0_SoftImpute_Completion.pkl"),
+                                           ("UCIauslan", "UCIauslan/0", "gram_UCIauslan_sigma12.000_dropfrom0_SoftImpute_Completion.pkl"),
+                                           ("UCIcharacter", "UCIcharacter/0", "gram_UCIcharacter_sigma20.000_dropfrom0_SoftImpute_Completion.pkl")]:
         data_dir = os.path.join(experiment_dir, direc)
         output_file = gram_file.replace('.pkl', '_svm_out.json')
         json_dict = dict(dataset_type=dataset_type,
