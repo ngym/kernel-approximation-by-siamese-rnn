@@ -90,8 +90,8 @@ def rnn_feature_extraction(seqs,
                                        bidirectional,
                                        batchnormalization)
     model.load_weights(logfile_hdf5)
-    new_model = Model(model.get_layer('model_1').get_layer('sequential_1').get_layer('base_hidden'),
-                      model.get_layer('base_hidden').output)
+    new_model = Model(model.get_layer('base_input'),
+                      model.get_layer('model_1').get_layer('sequential_1').get_layer('base_hidden').output)
     model = new_model
 
     pred_start = time.time()
