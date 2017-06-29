@@ -164,6 +164,7 @@ for exp in experiments:
             json.dump(json_dict, fd)
             fd.close()
             
+            PROGRAM = "/home/milacski/shota/fast-time-series-data-classification/algorithms/feature_extraction_rnn.py"
             time_file_name = os.path.join(k_dir, "time_command_featureextraction.output")
             command_file_name = os.path.join(k_dir, "command_featureextraction.sh")
             fd = open(command_file_name, "w")
