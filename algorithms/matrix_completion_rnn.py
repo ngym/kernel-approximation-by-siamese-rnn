@@ -83,7 +83,10 @@ def create_RNN_base_network(input_shape, mask_value,
         seq.add(Dense(dense_unit, use_bias=False if batchnormalization else True))
         if batchnormalization:
             seq.add(BatchNormalization())
-        seq.add(Activation('relu', name='base_hidden'))
+        if i < len(dense_units) - 1:
+            seq.add(Activation('relu'))
+        else:
+            seq.add(Activation('relu', name='base_output'))
     return seq
 
 def generator_sequence_pairs(indices, gram_drop, seqs):

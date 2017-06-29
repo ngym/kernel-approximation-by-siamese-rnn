@@ -5,7 +5,7 @@ from sklearn.metrics import f1_score, roc_auc_score
 import scipy.io as io
 import numpy as np
 import functools
-
+import pickle
 
 dataset_type = None
 attribute_type = None
@@ -119,15 +119,16 @@ def optimizehyperparameter(costs, # [C]
     return tryout1hyperparameter(best_cost, train_validation_matrix,
                                  train_validation_gtruths, test_matrix, test_gtruths)
 
-def crossvalidation(mat_file_names, costs):
+def crossvalidation(pkl_file_names, costs):
     errors = []
-    for mat_file_name in mat_file_names:
-        mat = io.loadmat(mat_file_name)
-        gram = mat['gram']
+    for pkl_file_name in pkl_file_names:
+        fd = open(pkl_file_name, 'rb')
+        pkl = pickle.load(fd)
+        gram = pkl['gram_matrices'][-1]['gram_completed_npsd']
         num_indices = len(gram)
-        indices = mat['indices']
+        indices = pkl['sample_names']
 
-        test_indices = mat['dropped_indices_number'][0]
+        test_indices = pkl['drop_indices']
         tr_and_v_indices = []
 
         for i in range(num_indices):
@@ -164,14 +165,14 @@ def main():
     l2regularization_costs = config_dict['l2regularization_costs']
     output_file = config_dict['output_file']
 
-    mat_file_names = []
-    for file_name_for_glob in config_dict['completed_matrices_for_glob']:
-        for mat_file_name in glob.glob(os.path.join(data_dir,
+    pkl_file_names = []
+    for file_name_for_glob in config_dict['completed_pklrices_for_glob']:
+        for pkl_file_name in glob.glob(os.path.join(data_dir,
                                                     file_name_for_glob)):
-            mat_file_names.append(mat_file_name)
-            print(mat_file_name)
+            pkl_file_names.append(pkl_file_name)
+            print(pkl_file_name)
 
-    ave_roc, ave_f1 = crossvalidation(mat_file_names, l2regularization_costs)
+    ave_roc, ave_f1 = crossvalidation(pkl_file_names, l2regularization_costs)
 
     json_dict = {}
     json_dict['ROC_AUC'] = ave_roc
