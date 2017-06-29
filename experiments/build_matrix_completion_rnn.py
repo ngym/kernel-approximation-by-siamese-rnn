@@ -141,13 +141,14 @@ for exp in experiments:
             ### use pretrained hdf5 file for constructing network and test
             json_file_name = os.path.join(k_dir, "config_rnn_completion_loadpretrained.json")
             json_dict['mode'] = 'load_pretrained'
+            completionanalysisfile = gram_file.replace(".pkl", "_loadpretrained.timelog")
+            json_dict['completionanalysisfile'] = completionanalysisfile
             fd = open(json_file_name, "w")
             json.dump(json_dict, fd)
             fd.close()
-            command_file_name = os.path.join(k_dir, "command_loadpretrained.sh")
+            
             time_file_name = os.path.join(k_dir, "time_command_loadpretrained.output")
-            completionanalysisfile = gram_file.replace(".pkl", "_loadpretrained.timelog")
-            json_dict['completionanalysisfile'] = completionanalysisfile
+            command_file_name = os.path.join(k_dir, "command_loadpretrained.sh")
             fd = open(command_file_name, "w")
             fd.write("CUDA_VISIBLE_DEVICES='' " +TIME + " -v -o " + time_file_name +\
                      " python3 " +\
@@ -156,14 +157,15 @@ for exp in experiments:
 
             ### extract features by using pretrained hdf5 file for constructing network and test
             json_file_name = os.path.join(k_dir, "config_rnn_completion_featureextraction.json")
-            time_file_name = os.path.join(k_dir, "time_command_featureextraction.output")
-            completionanalysisfile = gram_file.replace(".pkl", "_featureextraction.timelog")
             json_dict['mode'] = 'feature_extraction'
+            completionanalysisfile = gram_file.replace(".pkl", "_featureextraction.timelog")
+            json_dict['completionanalysisfile'] = completionanalysisfile
             fd = open(json_file_name, "w")
             json.dump(json_dict, fd)
             fd.close()
-            command_file_name = os.path.join(k_dir, "command_featureextraction.sh")
+            
             time_file_name = os.path.join(k_dir, "time_command_featureextraction.output")
+            command_file_name = os.path.join(k_dir, "command_featureextraction.sh")
             fd = open(command_file_name, "w")
             fd.write("CUDA_VISIBLE_DEVICES='' " +TIME + " -v -o " + time_file_name +\
                      " python3 " +\
