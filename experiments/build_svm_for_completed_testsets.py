@@ -6,10 +6,10 @@ def main():
     PROGRAM = "/home/milacski/shota/fast-time-series-data-classification/algorithms/svm_for_completed_testsets.py"
     l2regularization_costs = [0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64],
     
-    experiment_dir = "/home/milacski/shota/USE_CASE_RNN_COMPLETION_1_VALIDATION",
+    experiment_dir = "/home/milacski/shota/USE_CASE_RNN_COMPLETION_1_VALIDATION"
     for dataset_type, gram_file in [("6DMG", "gram_upperChar_all_sigma20.000_t1-t3_dropfrom0_RNN_LSTM.pkl"),
-                         ("UCIauslan", "gram_UCIauslan_sigma12.000_dropfrom0_RNN_LSTM.pkl"),
-                         ("UCIcharacter", "gram_UCIcharacter_sigma20.000_dropfrom0_RNN_LSTM.pkl")]:
+                                    ("UCIauslan", "gram_UCIauslan_sigma12.000_dropfrom0_RNN_LSTM.pkl"),
+                                    ("UCIcharacter", "gram_UCIcharacter_sigma20.000_dropfrom0_RNN_LSTM.pkl")]:
         data_dir = os.path.join(experiment_dir, dataset_type,
                                 "/LSTM/Forward/BatchNormalization/[10]/[3]/0.3/0")
         output_file = gram_file.replace('.pkl', '_svm_out.json')
