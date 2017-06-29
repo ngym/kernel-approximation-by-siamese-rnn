@@ -99,7 +99,8 @@ def main():
     mat_log.append(new_log)
 
     drop_indices = pkl['drop_indices']
-    drop_indices.append(indices_to_drop)
+    assert drop_indices == [] or indices_to_drop == []
+    drop_indices += indices_to_drop
 
     pkl_fd = open(logfile_pkl, 'wb')
     dic = dict(gram_matrices=gram_matrices,
