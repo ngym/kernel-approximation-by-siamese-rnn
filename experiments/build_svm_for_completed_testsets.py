@@ -14,7 +14,7 @@ def main():
         output_file = gram_file.replace('.pkl', '_svm_out.json')
         json_dict = dict(dataset_type=dataset_type,
                          data_dir=data_dir,
-                         completion_matrices_for_glob=[gram_file],
+                         completed_matrices_for_glob=[gram_file],
                          l2regularization_costs=l2regularization_costs,
                          output_file=output_file)
     
@@ -31,7 +31,7 @@ def main():
         output_file = gram_file.replace('.pkl', '_svm_out.json')
         json_dict = dict(dataset_type=dataset_type,
                          data_dir=data_dir,
-                         completion_matrices_for_glob=[gram_file],
+                         completed_matrices_for_glob=[gram_file],
                          l2regularization_costs=l2regularization_costs,
                          output_file=output_file)
         
@@ -48,7 +48,7 @@ def main():
         output_file = gram_file.replace('.pkl', '_svm_out.json')
         json_dict = dict(dataset_type=dataset_type,
                          data_dir=data_dir,
-                         completion_matrices_for_glob=[gram_file],
+                         completed_matrices_for_glob=[gram_file],
                          l2regularization_costs=l2regularization_costs,
                          output_file=output_file)
         
