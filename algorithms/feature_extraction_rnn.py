@@ -169,7 +169,7 @@ def main():
     
     seed = 1
 
-    logfile_pkl  = gram_filename.replace(".pkl", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".pkl")
+    logfile_pkl  = gram_filename.replace(".pkl", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + "featureextraction.pkl")
     logfile_hdf5  = gram_filename.replace(".pkl", "_dropfrom" + str(indices_to_drop[0]) + "_RNN_" + rnn + ".hdf5")
 
     # RNN Completion
