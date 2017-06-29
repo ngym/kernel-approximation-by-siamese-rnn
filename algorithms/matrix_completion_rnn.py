@@ -54,7 +54,7 @@ def create_RNN_base_network(input_shape, mask_value,
     """
 
     seq = Sequential()
-    seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
+    seq.add(Masking(mask_value=mask_value, input_shape=input_shape, name="base_masking"))
 
     if rnn == "Vanilla":
         r = SimpleRNN
@@ -272,7 +272,7 @@ def create_RNN_siamese_network(input_shape, pad_value,
                                            implementation,
                                            bidirectional,
                                            batchnormalization)
-    input_a = Input(shape=input_shape, name='base_input')
+    input_a = Input(shape=input_shape)
     input_b = Input(shape=input_shape)
     processed_a = base_network(input_a)
     processed_b = base_network(input_b)
