@@ -83,7 +83,7 @@ def create_RNN_base_network(input_shape, mask_value,
         seq.add(Dense(dense_unit, use_bias=False if batchnormalization else True))
         if batchnormalization:
             seq.add(BatchNormalization())
-        seq.add(Activation('relu'))
+        seq.add(Activation('relu', name = 'base_hidden'))
     return seq
 
 def generator_sequence_pairs(indices, gram_drop, seqs):
@@ -272,7 +272,7 @@ def create_RNN_siamese_network(input_shape, pad_value,
                                            implementation,
                                            bidirectional,
                                            batchnormalization)
-    base_network.get_layer(index=-1).name = 'base_hidden'
+    #base_network.get_layer(index=-1).name = 'base_hidden'
     input_a = Input(shape=input_shape, name='base_input')
     input_b = Input(shape=input_shape)
     processed_a = base_network(input_a)
