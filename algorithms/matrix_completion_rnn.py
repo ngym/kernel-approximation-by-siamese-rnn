@@ -272,7 +272,7 @@ def create_RNN_siamese_network(input_shape, pad_value,
                                            implementation,
                                            bidirectional,
                                            batchnormalization)
-    base_network.get_layer(index=-1).name = 'base_hidden'
+    #base_network.get_layer(index=-1).name = 'base_hidden'
     input_a = Input(shape=input_shape, name='base_input')
     input_b = Input(shape=input_shape)
     processed_a = base_network(input_a)
