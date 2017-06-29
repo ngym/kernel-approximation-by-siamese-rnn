@@ -272,7 +272,7 @@ def create_RNN_siamese_network(input_shape, pad_value,
                                            implementation,
                                            bidirectional,
                                            batchnormalization)
-    #base_network.get_layer(index=-1).name = 'base_hidden'
+    base_network.get_layer(index=-1).name = 'base_hidden'
     input_a = Input(shape=input_shape, name='base_input')
     input_b = Input(shape=input_shape)
     processed_a = base_network(input_a)
@@ -284,6 +284,11 @@ def create_RNN_siamese_network(input_shape, pad_value,
     out = Activation('sigmoid')(parent)
 
     model = Model([input_a, input_b], out)
+    
+    optimizer = Adam(clipnorm=1.)
+    if ngpus > 1:
+        model = make_parallel(model, ngpus)
+    model.compile(loss='mse', optimizer=optimizer)
     return model
 
 def rnn_matrix_completion(gram_drop, seqs,
@@ -360,10 +365,6 @@ def rnn_matrix_completion(gram_drop, seqs,
                                        batchnormalization)
     
     # training
-    optimizer = Adam(clipnorm=1.)
-    if ngpus > 1:
-        model = make_parallel(model, ngpus)
-    model.compile(loss='mse', optimizer=optimizer)
     # make 90% + 10% training validation random split
     trval_indices = np.random.permutation([(i, j)
                                         for i in range(num_seqs)
