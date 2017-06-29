@@ -69,8 +69,7 @@ def plot_gram_to_pdf(file_name, gram, files, separators, labels,
     for i in range(len(labels)):
         label = labels[i]
         x = -len(files)//100
-        y = np.mean([separators_[i], separators_[i+1]]) \
-            + size
+        y = separators_[i] + 0.75 * (separators_[i+1] - separators_[i])
         #y = np.mean([separators_[i], separators_[i+1]]) \
         #    + len(files) // 75
         if all([len(l) == 1 for l in labels]):
