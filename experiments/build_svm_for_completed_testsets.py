@@ -4,7 +4,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 def main():
     PROGRAM = "/home/milacski/shota/fast-time-series-data-classification/algorithms/svm_for_completed_testsets.py"
-    l2regularization_costs = [0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64],
+    l2regularization_costs = [0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64]
     
     experiment_dir = "/home/milacski/shota/USE_CASE_RNN_COMPLETION_1_VALIDATION"
     for dataset_type, gram_file in [("6DMG", "gram_upperChar_all_sigma20.000_t1-t3_dropfrom0_RNN_LSTM.pkl"),
