@@ -1,5 +1,6 @@
 import sys, json, glob, os
 from sklearn.svm import SVC
+from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.metrics import f1_score, roc_auc_score
 import scipy.io as io
@@ -74,6 +75,8 @@ def train_validation_test_split(gram, gtruths, validation_indices, test_indices)
 
 def tryout1hyperparameter(cost, train, train_gtruths, validation_or_test, v_or_t_gtruths):
     # indices in the gram matrix is passed to the function to indicate the split.
+    
+    
     clf = SVC(C=cost, kernel='precomputed', probability=True)
     clf.fit(np.array(train), np.array(train_gtruths))
     pred = clf.predict(validation_or_test)
@@ -138,10 +141,18 @@ def crossvalidation(pkl_file_names, costs):
             if i not in test_indices:
                 tr_and_v_indices.append(i)
                 
-        validation_indices = np.random.permutation(tr_and_v_indices)\
-                             [:(len(tr_and_v_indices)//9)]
-
         gtruths = [convert_index_to_attributes(index)['ground_truth'] for index in indices]
+        train_validation_gtruths = [gtruths[i] for i in range(len(gtruths))
+                                    if i not in test_indices]
+        
+        #validation_indices = np.random.permutation(tr_and_v_indices)\
+        #                     [:(len(tr_and_v_indices)//9)]
+        skf = StratifiedKFold(n_splits=1)
+        _, tmp = skf.split(np.zeros_like(train_validation_gtruths),
+                                          train_validation_gtruths)
+        validation_indices = []
+        for t in tmp:
+            validation_indices.append(tr_and_v_indices[t])
 
         errors.append(optimizehyperparameter(costs,
                                              gram,
