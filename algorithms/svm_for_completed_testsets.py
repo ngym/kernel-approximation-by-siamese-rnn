@@ -148,10 +148,10 @@ def crossvalidation(pkl_file_names, costs):
         #validation_indices = np.random.permutation(tr_and_v_indices)\
         #                     [:(len(tr_and_v_indices)//9)]
         skf = StratifiedShuffleSplit(n_splits=1)
-        _, tmp = skf.split(np.zeros_like(train_validation_gtruths),
-                                          train_validation_gtruths)
+        tmp = skf.split(np.zeros_like(train_validation_gtruths),
+                        train_validation_gtruths)
         validation_indices = []
-        for t in tmp:
+        for t in tmp[1]:
             validation_indices.append(tr_and_v_indices[t])
 
         errors.append(optimizehyperparameter(costs,
