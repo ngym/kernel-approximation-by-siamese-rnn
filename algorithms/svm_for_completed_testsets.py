@@ -151,7 +151,7 @@ def crossvalidation(pkl_file_names, costs):
         tmp = skf.split(np.zeros_like(train_validation_gtruths),
                         train_validation_gtruths)
         validation_indices = []
-        for t in tmp[1]:
+        for t in next(tmp)[1]:
             validation_indices.append(tr_and_v_indices[t])
 
         errors.append(optimizehyperparameter(costs,
