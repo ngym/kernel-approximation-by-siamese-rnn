@@ -182,7 +182,7 @@ def main():
     pkl_file_names = []
     for file_name_for_glob in config_dict['completed_matrices_for_glob']:
         for pkl_file_name in glob.glob(os.path.join(data_dir,
-                                                    file_name_for_glob)):
+                                                    file_name_for_glob.replace('[', '[[]'))):
             pkl_file_names.append(pkl_file_name)
             print(pkl_file_name)
 
