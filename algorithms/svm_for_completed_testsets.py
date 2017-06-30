@@ -1,6 +1,6 @@
 import sys, json, glob, os
 from sklearn.svm import SVC
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.metrics import f1_score, roc_auc_score
 import scipy.io as io
@@ -147,7 +147,7 @@ def crossvalidation(pkl_file_names, costs):
         
         #validation_indices = np.random.permutation(tr_and_v_indices)\
         #                     [:(len(tr_and_v_indices)//9)]
-        skf = StratifiedKFold(n_splits=1)
+        skf = StratifiedShuffleSplit(n_splits=1)
         _, tmp = skf.split(np.zeros_like(train_validation_gtruths),
                                           train_validation_gtruths)
         validation_indices = []
