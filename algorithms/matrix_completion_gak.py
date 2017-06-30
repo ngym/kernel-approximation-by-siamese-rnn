@@ -2,6 +2,7 @@ import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import json, pickle, time
 from string import Template
+import copy
 
 import numpy as np
 from scipy import io
@@ -17,7 +18,7 @@ from datasets.read_sequences import read_sequences
 from utils.plot_gram_to_html import plot_gram_to_html
 from algorithms.gak import gak, calculate_gak_sigma, calculate_gak_triangular
 
-def gram_complete_gak(gram, seqs, indices, sigma=None, triangular=None):
+def gram_complete_gak(gram_, seqs, indices, sigma=None, triangular=None):
     """Fill in multiple rows and columns of Gram matrix.
 
     :param gram: Gram matrix to be filled in
@@ -34,6 +35,8 @@ def gram_complete_gak(gram, seqs, indices, sigma=None, triangular=None):
     :rtype: list of lists, list of tuples
     """
 
+    gram = copy.deepcopy(gram_)
+    
     if sigma is None:
         sigma = calculate_gak_sigma(seqs)
     if triangular is None:
