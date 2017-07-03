@@ -5,15 +5,17 @@ from scipy import io
 from functools import reduce
 
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 import pickle
 
+
 def plot_gram_to_pdf(file_name, gram, files, separators, labels,
-         sigma, drop_percent):
+                     sigma, drop_percent, rotate_vertically=True, dataset_name=""):
     """Plot Gram matrix and save as pdf file with matplotlib.
-    
+
     :param file_name: Output pdf file name
     :param gram: Gram matrix to be plotted
     :param files: Filenames used for Global Alignment Kernel calcucation
@@ -21,6 +23,8 @@ def plot_gram_to_pdf(file_name, gram, files, separators, labels,
     :param labels: Class names for labeling
     :param sigma: Global Alignment Kernel sigma parameter
     :param drop_percent: Amount of Gram matrix elements removed
+    :param rotate_vertically: If True then rotate the bottom labels vertically
+    :param dataset_name: Name of the dataset
     :type file_name: str
     :type gram: np.ndarray
     :type files: list of str
@@ -28,13 +32,15 @@ def plot_gram_to_pdf(file_name, gram, files, separators, labels,
     :type labels: list of str
     :type sigma: float
     :type drop_percent: float
+    :type rotate_vertically: bool
+    :type dataset_name: str
     """
-             
+
     assert len(separators) == len(labels) - 1
 
     cmap = plt.get_cmap('bwr')
     cmap.set_bad('black')
-    
+
     fig, ax = plt.subplots()
     f1 = ax.imshow(gram,
                    interpolation='nearest',
@@ -57,13 +63,13 @@ def plot_gram_to_pdf(file_name, gram, files, separators, labels,
     ## actually deleting all labels at first and annotate corresponding texts
     ## to corresponding place, the center of each group of data
     plt.axis('off')
-    size = len(files) // len(labels) // 10
+    size = min(fig.get_size_inches() * fig.get_dpi() // len(labels) // 2)
     separators_ = [0] + separators + [len(gram)]
+    rotation = 'vertical' if rotate_vertically else 'horizontal'
     for i in range(len(labels)):
         label = labels[i]
         x = -len(files)//100
-        y = np.mean([separators_[i], separators_[i+1]]) \
-            + size
+        y = separators_[i] + 0.75 * (separators_[i+1] - separators_[i])
         #y = np.mean([separators_[i], separators_[i+1]]) \
         #    + len(files) // 75
         if all([len(l) == 1 for l in labels]):
@@ -74,16 +80,16 @@ def plot_gram_to_pdf(file_name, gram, files, separators, labels,
         ax.annotate(label, horizontalalignment=ha,
                     size=size,
                     xy=(0,0), xytext=(x, y))
-        x = np.mean([separators_[i], separators_[i+1]]) 
+        x = np.mean([separators_[i], separators_[i+1]])
         y = len(files) + size * 2
         ax.annotate(label, horizontalalignment='center',
                     verticalalignment='top',
                     size=size,
-                    rotation='vertical',
-                    xy=(0,0), xytext=(x, y))
+                    rotation=rotation,
+                    xy=(0, 0), xytext=(x, y))
 
     # Title of the graph, displaying the sigma and the drop percent
-    titletext = "σ =" + str(sigma) + "    drop=" + drop_percent #+ "%\n "
+    titletext = dataset_name + " σ =" + str(sigma)  # + "    drop=" + drop_percent #+ "%\n "
     ax.set_title(titletext,
                  horizontalalignment='center')
 
@@ -91,12 +97,12 @@ def plot_gram_to_pdf(file_name, gram, files, separators, labels,
     #             horizontalalignment='center')
 
     plt.savefig(file_name, format='pdf', dpi=1200)
-    
+
 
 def main():
     """Read .mat file, parse its metadata, plot Gram matrix and save as pdf file with matplotlib.
     """
-    
+
     filename = sys.argv[1]
     if filename[-4:] == ".mat":
         mat = io.loadmat(filename)
@@ -135,8 +141,11 @@ def main():
         filename_pdf = filename.replace(".pkl", ".pdf")
     else:
         assert False
-        
+
+    dataset_name = ""
+    rotate = True
     if filename.find("audioset") != -1:
+        dataset_name = "audioset"
         i = 0
         while sample_names[i].find("Bark") != -1:
             i += 1
@@ -149,6 +158,8 @@ def main():
             separators = [i]
         labels = ['3', '4']
     elif filename.find("upperChar") != -1:
+        dataset_name = "upperChar"
+        rotate = False
         labels = ["A", "B", "C", "D", "E", "F", "G",
                   "H", "I", "J", "K", "L", "M", "N",
                   "O", "P", "Q", "R", "S", "T", "U",
@@ -162,6 +173,8 @@ def main():
                 i += 1
             separators.append(i)
     elif filename.find("UCIcharacter") != -1:
+        dataset_name = "UCIcharacter"
+        rotate = False
         labels = []
         for f in sample_names:
             l = f[0]
@@ -176,22 +189,23 @@ def main():
                 i += 1
             separators.append(i)
     elif filename.find("UCIauslan") != -1 or filename.find("UCItctodd") != -1:
+        dataset_name = "UCIauslan"
         labels = []
         for f in sample_names:
-            l = reduce(lambda a, b: a + "-" + b, f.split('/')[-1].split('-')[:-2])
+            l = f.split('/')[-1].split('-')[0]
             if l not in labels:
                 labels.append(l)
         separators = []
         for l in labels[:-1]:
             i = 0
-            while reduce(lambda a, b: a + "-" + b, sample_names[i].split('/')[-1].split('-')[:-2]) != l:
+            while sample_names[i].split('/')[-1].split('-')[0] != l:
                 i += 1
-            while reduce(lambda a, b: a + "-" + b, sample_names[i].split('/')[-1].split('-')[:-2]) == l:
+            while sample_names[i].split('/')[-1].split('-')[0] == l:
                 i += 1
             separators.append(i)
     else:
-        assert False    
-        
+        assert False
+
     # OUTPUT
     plot_gram_to_pdf(filename_pdf,
                      gram,
@@ -199,7 +213,9 @@ def main():
                      separators,
                      labels,
                      sigma,
-                     drop_percent)
+                     drop_percent,
+                     rotate,
+                     dataset_name)
     """
     filename_pdf_dropped = filename.replace(".mat", "_dropped.pdf")
     plot_gram_to_pdf(filename_pdf_dropped,
@@ -209,7 +225,7 @@ def main():
                      labels,
                      sigma,
                      drop_percent)
-    
+
     filename_pdf_orig = filename.replace(".mat", "_orig.pdf")
     plot_gram_to_pdf(filename_pdf_orig,
                      mat['orig_gram'],
@@ -219,8 +235,8 @@ def main():
                      sigma,
                      drop_percent)
     """
-    
-    
+
+
 if __name__ == "__main__":
     main()
 

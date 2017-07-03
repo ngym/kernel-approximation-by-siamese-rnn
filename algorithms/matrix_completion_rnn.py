@@ -465,7 +465,7 @@ def main():
 
     logfile_loss = completionanalysisfile.replace(".timelog", ".losses")
     
-    seqs = OrderedDict((k, v) for k, v in read_sequences(dataset_type, direc=sample_dir).items()
+    seqs, _, _ = OrderedDict((k, v) for k, v in read_sequences(dataset_type, direc=sample_dir).items()
                        if k.split('/')[-1] in sample_names)
     
     seed = 1

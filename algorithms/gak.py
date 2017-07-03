@@ -136,7 +136,7 @@ def main():
         pkl = output_dir + output_filename_format.replace("${completion_alg}", "GAK") + ".pkl" 
         timelog = output_dir + output_filename_format.replace("${completion_alg}", "GAK") + ".timelog"
 
-        seqs = read_sequences(dataset_type, list_glob_arg=sample_glob_arg)
+        seqs, _, _ = read_sequences(dataset_type, list_glob_arg=sample_glob_arg)
         sample_names = list(seqs.keys())
         print(sample_names)
 
