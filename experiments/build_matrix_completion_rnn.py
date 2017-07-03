@@ -9,6 +9,7 @@ from datasets.k_fold_cross_validation_generators import KFold_UCIauslan, KFold, 
 if 'nipg' in os.uname().nodename:
     EXPERIMENTS_DIR = "/home/milacski/shota/USE_CASE_RNN_COMPLETION_1_VALIDATION"
     PROGRAM = "/home/milacski/shota/fast-time-series-data-classification/algorithms/matrix_completion_rnn.py"
+    PROGRAM_FEATURE_EXTRACTION = "/home/milacski/shota/fast-time-series-data-classification/algorithms/feature_extraction_rnn.py"
     TIME = "/usr/bin/time"
     IMPLEMENTATION = 2
 elif os.uname().nodename == 'Regulus.local':
@@ -169,7 +170,7 @@ for exp in experiments:
             fd = open(command_file_name, "w")
             fd.write("CUDA_VISIBLE_DEVICES='' " +TIME + " -v -o " + time_file_name +\
                      " python3 " +\
-                     PROGRAM + " " + json_file_name + "\n")
+                     PROGRAM_FEATURE_EXTRACTION + " " + json_file_name + "\n")
             fd.close()
 
                 
