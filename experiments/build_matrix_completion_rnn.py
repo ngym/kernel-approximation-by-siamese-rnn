@@ -9,6 +9,7 @@ from datasets.k_fold_cross_validation_generators import KFold_UCIauslan, KFold, 
 if 'nipg' in os.uname().nodename:
     EXPERIMENTS_DIR = "/home/milacski/shota/USE_CASE_RNN_COMPLETION_1_VALIDATION"
     PROGRAM = "/home/milacski/shota/fast-time-series-data-classification/algorithms/matrix_completion_rnn.py"
+    PROGRAM_FEATURE_EXTRACTION = "/home/milacski/shota/fast-time-series-data-classification/algorithms/feature_extraction_rnn.py"
     TIME = "/usr/bin/time"
     IMPLEMENTATION = 2
 elif os.uname().nodename == 'Regulus.local':
@@ -130,7 +131,6 @@ for exp in experiments:
             fd = open(json_file_name, "w")
             json.dump(json_dict, fd)
             fd.close()
-
             command_file_name = os.path.join(k_dir, "command.sh")
             time_file_name = os.path.join(k_dir, "time_command.output")
             fd = open(command_file_name, "w")
@@ -140,18 +140,37 @@ for exp in experiments:
             fd.close()
 
             ### use pretrained hdf5 file for constructing network and test
-            json_file_name = os.path.join(k_dir, "config_rnn_completion_pretraining.json")
-            json_dict['pretraining'] = True
+            json_file_name = os.path.join(k_dir, "config_rnn_completion_loadpretrained.json")
+            json_dict['mode'] = 'load_pretrained'
+            completionanalysisfile = gram_file.replace(".pkl", "_loadpretrained.timelog")
+            json_dict['completionanalysisfile'] = completionanalysisfile
             fd = open(json_file_name, "w")
             json.dump(json_dict, fd)
             fd.close()
-
-            command_file_name = os.path.join(k_dir, "command_pretraining.sh")
-            time_file_name = os.path.join(k_dir, "time_command_pretraining.output")
+            
+            time_file_name = os.path.join(k_dir, "time_command_loadpretrained.output")
+            command_file_name = os.path.join(k_dir, "command_loadpretrained.sh")
             fd = open(command_file_name, "w")
-            fd.write(TIME + " -v -o " + time_file_name +\
+            fd.write("CUDA_VISIBLE_DEVICES='' " +TIME + " -v -o " + time_file_name +\
                      " python3 " +\
                      PROGRAM + " " + json_file_name + "\n")
+            fd.close()
+
+            ### extract features by using pretrained hdf5 file for constructing network and test
+            json_file_name = os.path.join(k_dir, "config_rnn_completion_featureextraction.json")
+            json_dict['mode'] = 'feature_extraction'
+            completionanalysisfile = gram_file.replace(".pkl", "_featureextraction.timelog")
+            json_dict['completionanalysisfile'] = completionanalysisfile
+            fd = open(json_file_name, "w")
+            json.dump(json_dict, fd)
+            fd.close()
+            
+            time_file_name = os.path.join(k_dir, "time_command_featureextraction.output")
+            command_file_name = os.path.join(k_dir, "command_featureextraction.sh")
+            fd = open(command_file_name, "w")
+            fd.write("CUDA_VISIBLE_DEVICES='' " +TIME + " -v -o " + time_file_name +\
+                     " python3 " +\
+                     PROGRAM_FEATURE_EXTRACTION + " " + json_file_name + "\n")
             fd.close()
 
                 

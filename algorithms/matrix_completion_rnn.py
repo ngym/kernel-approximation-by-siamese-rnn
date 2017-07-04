@@ -54,7 +54,7 @@ def create_RNN_base_network(input_shape, mask_value,
     """
 
     seq = Sequential()
-    seq.add(Masking(mask_value=mask_value, input_shape=input_shape))
+    seq.add(Masking(mask_value=mask_value, input_shape=input_shape, name="base_masking"))
 
     if rnn == "Vanilla":
         r = SimpleRNN
@@ -83,7 +83,10 @@ def create_RNN_base_network(input_shape, mask_value,
         seq.add(Dense(dense_unit, use_bias=False if batchnormalization else True))
         if batchnormalization:
             seq.add(BatchNormalization())
-        seq.add(Activation('relu'))
+        if i < len(dense_units) - 1:
+            seq.add(Activation('relu'))
+        else:
+            seq.add(Activation('relu', name='base_output'))
     return seq
 
 def generator_sequence_pairs(indices, gram_drop, seqs):
@@ -257,6 +260,39 @@ def predict(model, te_indices, gram_drop, seqs):
         num_predicted_samples += preds_batch.shape[0]
     return preds
 
+
+def create_RNN_siamese_network(input_shape, pad_value,
+                               rnn_units, dense_units,
+                               rnn,
+                               dropout,
+                               implementation,
+                               bidirectional,
+                               batchnormalization):
+    base_network = create_RNN_base_network(input_shape, pad_value,
+                                           rnn_units, dense_units,
+                                           rnn,
+                                           dropout,
+                                           implementation,
+                                           bidirectional,
+                                           batchnormalization)
+    input_a = Input(shape=input_shape)
+    input_b = Input(shape=input_shape)
+    processed_a = base_network(input_a)
+    processed_b = base_network(input_b)
+    con = Concatenate()([processed_a, processed_b])
+    parent = Dense(units=1, use_bias=False if batchnormalization else True)(con)
+    if batchnormalization:
+        parent = BatchNormalization()(parent)
+    out = Activation('sigmoid')(parent)
+
+    model = Model([input_a, input_b], out)
+    
+    optimizer = Adam(clipnorm=1.)
+    if ngpus > 1:
+        model = make_parallel(model, ngpus)
+    model.compile(loss='mse', optimizer=optimizer)
+    return model
+
 def rnn_matrix_completion(gram_drop, seqs,
                           epochs, patience,
                           logfile_loss, logfile_hdf5,
@@ -266,7 +302,7 @@ def rnn_matrix_completion(gram_drop, seqs,
                           implementation,
                           bidirectional,
                           batchnormalization,
-                          pretraining=False):
+                          mode='train'):
     """Fill in Gram matrix with dropped elements with Keras Siamese RNN.
     Trains the network on given part of Gram matrix and the corresponding sequences
     Fills in missing elements by network prediction
@@ -288,7 +324,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     :param te_indices: Testing 2-tuples of time series index pairs
     :param gram_drop: Gram matrix with dropped elements
     :param seqs: List of time series
-    :param pretraining: Flag to switch training from training set/use pretrained weights in HDF5 format
+    :param load_pretrained: Flag to switch training from training set/use pretrained weights in HDF5 format
     :type gram_drop: list of lists
     :type seqs: list of np.ndarrays
     :type epochs: int
@@ -303,7 +339,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     :type implementation: int
     :type bidirectional: bool
     :type batchnormalization: bool
-    :type pretraining: bool
+    :type load_pretrained: bool
     :returns: Filled in Gram matrix, training and prediction start and end times
     :rtype: list of lists, float, float, float, float
     """
@@ -312,41 +348,25 @@ def rnn_matrix_completion(gram_drop, seqs,
     num_seqs = len(seqs)
     gram_drop = np.array(gram_drop)
     time_dim = max([seq.shape[0] for seq in seqs.values()])
-
     pad_value = -123456789
     seqs = pad_sequences([seq.tolist() for seq in seqs.values()],
                          maxlen=time_dim, dtype='float32',
                          padding='post', value=pad_value)
-
     feat_dim = seqs[0].shape[1]
     input_shape = (time_dim, feat_dim)
-
-    # build network
+    
     K.clear_session()
-    base_network = create_RNN_base_network(input_shape, pad_value,
-                                           rnn_units, dense_units,
-                                           rnn,
-                                           dropout,
-                                           implementation,
-                                           bidirectional,
-                                           batchnormalization)
-    input_a = Input(shape=input_shape)
-    input_b = Input(shape=input_shape)
-    processed_a = base_network(input_a)
-    processed_b = base_network(input_b)
-    con = Concatenate()([processed_a, processed_b])
-    parent = Dense(units=1, use_bias=False if batchnormalization else True)(con)
-    if batchnormalization:
-        parent = BatchNormalization()(parent)
-    out = Activation('sigmoid')(parent)
-
-    model = Model([input_a, input_b], out)
-
+    
+    # build network
+    model = create_RNN_siamese_network(input_shape, pad_value,
+                                       rnn_units, dense_units,
+                                       rnn,
+                                       dropout,
+                                       implementation,
+                                       bidirectional,
+                                       batchnormalization)
+    
     # training
-    optimizer = Adam(clipnorm=1.)
-    if ngpus > 1:
-        model = make_parallel(model, ngpus)
-    model.compile(loss='mse', optimizer=optimizer)
     # make 90% + 10% training validation random split
     trval_indices = np.random.permutation([(i, j)
                                         for i in range(num_seqs)
@@ -355,10 +375,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     tr_indices = trval_indices[:int(len(trval_indices) * 0.9)]
     val_indices = trval_indices[int(len(trval_indices) * 0.9):]
     tr_start = time.time()
-    if pretraining:
-        print("load from hdf5 file: %s", logfile_hdf5)
-        model.load_weights(logfile_hdf5)
-    else:
+    if mode == 'train':
         train_and_validate(model, tr_indices, val_indices,
                            gram_drop,
                            seqs,
@@ -366,6 +383,12 @@ def rnn_matrix_completion(gram_drop, seqs,
                            patience,
                            logfile_loss,
                            logfile_hdf5)
+    elif mode == 'load_pretrained':
+        print("load from hdf5 file: %s", logfile_hdf5)
+        model.load_weights(logfile_hdf5)
+    else:
+        print('Unsupported mode.')
+        exit -1
     tr_end = time.time()
 
     # prediction
@@ -393,7 +416,7 @@ def rnn_matrix_completion(gram_drop, seqs,
 
 def main():
     main_start = time.time()
-    pretraining = False
+    mode = 'train'
     if len(sys.argv) != 2:
         random_drop = True
         gram_filename = sys.argv[1]
@@ -437,9 +460,8 @@ def main():
         implementation = config_dict['implementation']
         bidirectional = config_dict['bidirectional']
         batchnormalization = config_dict['batchnormalization']
-        if 'pretraining' in config_dict.keys():
-            pretraining = config_dict['pretraining']
-        assert type(pretraining) == bool
+        if 'mode' in config_dict.keys():
+            mode = config_dict['mode']
 
     fd = open(gram_filename, 'rb')
     pkl = pickle.load(fd)
@@ -484,7 +506,7 @@ def main():
                                          implementation,
                                          bidirectional,
                                          batchnormalization,
-                                         pretraining=pretraining)
+                                         mode=mode)
     gram_completed = np.array(gram_completed)
     # eigenvalue check
     npsd_start = time.time()
@@ -504,7 +526,8 @@ def main():
     mat_log.append(new_log)
 
     drop_indices = pkl['drop_indices']
-    drop_indices.append(dropped_elements)
+    assert drop_indices == [] or indices_to_drop == []
+    drop_indices += indices_to_drop
 
     pkl_fd = open(logfile_pkl, 'wb')
     dic = dict(gram_matrices=gram_matrices,
