@@ -37,14 +37,14 @@ def check_dataset_type(dataset_type):
 def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_filename_format):
     check_dataset_type(dataset_type)
 
-    seqs, _, _ = read_sequences(dataset_type, list_glob_arg=dataset_location)
+    seqs, _, _ = read_sequences(dataset_type, list_glob_arg=[dataset_location])
     sample_names = list(seqs.keys())
 
     start = time.time()
-    gram = gak.gram_gak(list(seqs.values), sigma, triangular)
+    gram = gak.gram_gak(list(seqs.values()), sigma, triangular)
     end = time.time()
 
-    output_filename = os.path.join(output_dir, output_filename_format.replace("${completion_alg}", "GAK") + ".pkl")
+    output_filename = os.path.join(output_dir, output_filename_format.replace("${si}", "GAK") + ".pkl")
     file_utils.save_new_result(output_filename, dataset_type, gram, sample_names)
 
     timelog = os.path.join(output_dir, output_filename_format.replace("${completion_alg}", "GAK") + ".timelog")
