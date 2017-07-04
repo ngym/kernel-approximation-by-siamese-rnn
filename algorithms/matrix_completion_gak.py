@@ -109,6 +109,7 @@ def main():
 
     logfile_loss = completionanalysisfile.replace(".timelog", ".losses")
     
+    # TODO correct error
     seqs, _, _ = OrderedDict((k, v) for k, v in read_sequences(dataset_type, direc=sample_dir).items()
                        if k.split('/')[-1] in sample_names)
     
