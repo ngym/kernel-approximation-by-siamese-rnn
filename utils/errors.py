@@ -1,7 +1,4 @@
-import sys
-
 import numpy as np
-from scipy import io
 
 def mean_squared_error(m1, m2, indices=None):
     """Compute (masked) Mean Squared Error.
@@ -78,39 +75,3 @@ def mean_absolute_error(m1, m2, indices=None):
     else:
         mae = np.sum(np.abs(m1 - m2)) / np.prod(m1.shape)
     return mae
-
-def main():
-    f = sys.argv[1]
-
-    mat = io.loadmat(f)
-
-    gram1 = mat['orig_gram']
-    gram2 = mat['gram']
-
-    assert gram1.shape == gram2.shape
-
-    indices_drop = []
-    for i in range(len(gram1)):
-        for j in range(len(gram1)):
-            if gram1[i][j] != gram2[i][j]:
-                indoces_drop.append((i, j))
-    
-    mse = mean_squared_error(gram1, gram2)
-    print("Mean squared error: %.10f" % mse)
-    msede = mean_squared_error(gram1, gram2, indices_drop)
-    print("Mean squared error of dropped elements: %.10f" % msede)
-
-    mae = mean_absolute_error(gram1, gram2)
-    print("Mean absolute error: %.10f" % mae)
-    maede = mean_absolute_error(gram1, gram2, indices_drop)
-    print("Mean absolute error of dropped elements: %.10f" % maede)
-    
-    re = relative_error(gram1, gram2)
-    print("Relative error: %.10f" % re)
-    rede = relative_error(gram1, gram2, indices_drop)
-    print("Relative error of dropped elements: %.10f" % rede)
-    
-
-if __name__ == "__main__":
-    main()
-

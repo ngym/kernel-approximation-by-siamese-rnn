@@ -14,7 +14,6 @@ from keras.layers.wrappers import Bidirectional
 from keras.layers.merge import Concatenate
 
 from utils.nearest_positive_semidefinite import nearest_positive_semidefinite
-from utils.errors import mean_squared_error, mean_absolute_error, relative_error
 from utils.plot_gram_to_html import plot_gram_to_html
 from utils.make_matrix_incomplete import gram_drop_random, gram_drop_samples
 from datasets.read_sequences import read_sequences

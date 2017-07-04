@@ -11,7 +11,7 @@ from pathos.multiprocessing import ProcessingPool
 from collections import OrderedDict
 
 from utils.nearest_positive_semidefinite import nearest_positive_semidefinite
-from utils.errors import mean_squared_error, mean_absolute_error, relative_error
+from utils import errors
 from utils.plot_gram_to_html import plot_gram_to_html
 from utils.make_matrix_incomplete import gram_drop_random, gram_drop_samples
 from datasets.read_sequences import read_sequences
@@ -164,19 +164,19 @@ def main():
 
     print("GAK Completion files are output.")
 
-    mse = mean_squared_error(gram, gram_completed_npsd)
-    msede = mean_squared_error(gram,
+    mse = errors.mean_squared_error(gram, gram_completed_npsd)
+    msede = errors.mean_squared_error(gram,
                                gram_completed_npsd,
                                dropped_elements)
 
-    mae = mean_absolute_error(gram, gram_completed_npsd)
-    maede = mean_absolute_error(gram,
+    mae = errors.mean_absolute_error(gram, gram_completed_npsd)
+    maede = errors.mean_absolute_error(gram,
                                 gram_completed_npsd,
                                 dropped_elements)
     
-    re = relative_error(gram,
+    re = errors.relative_error(gram,
                         gram_completed_npsd)
-    rede = relative_error(gram,
+    rede = errors.relative_error(gram,
                          gram_completed_npsd,
                          dropped_elements)
 
