@@ -44,10 +44,10 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_fi
     gram = gak.gram_gak(list(seqs.values()), sigma, triangular)
     end = time.time()
 
-    output_filename = os.path.join(output_dir, output_filename_format.replace("${si}", "GAK") + ".pkl")
+    output_filename = os.path.join(output_dir, output_filename_format.replace("${sigma}", sigma) + ".pkl")
     file_utils.save_new_result(output_filename, dataset_type, gram, sample_names)
 
-    timelog = os.path.join(output_dir, output_filename_format.replace("${completion_alg}", "GAK") + ".timelog")
+    timelog = os.path.join(output_dir, output_filename_format.replace("${sigma}", sigma) + ".timelog")
     duration = end - start
     num_samples = len(sample_names)
     time_fd = open(timelog, 'w')
