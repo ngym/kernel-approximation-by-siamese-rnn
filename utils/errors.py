@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def mean_squared_error(m1, m2, indices=None):
     """Compute (masked) Mean Squared Error.
     Take subset of elements as vector, compute norm of difference, divided by subset size
@@ -10,7 +11,7 @@ def mean_squared_error(m1, m2, indices=None):
     :type m1: np.ndarray
     :type m2: np.ndarray
     :type indices: None or list of 2-tuples
-    :returns: Mean Squared Error
+    :return: Mean Squared Error
     :rtype: float
     """
     
@@ -25,6 +26,7 @@ def mean_squared_error(m1, m2, indices=None):
         mse = np.sum(np.square(m1 - m2)) / np.prod(m1.shape)
     return mse
 
+
 def relative_error(m1, m2, indices=None):
     """Compute (masked) Relative 2-norm Error.
     Take subset of elements as vector, compute norm of difference, divided by norm
@@ -35,7 +37,7 @@ def relative_error(m1, m2, indices=None):
     :type m1: np.ndarray
     :type m2: np.ndarray
     :type indices: None or list of 2-tuples
-    :returns: Relative 2-norm Error
+    :return: Relative 2-norm Error
     :rtype: float
     """
 
@@ -50,18 +52,19 @@ def relative_error(m1, m2, indices=None):
     else:
         re = np.sqrt(np.sum(np.square(m1 - m2))) / np.sqrt(np.sum(np.square(m1)) + 1e-8)
     return re
-    
+
+
 def mean_absolute_error(m1, m2, indices=None):
     """Compute (masked) Mean Absolute Error.
     Take subset of elements as vector, compute norm of difference, divided by subset size
-    
+
     :param m1: True matrix
     :param m2: Estimated matrix
     :param indices: Subset indices
     :type m1: np.ndarray
     :type m2: np.ndarray
     :type indices: None or list of 2-tuples
-    :returns: Mean Absolute Error
+    :return: Mean Absolute Error
     :rtype: float
     """
     
