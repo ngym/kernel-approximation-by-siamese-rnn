@@ -13,7 +13,7 @@ from utils import file_utils
 from utils import nearest_positive_semidefinite
 from utils import make_matrix_incomplete
 
-ex = Experiment('calculate_gram_matrix')
+ex = Experiment('complete_matrix')
 
 
 @ex.config
@@ -36,9 +36,23 @@ def softimpute():
     algorithm = "softimpute"
 
 
+@ex.named_config
+def rnn():
+    algorithm = "rnn"
+    params = dict(epochs=100,
+                  patience=2,
+                  rnn="LSTM",
+                  rnn_units=[10],
+                  dense_units=[3],
+                  dropout=0.3,
+                  bidirectional=False,
+                  batchnormalization=True,
+                  implementation=1,
+                  mode="train")
+
 @ex.capture
-def check_algorithms(algorithm):
-    assert algorithm in {"gak", "softimpute"}
+def check_algorithm(algorithm):
+    assert algorithm in {"gak", "softimpute", "rnn"}
 
 
 @ex.capture
@@ -74,6 +88,7 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 
     return mse, msede, mae, maede, re, rede
 
+
 @ex.automain
 def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
         algorithm, params, output_dir, output_filename_format):
@@ -89,7 +104,7 @@ def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
     else:
         gram = gram_matrices[-1]['completed_npsd']
 
-    check_fold(fold_count, fold_to_drop)
+    # drop elements
     folds = k_fold_cross_validation.get_kfolds(dataset_type, sample_names, fold_count)
     indices_to_drop = folds[fold_to_drop - 1]
     gram_drop, dropped_elements = make_matrix_incomplete.gram_drop_samples(gram, indices_to_drop)
@@ -110,6 +125,21 @@ def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
         gram_completed, completion_start, completion_end \
             = matrix_completion.softimpute_matrix_completion(gram_drop)
         action = "Softimpute"
+    elif algorithm == "rnn":
+        logfile_hdf5 = pickle_location.replace(".pkl", ".hdf5")
+        logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
+        gram_completed, train_start, train_end, completion_start, completion_end \
+            = matrix_completion.rnn_matrix_completion(gram_drop, list(seqs.values()),
+                                                      params['epochs'], params['patience'],
+                                                      logfile_loss, logfile_hdf5,
+                                                      params['rnn'],
+                                                      params['rnn_units'], params['dense_units'],
+                                                      params['dropout'],
+                                                      params['implementation'],
+                                                      params['bidirectional'],
+                                                      params['batchnormalization'],
+                                                      mode=params['mode'])
+        action = "SiameseRNN"
     else:
         assert False
 
