@@ -1,4 +1,20 @@
+import json
+
 import pickle
+
+
+def load_pickle(filename):
+    file = open(filename, 'rb')
+    pkl = pickle.load(file)
+    file.close()
+    return pkl
+
+
+def save_pickle(filename, dic):
+    file = open(filename, 'wb')
+    pickle.dump(dic, file)
+    file.close()
+
 
 def save_new_result(filename, dataset_type, gram, sample_names):
     """ Saves the given results to the specified file.
@@ -12,14 +28,13 @@ def save_new_result(filename, dataset_type, gram, sample_names):
     :type gram: np.ndarrays
     :type sample_names: list of strs
     """
-    file = open(filename, 'wb')
     dic = dict(dataset_type=dataset_type,
-               gram_matrices=[dict(gram_original=gram)],
+               gram_matrices=[dict(original=gram)],
                drop_indices=[[]],
                sample_names=sample_names,
                log=["made by GAK"])
-    pickle.dump(dic, file)
-    file.close()
+    save_pickle(filename, dic)
+
 
 def append_and_save_result(filename, prev_results, dropped, completed, completed_npsd, dropped_indices, action):
     """ Append and saves the given results to the specified file.
@@ -51,11 +66,41 @@ def append_and_save_result(filename, prev_results, dropped, completed, completed
     log = prev_results['log']
     log.append(action)
 
-    file = open(filename, 'wb')
     dic = dict(dataset_type=prev_results['dataset_type'],
                gram_matrices=gram_matrices,
                dropped_indices=new_dropped_indices,
                sample_names=prev_results['sample_names'],
                log=log)
-    pickle.dump(dic, file)
+    save_pickle(filename, dic)
+
+
+def save_analysis(filename, drop_count, calculated_count,
+                  completion_start, completion_end, npsd_start, npsd_end, main_start, main_end,
+                  mse, mse_dropped, mae, mae_dropped, re, re_dropped,
+                  train_start=None, train_end=None):
+    analysis_json = {}
+    analysis_json['number_of_dropped_elements'] = drop_count
+    analysis_json['number_of_calculated_elements'] = calculated_count
+    if train_start is not None and train_end is not None:
+        analysis_json['train_start'] = train_start
+        analysis_json['train_end'] = train_end
+        analysis_json['train_duration'] = train_end - train_start
+    analysis_json['completion_start'] = completion_start
+    analysis_json['completion_end'] = completion_end
+    analysis_json['completion_duration'] = completion_end - completion_start
+    analysis_json['npsd_start'] = npsd_start
+    analysis_json['npsd_end'] = npsd_end
+    analysis_json['npsd_duration'] = npsd_end - npsd_start
+    analysis_json['main_start'] = main_start
+    analysis_json['main_end'] = main_end
+    analysis_json['main_duration'] = main_end - main_start
+    analysis_json['mean_squared_error'] = mse
+    analysis_json['mean_squared_error_of_dropped_elements'] = mse_dropped
+    analysis_json['mean_absolute_error'] = mae
+    analysis_json['mean_absolute_error_of_dropped_elements'] = mae_dropped
+    analysis_json['relative_error'] = re
+    analysis_json['relative_error_of_dropped_elements'] = re_dropped
+
+    file = open(filename, "w")
+    json.dump(analysis_json, file)
     file.close()
