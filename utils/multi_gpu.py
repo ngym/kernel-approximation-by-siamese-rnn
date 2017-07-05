@@ -5,6 +5,7 @@ from keras.layers.core import Lambda
 from keras.models import Model
 
 import tensorflow as tf
+from tensorflow.python.client import device_lib
 
 def make_parallel(model, gpu_count):
     """Data parallelize model on multiple GPUs.
@@ -75,3 +76,7 @@ def make_parallel(model, gpu_count):
             
         return Model(input=model.inputs, output=merged)
 
+
+def get_available_gpus():
+    local_device_protos = device_lib.list_local_devices()
+    return [x.name for x in local_device_protos if x.device_type == 'GPU']
