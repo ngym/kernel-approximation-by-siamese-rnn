@@ -1,0 +1,21 @@
+{
+	"pickle_location": "results/gram_UCIauslan_sigma20_triangularNone.pkl",
+	"dataset_location": "/home/milacski/lkopi/datasources/UCI/AUSLAN/*",
+	"fold_count": 5,
+	"fold_to_drop": 1,
+	"algorithm": "rnn",
+	"params": {
+		"epochs": 100,
+		"patience": 2,
+		"rnn": "LSTM",
+		"rnn_units": [10],
+		"dense_units": [3],
+		"dropout": 0.3,
+		"bidirectional": false,
+		"batchnormalization": true,
+		"implementation": 1,
+		"mode": "train"
+	},
+	"output_dir": "results/",
+	"output_filename_format": "gram_UCIauslan_rnn"
+}

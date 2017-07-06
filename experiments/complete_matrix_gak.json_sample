@@ -1,0 +1,12 @@
+{
+	"pickle_location": "results/gram_UCIauslan_sigma20_triangularNone.pkl",
+	"dataset_location": "/home/milacski/lkopi/datasources/UCI/AUSLAN/*",
+	"fold_count": 5,
+	"fold_to_drop": 1,
+	"algorithm": "gak",
+	"params": {
+		"sigma": 20
+	},
+	"output_dir": "results/",
+	"output_filename_format": "gram_UCIauslan_sigma${sigma}_triangular${triangular}_gak"
+}
