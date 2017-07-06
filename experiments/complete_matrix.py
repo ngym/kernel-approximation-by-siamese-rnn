@@ -120,7 +120,7 @@ def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
                                                       sigma=params['sigma'], triangular=params['triangular'])
         action = "GAK sigma: " + str(params['sigma']) + " triangular: " + str(params['triangular'])
         output_filename_format = output_filename_format.replace("${sigma}", str(params['sigma']))\
-                                                       .replace("${triangular", str(params['triangular']))
+                                                       .replace("${triangular}", str(params['triangular']))
     elif algorithm == "softimpute":
         gram_completed, completion_start, completion_end \
             = matrix_completion.softimpute_matrix_completion(gram_drop)

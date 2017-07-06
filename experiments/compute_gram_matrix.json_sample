@@ -1,6 +1,7 @@
 {
 	"dataset_type": "UCIauslan",
 	"sigma": 12,
-	"dataset_location": "/home/milacski/lkopi/datasources/UCI/AUSLAN/*/*tsd",
-	"output_filename_format": "gram_UCIauslan_sigma${gak_sigma}"
+	"dataset_location": "/home/milacski/lkopi/datasources/UCI/AUSLAN/*",
+	"output_dir": "results/",
+	"output_filename_format": "gram_UCIauslan_sigma${sigma}_triangular${triangular}"
 }
