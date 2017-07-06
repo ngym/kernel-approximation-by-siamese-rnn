@@ -92,6 +92,14 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 @ex.automain
 def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
         algorithm, params, output_dir, output_filename_format):
+    check_fold(fold_count, fold_to_drop)
+    check_algorithm(algorithm)
+    check_params(algorithm, params)
+
+    pickle_location = os.path.abspath(pickle_location)
+    dataset_location = os.path.abspath(dataset_location)
+    output_dir = os.path.abspath(output_dir)
+
     main_start = time.time()
 
     pkl = file_utils.load_pickle(pickle_location)

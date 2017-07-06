@@ -193,7 +193,7 @@ class SiameseRnn:
                    action, processed_sample_count, total_sample_count,
                    elapsed_time, eta,
                    average_loss, loss_batch),
-                  end)
+                  end=end)
 
         loss_file = open(logfile_loss, "w")
         wait = 0

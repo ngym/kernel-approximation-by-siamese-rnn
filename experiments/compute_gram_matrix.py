@@ -37,6 +37,9 @@ def check_dataset_type(dataset_type):
 def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_filename_format):
     check_dataset_type(dataset_type)
 
+    dataset_location = os.path.abspath(dataset_location)
+    output_dir = os.path.abspath(output_dir)
+
     seqs, _, _ = read_sequences(dataset_type, direc=dataset_location)
     sample_names = list(seqs.keys())
 
