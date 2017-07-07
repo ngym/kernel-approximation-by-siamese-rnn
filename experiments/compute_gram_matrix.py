@@ -4,8 +4,9 @@ import time
 from sacred import Experiment
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-from datasets.read_sequences import read_sequences
 from algorithms import gak
+from datasets import others
+from datasets.read_sequences import read_sequences
 from utils import file_utils
 
 ex = Experiment('calculate_gram_matrix')
@@ -29,16 +30,13 @@ def UCIcharacter():
 def UCIauslan():
     dataset_type = "UCIauslan"
 
-@ex.capture
-def check_dataset_type(dataset_type):
-    assert dataset_type in {"6DMG", "6DMGupperChar", "upperChar", "UCIcharacter", "UCIauslan"}
-
 @ex.automain
 def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_filename_format):
-    check_dataset_type(dataset_type)
+    assert others.is_valid_dataset_type(dataset_type)
 
     dataset_location = os.path.abspath(dataset_location)
     output_dir = os.path.abspath(output_dir)
+    assert os.path.isdir(output_dir)
 
     seqs, _, _ = read_sequences(dataset_type, direc=dataset_location)
     sample_names = list(seqs.keys())

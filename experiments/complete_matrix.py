@@ -68,6 +68,14 @@ def check_params(algorithm, params):
         if 'triangular' not in params:  # TODO else
             params['triangular'] = None
 
+@ex.capture
+def check_pickle_format(result):
+    assert "dataset_type" in result \
+           and "gram_matrices" in result \
+           and "dropped_indices" in result \
+           and "sample_names" in result \
+           and "log" in result
+
 
 def calculate_errors(gram, gram_completed_npsd, dropped_elements):
     mse = errors.mean_squared_error(gram, gram_completed_npsd)
@@ -99,10 +107,13 @@ def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
     pickle_location = os.path.abspath(pickle_location)
     dataset_location = os.path.abspath(dataset_location)
     output_dir = os.path.abspath(output_dir)
+    assert os.path.isdir(output_dir)
+    assert os.path.exists(pickle_location)
 
     main_start = time.time()
 
     pkl = file_utils.load_pickle(pickle_location)
+    check_pickle_format(pkl)
 
     dataset_type = pkl['dataset_type']
     sample_names = pkl['sample_names']
