@@ -30,7 +30,7 @@ def save_new_result(filename, dataset_type, gram, sample_names):
     """
     dic = dict(dataset_type=dataset_type,
                gram_matrices=[dict(original=gram)],
-               drop_indices=[[]],
+               dropped_indices=[[]],
                sample_names=sample_names,
                log=["made by GAK"])
     save_pickle(filename, dic)

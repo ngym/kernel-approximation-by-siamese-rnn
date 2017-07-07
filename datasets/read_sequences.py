@@ -6,6 +6,9 @@ import glob
 import numpy as np
 from scipy import io
 
+from datasets import others
+
+
 def read_sequences(dataset_type, list_glob_arg=None, direc=None):
     """Time series loader.
     Parse time series from files.
@@ -85,13 +88,7 @@ def get_labels(seqs, dataset_type):
     :return: A dictionary pair which are represents the labels of the given sequences.
     :rtype: (collections.OrderedDict, collections.OrderedDict)
     """
-
-    # Lambdas to calculate labels from keys of the sequences
-    get_label = dict.fromkeys(["6DMG", "6DMGupperChar", "upperChar"], lambda fn: fn.split('/')[-1].split('_')[1])
-    get_label["UCIcharacter"] = lambda str: str[0]
-    get_label["UCIauslan"] = lambda fn: fn.split('/')[-1].split('-')[0]
-
-    if dataset_type not in get_label:
+    if not others.is_valid_dataset_type(dataset_type):
         assert False
 
     key_to_str = OrderedDict()
@@ -99,7 +96,7 @@ def get_labels(seqs, dataset_type):
     label_to_int = dict()
     last_index = 0
     for k, _ in seqs.items():
-        label = get_label[dataset_type](k)
+        label = others.get_label(dataset_type, k)
         if label not in label_to_int:
             label_to_int[label] = last_index
             last_index += 1

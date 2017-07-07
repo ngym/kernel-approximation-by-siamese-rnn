@@ -7,6 +7,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from datasets import others
 from utils import file_utils
 
 
@@ -111,17 +112,9 @@ def get_informations(dataset_type, sample_names):
         :return: List of labels and list of separators.
         :rtype: list of str, list of int
         """
-        # Lambdas to calculate labels from keys of the sequences
-        get_label = dict.fromkeys(["6DMG", "6DMGupperChar", "upperChar"], lambda fn: fn.split('/')[-1].split('_')[1])
-        get_label["UCIcharacter"] = lambda str: str[0]
-        get_label["UCIauslan"] = lambda fn: fn.split('/')[-1].split('-')[0]
-
-        if dataset_type not in get_label:
-            assert False
-
         label_to_separator = OrderedDict()
         for index, sample_name in enumerate(sample_names):
-            label = get_label[dataset_type](sample_name)
+            label = others.get_label(dataset_type, sample_name)
             if label not in label_to_separator:
                 label_to_separator[label] = index
         labels = list(label_to_separator.keys())
@@ -156,11 +149,7 @@ def main():
 
     labels, separators, dataset_name, rotate = get_informations(dataset_type, sample_names)
 
-    if len(gram_matrices) == 1:
-        matrices = gram_matrices[0]
-    else:
-        matrices = gram_matrices[-1]
-
+    matrices = gram_matrices[-1]
     for key in matrices.keys():
         filename_pdf = filename.replace(".pkl", key + ".pdf")
         plot_title = title + " " + key.replace("_", " ")
