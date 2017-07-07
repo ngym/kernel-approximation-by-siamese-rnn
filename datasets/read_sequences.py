@@ -37,6 +37,8 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None):
     elif direc is not None:
         if dataset_type in {"UCIauslan", "UCItctodd"}:
             extension = "*.tsd"
+        elif dataset_type in {"6DMG", "6DMGupperChar", "upperChar"}:
+            extension = "upper_*.mat"
         else:
             extension = "*.mat"
         sample_files = glob.glob(path.join(direc, extension))
