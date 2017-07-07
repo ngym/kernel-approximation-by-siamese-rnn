@@ -129,7 +129,7 @@ def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
     gram_drop, dropped_elements = make_matrix_incomplete.gram_drop_samples(gram, indices_to_drop)
 
     seqs = OrderedDict((k, v) for k, v in read_sequences(dataset_type, direc=dataset_location)[0].items()
-                       if k.split('/')[-1] in sample_names)
+                       if k in sample_names)
 
     train_start = None
     train_end = None

@@ -48,7 +48,7 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None):
     if dataset_type in {"6DMG", "6DMGupperChar", "upperChar"}:
         for sample_file in sample_files:
             m = io.loadmat(sample_file)
-            seqs[sample_file] = m['gest'].T[:, 1:]
+            seqs[others.get_sample_name(dataset_type, sample_file)] = m['gest'].T[:, 1:]
     elif dataset_type == "UCIcharacter":
         if isinstance(list_glob_arg, str):
             mat_file_path = list_glob_arg
@@ -66,15 +66,15 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None):
             seqs_.append((l + str(i), data['mixout'][0][i].T))
             i += 1
         for k, v in sorted(seqs_):
-            seqs[k] = v
+            seqs[others.get_sample_name(dataset_type, k)] = v
     elif dataset_type == "UCIauslan":
         for sample_file in sample_files:
-            reader = csv.reader(open(sample_file.replace(' ', ''), "r"),
+            reader = csv.reader(open(sample_file, "r"),
                                 delimiter='\t')
             seq = []
             for r in reader:
                 seq.append(r)
-            seqs[sample_file] = np.array(seq).astype(np.float32)
+            seqs[others.get_sample_name(dataset_type, sample_file)] = np.array(seq).astype(np.float32)
     else:
         assert False
     key_to_str, key_to_int = get_labels(seqs, dataset_type)
