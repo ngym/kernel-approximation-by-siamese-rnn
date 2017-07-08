@@ -151,7 +151,7 @@ def main():
 
     matrices = gram_matrices[-1]
     for key in matrices.keys():
-        filename_pdf = filename.replace(".pkl", key + ".pdf")
+        filename_pdf = filename.replace(".pkl", "_" + key + ".pdf")
         plot_title = title + " " + key.replace("_", " ")
         plot_gram_to_pdf(filename_pdf, matrices[key], sample_names,
                          separators, labels,

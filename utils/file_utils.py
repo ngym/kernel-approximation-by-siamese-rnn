@@ -74,6 +74,12 @@ def append_and_save_result(filename, prev_results, dropped, completed, completed
     save_pickle(filename, dic)
 
 
+def save_json(filename, dic):
+    file = open(filename, "w")
+    json.dump(dic, file)
+    file.close()
+
+
 def save_analysis(filename, drop_count, calculated_count,
                   completion_start, completion_end, npsd_start, npsd_end, main_start, main_end,
                   mse, mse_dropped, mae, mae_dropped, re, re_dropped,
@@ -101,6 +107,4 @@ def save_analysis(filename, drop_count, calculated_count,
     analysis_json['relative_error'] = re
     analysis_json['relative_error_of_dropped_elements'] = re_dropped
 
-    file = open(filename, "w")
-    json.dump(analysis_json, file)
-    file.close()
+    save_json(filename, analysis_json)
