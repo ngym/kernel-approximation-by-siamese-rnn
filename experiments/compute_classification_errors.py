@@ -29,9 +29,8 @@ def run(pickle_files, regularization_costs, output_file):
         dataset_type = pkl['dataset_type']
         gram_matrices = pkl['gram_matrices']
         if len(gram_matrices) == 1:
-            gram = gram_matrices[0]['original']
-        else:
-            gram = gram_matrices[-1]['completed_npsd']
+            continue
+        gram = gram_matrices[-1]['completed_npsd']
         sample_names = pkl['sample_names']
         test_indices = pkl['dropped_indices'][-1]
 
