@@ -9,6 +9,21 @@ from datasets import others
 
 
 def get_classification_error(dataset_type, gram, sample_names, test_indices, costs):
+    """
+
+    :param dataset_type: Type of the dataset
+    :param gram: Completed gram matrix
+    :param sample_names: List of the sample names
+    :param test_indices: Completed rows and columns
+    :param costs: Regularization costs
+    :return: roc auc score and f1 score
+    :type dataset_type: str
+    :type gram: np.ndarrays
+    :type sample_names: list of str
+    :type test_indices: list of int
+    :type costs: list of float
+    :rtype: float, float
+    """
     train_and_validation_indices = [i for i in range(len(gram))
                                     if i not in test_indices]
     # TODO switch with read_sequences's list(key_to_str.values())
@@ -34,6 +49,21 @@ def optimize_hyperparameter(costs,
                             labels,
                             validation_indices,
                             test_indices):
+    """
+
+    :param costs: Regularization costs
+    :param gram: Gram matrix
+    :param labels: Ground truth labels
+    :param validation_indices: Indices to validate
+    :param test_indices: Indices to test
+    :return: roc auc score and f1 score
+    :type costs: list of float
+    :type gram: np.ndarrays
+    :type labels: list of str
+    :type validation_indices: list of int
+    :type test_indices: list of int
+    :rtype: float, float
+    """
     error_to_hyperparameters = {}
     (train_matrix, train_labels), (validation_matrix, validation_labels), \
         (train_and_validation_matrix, train_and_validation_labels), (test_matrix, test_labels) \
@@ -51,49 +81,78 @@ def optimize_hyperparameter(costs,
 
 
 def train_validation_test_split(gram, labels, validation_indices, test_indices):
+    """
+
+    :param gram: Gram matrix
+    :param labels: Ground truth labels
+    :param validation_indices: Indices to validate
+    :param test_indices: Indices to test
+    :return: Tuples of train, validation, train and validation and test matrices and labels
+    :type gram: np.ndarrays
+    :type labels: list of str
+    :type validation_indices: list of int
+    :type test_indices: list of int
+    :rtype: (np.ndarrays, np.ndarray), (np.ndarrays, np.ndarray),
+            (np.ndarrays, np.ndarray), (np.ndarrays, np.ndarray)
+    """
     length = len(gram)
-    train_and_validation_matrix = [[gram[i][j]
-                                for j in range(length) if j not in test_indices]
-                               for i in range(length) if i not in test_indices]
-    test_matrix = [[gram[i][j]
-                    for j in range(length) if j not in test_indices]
-                   for i in range(length) if i in test_indices]
+    train_and_validation_matrix = np.array([[gram[i][j]
+                                             for j in range(length) if j not in test_indices]
+                                            for i in range(length) if i not in test_indices])
+    test_matrix = np.array([[gram[i][j]
+                             for j in range(length) if j not in test_indices]
+                            for i in range(length) if i in test_indices])
 
-    train_matrix = [[gram[i][j]
-                     for j in range(length) if j not in np.r_[validation_indices, test_indices]]
-                    for i in range(length) if i not in np.r_[validation_indices, test_indices]]
-    validation_matrix = [[gram[i][j]
-                          for j in range(length) if j not in np.r_[validation_indices,
-                                                                   test_indices]]
-                         for i in range(length) if i in validation_indices]
+    train_matrix = np.array([[gram[i][j]
+                              for j in range(length) if j not in np.r_[validation_indices, test_indices]]
+                             for i in range(length) if i not in np.r_[validation_indices, test_indices]])
+    validation_matrix = np.array([[gram[i][j]
+                                   for j in range(length) if j not in np.r_[validation_indices,
+                                                                            test_indices]]
+                                  for i in range(length) if i in validation_indices])
 
-    train_labels = [labels[i] for i in range(len(labels))
-                    if i not in validation_indices and i not in test_indices]
-    validation_labels = [labels[i] for i in range(len(labels))
-                         if i in validation_indices]
-    train_and_validation_labels = [labels[i] for i in range(len(labels))
-                                   if i not in test_indices]
-    test_labels = [labels[i] for i in range(len(labels))
-                   if i in test_indices]
+    train_labels = np.array([labels[i] for i in range(len(labels))
+                             if i not in validation_indices and i not in test_indices])
+    validation_labels = np.array([labels[i] for i in range(len(labels))
+                                  if i in validation_indices])
+    train_and_validation_labels = np.array([labels[i] for i in range(len(labels))
+                                            if i not in test_indices])
+    test_labels = np.array([labels[i] for i in range(len(labels))
+                            if i in test_indices])
 
-    print(np.array(train_and_validation_matrix).shape)
-    print(np.array(test_matrix).shape)
-    print(np.array(train_matrix).shape)
-    print(np.array(validation_matrix).shape)
+    print(train_and_validation_matrix.shape)
+    print(test_matrix.shape)
+    print(train_matrix.shape)
+    print(validation_matrix.shape)
 
-    print(np.array(train_and_validation_labels).shape)
-    print(np.array(test_labels).shape)
-    print(np.array(train_labels).shape)
-    print(np.array(validation_labels).shape)
+    print(train_and_validation_labels.shape)
+    print(test_labels.shape)
+    print(train_labels.shape)
+    print(validation_labels.shape)
 
     return (train_matrix, train_labels), (validation_matrix, validation_labels), \
            (train_and_validation_matrix, train_and_validation_labels), (test_matrix, test_labels)
 
 
 def tryout_hyperparameter(cost, train, train_labels, validation_or_test, validation_or_test_labels):
+    """
+
+    :param cost: Regularization cost
+    :param train: Train matrix
+    :param train_labels: Train labels
+    :param validation_or_test: Validation or test matrix
+    :param validation_or_test_labels: Validation or test labels
+    :return: Roc auc score, f1 score
+    :type cost: float
+    :type train: np.ndarrays
+    :type train_labels: np.ndarray of str
+    :type validation_or_test: np.ndarrays
+    :type validation_or_test_labels: np.ndarray of str
+    :rtype: float, float
+    """
     # indices in the gram matrix is passed to the function to indicate the split.
     clf = SVC(C=cost, kernel='precomputed', probability=True)
-    clf.fit(np.array(train), np.array(train_labels))
+    clf.fit(train, train_labels)
 
     predicted_labels = clf.predict(validation_or_test)
     f1_ = f1_score(validation_or_test_labels, predicted_labels, average='weighted')

@@ -48,7 +48,7 @@ def rnn():
                   bidirectional=False,
                   batchnormalization=True,
                   implementation=1,
-                  mode="train")
+                  mode="train") # mode="load_pretrained")
 
 @ex.capture
 def check_algorithm(algorithm):

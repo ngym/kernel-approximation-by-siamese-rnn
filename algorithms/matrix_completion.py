@@ -25,8 +25,8 @@ def gak_matrix_completion(gram_drop, seqs, indices, sigma=None, triangular=None)
     :type indices: list of ints
     :type sigma: float
     :type triangular: int
-    :returns: Filled in version of Gram matrix
-    :rtype: list of lists, list of tuples
+    :returns: Filled in version of Gram matrix, complition start and end time
+    :rtype: np.ndarray, float, float
     """
 
     gram = copy.deepcopy(gram_drop)
@@ -65,7 +65,7 @@ def softimpute_matrix_completion(gram_drop):
     :param gram_drop: Gram matrix with dropped elements
     :type gram_drop: list of lists
     :returns: Filled in Gram matrix, optimization start and end times
-    :rtype: list of lists, float, float, float, float
+    :rtype: np.ndarray, float, float
     """
     t_start = time.time()
     gram_completed = SoftImpute().complete(gram_drop)
@@ -101,7 +101,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     :param bidirectional: Flag to switch between Forward and Bidirectional RNN
     :param batchnormalization: Flag to switch Batch Normalization on/off
     :param gram_drop: Keras Siamese RNN to be tested
-    :param te_indices: Testing 2-tuples of time series index pairs
+    :param test_indices: Testing 2-tuples of time series index pairs
     :param gram_drop: Gram matrix with dropped elements
     :param seqs: List of time series
     :param load_pretrained: Flag to switch training from training set/use pretrained weights in HDF5 format
@@ -121,7 +121,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     :type batchnormalization: bool
     :type load_pretrained: bool
     :returns: Filled in Gram matrix, training and prediction start and end times
-    :rtype: list of lists, float, float, float, float
+    :rtype: np.ndarray, float, float, float, float
     """
 
     # pre-processing
@@ -147,15 +147,15 @@ def rnn_matrix_completion(gram_drop, seqs,
 
     # training
     # make 90% + 10% training validation random split
-    trval_indices = np.random.permutation([(i, j)
+    train_and_validation_indices = np.random.permutation([(i, j)
                                            for i in range(num_seqs)
                                            for j in range(i, num_seqs)
                                            if not np.isnan(gram_drop[i][j])])
-    tr_indices = trval_indices[:int(len(trval_indices) * 0.9)]
-    val_indices = trval_indices[int(len(trval_indices) * 0.9):]
-    tr_start = time.time()
+    train_indices = train_and_validation_indices[:int(len(train_and_validation_indices) * 0.9)]
+    validation_indices = train_and_validation_indices[int(len(train_and_validation_indices) * 0.9):]
+    train_start = time.time()
     if mode == 'train':
-        model.train_and_validate(tr_indices, val_indices,
+        model.train_and_validate(train_indices, validation_indices,
                            gram_drop,
                            seqs,
                            epochs,
@@ -167,28 +167,28 @@ def rnn_matrix_completion(gram_drop, seqs,
         model.load_weights(logfile_hdf5)
     else:
         print('Unsupported mode.')
-        exit -1
-    tr_end = time.time()
+        exit(-1)
+    train_end = time.time()
 
     # prediction
-    te_indices = [(i, j)
+    test_indices = [(i, j)
                   for i in range(num_seqs)
                   for j in range(i, num_seqs)
                   if np.isnan(gram_drop[i][j])]
-    pred_start = time.time()
-    preds = model.predict(te_indices, gram_drop, seqs)
-    pred_end = time.time()
+    prediction_start = time.time()
+    predictions = model.predict(test_indices, gram_drop, seqs)
+    prediction_end = time.time()
 
     # fill in
-    gram_completed = gram_drop.tolist()
-    for k in range(te_indices.__len__()):
-        pred = preds[k][0]
-        i, j = te_indices[k]
+    gram_completed = copy.deepcopy(gram_drop)
+    for k in range(len(test_indices)):
+        prediction = predictions[k][0]
+        i, j = test_indices[k]
         assert np.isnan(gram_completed[i][j])
-        gram_completed[i][j] = pred
-        gram_completed[j][i] = pred
+        gram_completed[i][j] = prediction
+        gram_completed[j][i] = prediction
         assert not np.isnan(gram_completed[i][j])
     assert not np.any(np.isnan(np.array(gram_completed)))
     assert not np.any(np.isinf(np.array(gram_completed)))
 
-    return gram_completed, tr_start, tr_end, pred_start, pred_end
+    return gram_completed, train_start, train_end, prediction_start, prediction_end

@@ -49,6 +49,11 @@ class SiameseRnn:
         self.model = self.__create_RNN_siamese_network()
 
     def __create_RNN_siamese_network(self):
+        """
+
+        :return: Keras Deep RNN Siamese network
+        :rtype: keras.models.Model
+        """
         base_network = self.__create_RNN_base_network()
         input_a = Input(shape=self.input_shape)
         input_b = Input(shape=self.input_shape)
@@ -229,11 +234,12 @@ class SiameseRnn:
         :param te_indices: Testing 2-tuples of time series index pairs
         :param gram_drop: Gram matrix with dropped elements
         :param seqs: List of time series
+        :return: Predictions
         :type te_indices: list of tuples
         :type gram_drop: list of lists
         :type seqs: list of np.ndarrays
         :returns: List of predicted network outputs
-        :rtype: list of lists
+        :rtype: np.ndarrays
         """
 
         te_gen = self.__generator_sequence_pairs(te_indices, gram_drop, seqs)
@@ -244,7 +250,7 @@ class SiameseRnn:
             preds_batch = self.model.predict_on_batch(x)
             preds += preds_batch.tolist()
             num_predicted_samples += preds_batch.shape[0]
-        return preds
+        return np.array(preds)
 
     def __generator_sequence_pairs(self, indices, gram_drop, seqs):
         """Siamese RNN data batch generator.
