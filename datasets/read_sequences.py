@@ -9,7 +9,9 @@ from scipy import io
 from datasets import others
 
 
-def read_sequences(dataset_type, list_glob_arg=None, direc=None):
+def read_sequences(dataset_type, list_glob_arg=None, direc=None,
+                   feature_normalization=False,
+                   data_attribute_type=None):
     """Time series loader.
     Parse time series from files.
     UCIauslan is assumed that the contents of subdirectories tctodd1-tctodd9
@@ -48,7 +50,27 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None):
     if dataset_type in {"6DMG", "6DMGupperChar", "upperChar"}:
         for sample_file in sample_files:
             m = io.loadmat(sample_file)
-            seqs[others.get_sample_name(dataset_type, sample_file)] = m['gest'].T[:, 1:]
+            if data_attribute_type is None or data_attribute_type == "all":
+                seqs[others.get_sample_name(dataset_type, sample_file)]\
+                    = m['gest'].T[:, 1:]
+            elif data_attribute_type == "position":
+                seqs[others.get_sample_name(dataset_type, sample_file)]\
+                    = m['gest'].T[:, 1:4]
+            elif data_attribute_type == "velocity":
+                seqs[others.get_sample_name(dataset_type, sample_file)]\
+                    = (m['gest'].T[1:, 1:4] - m['gest'].T[:-1, 1:4]) / 1000
+            elif data_attribute_type == "orientation":
+                seqs[others.get_sample_name(dataset_type, sample_file)]\
+                    = m['gest'].T[:, 4:8]
+            elif data_attribute_type == "acceleration":
+                seqs[others.get_sample_name(dataset_type, sample_file)]\
+                    = m['gest'].T[:, 8:11]
+            elif data_attribute_type == "angularvelocity":
+                seqs[others.get_sample_name(dataset_type, sample_file)]\
+                = m['gest'].T[:, 11:14]
+            else:
+                print("attribute type error.")
+                assert False
     elif dataset_type == "UCIcharacter":
         if isinstance(list_glob_arg, str):
             mat_file_path = list_glob_arg
@@ -78,6 +100,10 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None):
     else:
         assert False
     key_to_str, key_to_int = get_labels(seqs, dataset_type)
+
+    if feature_normalization:
+        seqs = normalization(seqs)
+    
     return seqs, key_to_str, key_to_int
 
 
@@ -106,3 +132,15 @@ def get_labels(seqs, dataset_type):
         key_to_int[k] = label_to_int[label]
 
     return key_to_str, key_to_int
+
+def normalization(seqs):
+    newseqs = OrderedDict()
+    mean = np.mean(np.concatenate(np.array(list(seqs.values())), axis=0),
+                   axis=0, keepdims=True)
+    std = np.std(np.concatenate(np.array(list(seqs.values())), axis=0),
+                   axis=0, keepdims=True)
+    for k, v in seqs.items():
+        newseqs[k] = (v - mean) / (std + 1e-8)
+    return newseqs
+
+
