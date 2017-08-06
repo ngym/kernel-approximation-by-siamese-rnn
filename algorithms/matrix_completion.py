@@ -127,7 +127,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     # pre-processing
     num_seqs = len(seqs)
     time_dim = max([seq.shape[0] for seq in seqs])
-    pad_value = -123456789
+    pad_value = -4444
     seqs = pad_sequences([seq.tolist() for seq in seqs],
                          maxlen=time_dim, dtype='float32',
                          padding='post', value=pad_value)
