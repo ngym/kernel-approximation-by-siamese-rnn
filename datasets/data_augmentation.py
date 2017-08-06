@@ -13,7 +13,7 @@ from utils import file_utils
 
 def augment_data(seqs, length):
     new_seqs = OrderedDict()    
-    for sample_name, seq in seqs:
+    for sample_name, seq in seqs.items():
         new_seqs[sample_name] = seq
         # uniform random insertion
         augmented_seq = insert_random(seq, length)
