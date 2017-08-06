@@ -10,27 +10,77 @@ class test_augmentation(unittest.TestCase):
     def create_seq(self, length):
         seq = []
         for i in range(length):
-            seq.append([float(i),float(i),float(i)])
+            seq.append([float(i), float(i)])
         return np.array(seq)
-    def test_augment_random(self):
+    def test_insert_steps_with_balance(self):
+        seq = self.create_seq(3)
+        seq = DA.insert_steps_with_balance(seq,
+                                           [1,1,1,0,0,0])
+        seq_ = np.array([[0, 0],
+                         [0.25, 0.25],
+                         [0.5, 0.5],
+                         [0.75, 0.75],
+                         [1, 1],
+                         [1.25, 1.25],
+                         [1.5, 1.5],
+                         [1.75, 1.75],
+                         [2, 2]])
+        self.assertTrue(np.all(seq == seq_))
+
+        
+    def test_insert_steps_between_two_with_balance(self):
+        seq = self.create_seq(3)
+        seq = DA.insert_steps_between_two_with_balance(seq,
+                                                       1,
+                                                       3)
+        seq_ = np.array([[0, 0],
+                         [1, 1],
+                         [1.25, 1.25],
+                         [1.5, 1.5],
+                         [1.75, 1.75],
+                         [2, 2]])
+        self.assertTrue(np.all(seq == seq_))
+    def test_insert_random(self):
         # lengthen
         length = 9000
         seq = self.create_seq(10)
-        seq = DA.augment_random(seq, length)
+        seq = DA.insert_random(seq, length)
+        
         i = 1
         num_inserted = []
         count = 0
         print(seq.shape)
         for step in seq:
-            if step.tolist() == [float(i), float(i), float(i)]:
+            if step.tolist() == [float(i), float(i)]:
                 i += 1
-                num_inserted.append(count)
+                num_inserted.append(count - 1)
                 count = 0
             count += 1
         print(num_inserted)
         print(seq)
-
-
+    def test_insert_normal_distribution(self):
+        # lengthen
+        length = 9000
+        for ave_p in {0.25, 0.50, 0.75}:
+            seq = self.create_seq(10)
+            ave = (seq.shape[0] - 2) * ave_p
+            std = seq.shape[0] * 0.25
+            seq = DA.insert_normal_distribution(seq, length,
+                                                ave, std)
+            i = 1
+            num_inserted = []
+            count = 0
+            print(seq.shape)
+            for step in seq:
+                if step.tolist() == [float(i), float(i)]:
+                    i += 1
+                    num_inserted.append(count - 1)
+                    count = 0
+                count += 1
+            print(num_inserted)
+            print(seq)
+        """
+    def test
         # shorten
         length = 10
         seq = self.create_seq(10000)
@@ -80,6 +130,7 @@ class test_augmentation(unittest.TestCase):
                                       loc=ave,
                                       scale=std))] += 1
         print(counter)
+    """
     def tearDown(self):
         pass
 

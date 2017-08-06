@@ -8,6 +8,7 @@ from algorithms import gak
 from datasets import others
 from datasets.read_sequences import read_sequences
 from utils import file_utils
+from datasets.data_augmentation import augment_data
 
 ex = Experiment('calculate_gram_matrix')
 
@@ -31,7 +32,7 @@ def UCIauslan():
     dataset_type = "UCIauslan"
 
 @ex.automain
-def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_filename_format):
+def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_filename_format, data_augmentation):
     assert others.is_valid_dataset_type(dataset_type)
 
     dataset_location = os.path.abspath(dataset_location)
@@ -39,6 +40,10 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_fi
     assert os.path.isdir(output_dir)
 
     seqs, _, _ = read_sequences(dataset_type, direc=dataset_location)
+    if data_augmentation:
+        length = int(max([len(seq) for _, seq in seqs]) * 1.2)
+        seqs = augment_data(seqs, length)
+    
     sample_names = list(seqs.keys())
 
     start = time.time()

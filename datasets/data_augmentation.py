@@ -1,5 +1,4 @@
-import os, csv
-import os.path as path
+import sys, os, csv
 from collections import OrderedDict
 import glob
 
@@ -10,52 +9,183 @@ from scipy.stats import truncnorm
 from datasets import others
 
 from datasets.read_sequences import read_sequences
+from utils import file_utils
 
-def data_augmentation(dataset_type, list_glob_arg=None, direc=None,
+def augment_data(seqs, length):
+    new_seqs = OrderedDict()    
+    for sample_name, seq in seqs:
+        new_seqs[sample_name] = seq
+        # uniform random insertion
+        augmented_seq = insert_random(seq, length)
+        augmented_name = sample_name + "augrand_uniform.pkl"
+        new_seqs[augmented_name] = augmented_seq
+        
+        # normal distribution random insertion
+        for ave_p in {0.25, 0.50, 0.75}:
+            ave = (seq.shape[0] - 2) * ave_p
+            std = seq.shape[0] * 0.25
+            augmented_seq = insert_normal_distribution(seq,
+                                                       length,
+                                                       ave, std) 
+            augmented_name = sample_name + "augrand_normaldist"\
+                             + str(ave_p) + ".pkl"
+            new_seqs[augmented_name] = augmented_seq
+    return new_seqs
+            
+
+def data_augmentation(dataset_type, length, path,
+                      list_glob_arg=None, direc=None,
                       feature_normalization=False,
                       data_attribute_type=None):
-    seqs = read_sequences(dataset_type, list_glob_arg=list_glob_arg, direc=direc,
-                          feature_normalization=feature_normalization,
-                          data_attribute_type=data_attribute_type)
+    seqs, _, _ = read_sequences(dataset_type,
+                                list_glob_arg=list_glob_arg,
+                                direc=direc,
+                                feature_normalization=feature_normalization,
+                                data_attribute_type=data_attribute_type)
 
-def augment_random(seq, length):
-    while seq.shape[0] < length:
-        seq = seq_insert(seq, np.random.randint(seq.shape[0] - 1))
-    while seq.shape[0] > length:
-        seq = seq_delete(seq, np.random.randint(seq.shape[0] - 1))
+    num = len(seqs)
+    i = 0
+    for name, seq in seqs.items():
+        print("[%d/%d]" % (i, num), end='\r')
+        i += 1
+        # uniform random insertion
+        seq = insert_random(seq, length)
+        fname = name + "augrand_uniform.pkl"
+        dic = dict(augmented_seq=seq,
+                   original_name=name,
+                   distribution="uniform_random")
+        file_utils.save_pickle(os.path.join(path, fname), dic)
+        
+        # normal distribution random insertion
+        for ave_p in {0.25, 0.50, 0.75}:
+            ave = (seq.shape[0] - 2) * ave_p
+            std = seq.shape[0] * 0.25
+            seq = insert_normal_distribution(seq, length, ave, std)
+            fname = name + "augrand_normaldist" + str(ave_p) + ".pkl"
+            dic = dict(augmented_seq=seq,
+                       original_name=name,
+                       distribution="normal_distribution",
+                       ave=ave,
+                       std=std)
+            file_utils.save_pickle(os.path.join(path, fname), dic)
+
+#############################
+#         Insert            #
+#############################
+    
+def insert_random(seq, length):
+    num = length - seq.shape[0]
+    to_insert = np.random.randint(seq.shape[0] - 1, size=num)
+    seq = insert_steps_with_balance(seq, to_insert)
     return seq
 
-def augment_normal_distribution(seq, length, ave_, std_):
-    ave = ave_
-    std = std_
-    std_fraction = std / len(seq)
-    while seq.shape[0] < length:
-        std = len(seq) * std_fraction
-        time_insert = int(truncnorm.rvs((0 - ave) / std,
-                                    (seq.shape[0] - 1 - ave) / std,
-                                    loc=ave,
-                                    scale=std))
-        seq = seq_insert(seq, time_insert)
-        if time_insert > ave:
-            ave += 1
-    while seq.shape[0] > length:
-        time_remove = int(truncnorm.rvs((0 - ave) / std,
-                                    (seq.shape[0] - 1 - ave) / std,
-                                    loc=ave,
-                                    scale=std))
-        seq = seq_delete(seq, time_remove)
-        if time_remove > ave:
-            ave += 1
+def insert_normal_distribution(seq, length, ave, std):
+    num = length - seq.shape[0]
+    to_insert = np.round(truncnorm.rvs((0 - ave) / std,
+                                       (seq.shape[0] - 2 - ave) / std,
+                                       loc=ave,
+                                       scale=std,
+                                       size=num))
+    seq = insert_steps_with_balance(seq, to_insert)
     return seq
 
-def seq_insert(seq, time_insert):
-    new_step = (seq[time_insert] + seq[time_insert + 1]) / 2
-    seq = np.insert(seq, time_insert + 1, new_step, axis=0)
+def insert_steps_with_balance(seq, to_insert):
+    """
+    seq: sequence to augment
+    to_insert: array of steps to insert. random, unsorted array 
+               is acceptable.
+    """
+    to_insert = np.array(to_insert).astype(int)
+    to_insert = sorted(to_insert)
+
+    count = [0] * (seq.shape[0] - 1)
+    for t in to_insert:
+        count[t] += 1
+        
+    for step in range(seq.shape[0] - 1)[::-1]:
+        if count[step] != 0:
+            seq = insert_steps_between_two_with_balance(seq,
+                                                        step,
+                                                        count[step])
     return seq
 
-def seq_delete(seq, time_delete):
+def insert_steps_between_two_with_balance(seq, time_insert, num):
+    assert time_insert < seq.shape[0] - 1
+    diff = seq[time_insert + 1] - seq[time_insert]
+    for i in range(1, num + 1):
+        new_step = seq[time_insert] +\
+                   diff * i / (num + 1)
+        seq = np.insert(seq, time_insert + i, new_step, axis=0)
+    return seq
+
+#############################
+#         Delete            #
+#############################
+
+def delete_random(seq, length):
+    num = seq.shape[0] - length
+    to_delete = np.random.choice(np.arange(1, seq.shape[0] - 1),
+                                 num,
+                                 replace=False)
+    
+    seq = delete_steps(seq, to_delete)
+    return seq
+
+def delete_normal_distribution(seq, length, ave, std):
+    num = seq.shape[0] - length
+
+    probability_density = []
+    for i in range(1, seq.shape[0] - 1):
+        probability_density.append(np.round(\
+                truncnorm.pdf(i,
+                              (1 - ave) / std,
+                              (seq.shape[0] - 2 - ave) / std,
+                              loc=ave,
+                              scale=std)))
+    # the sum of probability_density may not just 1 because of error,
+    # hence arrange the biggest value
+    probability_density[ave] -= (1 - np.sum(probability_density))
+    to_delete = np.random.choice(np.arange(1, seq.shape[0] - 1),
+                                 num,
+                                 p=probability_density,
+                                 replace=False)
+    
+    seq = delete_steps(seq, to_delete)
+    return seq
+
+def delete_steps(seq, to_delete):
+    to_delete = np.array(sorted(to_delete))
+    for step in to_delete[::-1]:
+        seq = delete_step(seq, step)
+    return seq
+
+def delete_step(seq, time_delete):
     new_seq = np.delete(seq, time_delete, axis=0)
     return new_seq
 
 
 
+
+
+
+#############################
+#           Main            #
+#############################
+
+def main():
+    dataset_type = sys.argv[1]
+    direc = sys.argv[2]
+    path = sys.argv[3]
+    length = int(sys.argv[4])
+    
+    data_augmentation(dataset_type,
+                      length,
+                      path,
+                      list_glob_arg=None,
+                      direc=direc,
+                      feature_normalization=True)
+
+if __name__ == "__main__":
+    main()
+
+    
