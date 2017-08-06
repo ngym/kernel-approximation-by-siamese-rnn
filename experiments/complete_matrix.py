@@ -116,7 +116,7 @@ def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
     check_pickle_format(pkl)
 
     dataset_type = pkl['dataset_type']
-    sample_names = pkl['sample_names']
+    sample_names = [s.split('/')[-1] for s in pkl['sample_names']]
     gram_matrices = pkl['gram_matrices']
     if len(gram_matrices) == 1:
         gram = gram_matrices[0]['original']
