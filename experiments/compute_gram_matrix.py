@@ -41,7 +41,7 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_fi
 
     seqs, _, _ = read_sequences(dataset_type, direc=dataset_location)
     if data_augmentation:
-        length = int(max([len(seq) for _, seq in seqs]) * 1.2)
+        length = int(max([len(seq) for seq in seqs.values()]) * 1.2)
         seqs = augment_data(seqs, length)
     
     sample_names = list(seqs.keys())
