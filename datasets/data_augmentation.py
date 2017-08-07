@@ -11,63 +11,39 @@ from datasets import others
 from datasets.read_sequences import read_sequences
 from utils import file_utils
 
-def augment_data(seqs, length):
-    new_seqs = OrderedDict()    
+def augment_data(seqs, length, rand_uniform=True, num_normaldist_ave=3):
+    np.random.seed(1)
+    
+    new_seqs = OrderedDict()
     for sample_name, seq in seqs.items():
         new_seqs[sample_name] = seq
+        
         # uniform random insertion
-        augmented_seq = insert_random(seq, length)
-        augmented_name = sample_name + "augrand_uniform.pkl"
-        new_seqs[augmented_name] = augmented_seq
+        if rand_uniform:
+            if length > seq.shape[0]:
+                augmented_seq = insert_random(seq, length)
+            else:
+                augmented_seq = delete_random(seq, length)
+            augmented_name = sample_name + "augrand_uniform.pkl"
+            new_seqs[augmented_name] = augmented_seq
         
         # normal distribution random insertion
-        for ave_p in {0.25, 0.50, 0.75}:
+        for ave_p in [(i + 1) / (num_normaldist_ave + 1)
+                      for i in range(num_normaldist_ave)]:
             ave = (seq.shape[0] - 2) * ave_p
             std = seq.shape[0] * 0.25
-            augmented_seq = insert_normal_distribution(seq,
-                                                       length,
-                                                       ave, std) 
+            if length > seq.shape[0]:
+                augmented_seq = insert_normal_distribution(seq,
+                                                           length,
+                                                           ave, std)
+            else:
+                augmented_seq = delete_normal_distribution(seq,
+                                                           length,
+                                                           ave, std)
             augmented_name = sample_name + "augrand_normaldist"\
                              + str(ave_p) + ".pkl"
             new_seqs[augmented_name] = augmented_seq
     return new_seqs
-            
-
-def data_augmentation(dataset_type, length, path,
-                      list_glob_arg=None, direc=None,
-                      feature_normalization=False,
-                      data_attribute_type=None):
-    seqs, _, _ = read_sequences(dataset_type,
-                                list_glob_arg=list_glob_arg,
-                                direc=direc,
-                                feature_normalization=feature_normalization,
-                                data_attribute_type=data_attribute_type)
-
-    num = len(seqs)
-    i = 0
-    for name, seq in seqs.items():
-        print("[%d/%d]" % (i, num), end='\r')
-        i += 1
-        # uniform random insertion
-        seq = insert_random(seq, length)
-        fname = name + "augrand_uniform.pkl"
-        dic = dict(augmented_seq=seq,
-                   original_name=name,
-                   distribution="uniform_random")
-        file_utils.save_pickle(os.path.join(path, fname), dic)
-        
-        # normal distribution random insertion
-        for ave_p in {0.25, 0.50, 0.75}:
-            ave = (seq.shape[0] - 2) * ave_p
-            std = seq.shape[0] * 0.25
-            seq = insert_normal_distribution(seq, length, ave, std)
-            fname = name + "augrand_normaldist" + str(ave_p) + ".pkl"
-            dic = dict(augmented_seq=seq,
-                       original_name=name,
-                       distribution="normal_distribution",
-                       ave=ave,
-                       std=std)
-            file_utils.save_pickle(os.path.join(path, fname), dic)
 
 #############################
 #         Insert            #
@@ -177,13 +153,35 @@ def main():
     direc = sys.argv[2]
     path = sys.argv[3]
     length = int(sys.argv[4])
+    num_normaldist_ave = 3
     
-    data_augmentation(dataset_type,
-                      length,
-                      path,
-                      list_glob_arg=None,
-                      direc=direc,
-                      feature_normalization=True)
+    seqs, _, _ = read_sequences(dataset_type,
+                                direc=direc,
+                                feature_normalization=True)
+    print(len(seqs))
+    seqs = augment_data(seqs, length,
+                        num_normaldist_ave=num_normaldist_ave)
+
+    print(len(seqs))
+    i = 0
+    for sample_name, seq in seqs.items():
+        if i % 5 == 0:
+            original_name = sample_name
+        elif i % 5 == 1:
+            dic = dict(augmented_seq=seq,
+                       sample_name=sample_name,
+                       original_name=original_name,
+                       distribution="uniform_random")
+            f_path = os.path.join(path, sample_name)
+            file_utils.save_pickle(f_path, dic)
+        else:
+            dic = dict(augmented_seq=seq,
+                       sample_name=sample_name,
+                       original_name=original_name,
+                       distribution="uniform_random")
+            f_path = os.path.join(path, sample_name)
+            file_utils.save_pickle(f_path, dic)
+        i += 1
 
 if __name__ == "__main__":
     main()
