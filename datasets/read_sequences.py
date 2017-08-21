@@ -143,4 +143,16 @@ def normalization(seqs):
         newseqs[k] = (v - mean) / (std + 1e-8)
     return newseqs
 
+def pick_labels(dataset_type, seqs, labels_to_use):
+    new_seq = OrderedDict()
+    for k, v in seqs.items():
+        label = others.get_label(dataset_type, k)
+        if label in labels_to_use:
+            new_seq[k] = v
+    return new_seq
+
+
+
+
+
 
