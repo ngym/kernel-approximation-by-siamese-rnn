@@ -41,7 +41,10 @@ def kfold_6DMGupperChar(sample_names, fold_count):
 
     folds = [[] for _ in range(fold_count)]
     for i in range(len(sample_names)):
-        type_, ground_truth, group, trial = sample_names[i].split('/')[-1].split('_')
+        try:
+            type_, ground_truth, group, trial = sample_names[i].split('/')[-1].split('_')
+        except:
+            type_, ground_truth, group, trial, _, _ = sample_names[i].split('/')[-1].split('_')
         folds[k_groups[group]].append(i)
     return folds
 

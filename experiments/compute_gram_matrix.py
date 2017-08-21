@@ -40,9 +40,9 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_fi
     assert os.path.isdir(output_dir)
 
     seqs, _, _ = read_sequences(dataset_type, direc=dataset_location)
-    seqs = pick_labels(dataset_type, seqs, labels_to_use)
     
     if data_augmentation_size != 1:
+        seqs = pick_labels(dataset_type, seqs, labels_to_use)
         length = int(max([len(seq) for seq in seqs.values()]) * 1.2)
         seqs = augment_data(seqs, length,
                             rand_uniform=True,

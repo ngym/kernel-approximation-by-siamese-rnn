@@ -24,7 +24,7 @@ def augment_data(seqs, length, rand_uniform=True, num_normaldist_ave=3):
                 augmented_seq = insert_random(seq, length)
             else:
                 augmented_seq = delete_random(seq, length)
-            augmented_name = sample_name + "augrand_uniform.pkl"
+            augmented_name = sample_name + "_augrand_uniform.pkl"
             new_seqs[augmented_name] = augmented_seq
         
         # normal distribution random insertion
@@ -40,7 +40,7 @@ def augment_data(seqs, length, rand_uniform=True, num_normaldist_ave=3):
                 augmented_seq = delete_normal_distribution(seq,
                                                            length,
                                                            ave, std)
-            augmented_name = sample_name + "augrand_normaldist"\
+            augmented_name = sample_name + "_augrand_normaldist"\
                              + str(ave_p) + ".pkl"
             new_seqs[augmented_name] = augmented_seq
     return new_seqs
