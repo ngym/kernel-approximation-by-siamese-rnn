@@ -9,7 +9,7 @@ from keras.layers.wrappers import Bidirectional
 from keras.layers.merge import Concatenate
 
 from utils import multi_gpu
-from rnn import Rnn
+from algorithms.rnn import Rnn
 
 class SiameseRnn(Rnn):
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
@@ -44,7 +44,7 @@ class SiameseRnn(Rnn):
         :return: Keras Deep RNN Siamese network
         :rtype: keras.models.Model
         """
-        base_network = self.__create_RNN_base_network()
+        base_network = super().create_RNN_base_network()
         input_a = Input(shape=self.input_shape)
         input_b = Input(shape=self.input_shape)
         processed_a = base_network(input_a)

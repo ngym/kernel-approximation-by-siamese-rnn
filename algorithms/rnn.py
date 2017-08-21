@@ -45,7 +45,7 @@ class Rnn:
 
         self.gpu_count = len(multi_gpu.get_available_gpus())
 
-    def __create_RNN_base_network(self):
+    def create_RNN_base_network(self):
         """Keras Deep RNN network to be used as Siamese branch.
         Stacks some Recurrent and some Dense layers on top of each other
 

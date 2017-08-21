@@ -13,6 +13,9 @@ from utils import file_utils
 from utils import nearest_positive_semidefinite
 from utils import make_matrix_incomplete
 
+from datasets.read_sequences import read_sequences, pick_labels
+from datasets.data_augmentation import augment_data
+
 ex = Experiment('complete_matrix')
 
 
@@ -99,7 +102,8 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 
 @ex.automain
 def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
-        algorithm, params, output_dir, output_filename_format):
+        algorithm, params, output_dir, output_filename_format,
+        data_augmentation_size):
     check_fold(fold_count, fold_to_drop)
     check_algorithm(algorithm)
     check_params(algorithm, params)
@@ -130,6 +134,12 @@ def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
 
     seqs = OrderedDict((k, v) for k, v in read_sequences(dataset_type, direc=dataset_location)[0].items()
                        if k in sample_names)
+    
+    if data_augmentation_size != 1:
+        length = int(max([len(seq) for seq in seqs.values()]) * 1.2)
+        seqs = augment_data(seqs, length,
+                            rand_uniform=True,
+                            num_normaldist_ave=data_augmentation_size - 2)
 
     train_start = None
     train_end = None
