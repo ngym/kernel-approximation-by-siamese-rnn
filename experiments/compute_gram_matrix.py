@@ -6,7 +6,7 @@ from sacred import Experiment
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from algorithms import gak
 from datasets import others
-from datasets.read_sequences import read_sequences
+from datasets.read_sequences import read_sequences, pick_labels
 from utils import file_utils
 from datasets.data_augmentation import augment_data
 
@@ -32,7 +32,7 @@ def UCIauslan():
     dataset_type = "UCIauslan"
 
 @ex.automain
-def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_filename_format, data_augmentation):
+def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_filename_format, labels_to_use, data_augmentation_size):
     assert others.is_valid_dataset_type(dataset_type)
 
     dataset_location = os.path.abspath(dataset_location)
@@ -40,9 +40,13 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_fi
     assert os.path.isdir(output_dir)
 
     seqs, _, _ = read_sequences(dataset_type, direc=dataset_location)
-    if data_augmentation:
+    seqs = pick_labels(dataset_type, seqs, labels_to_use)
+    
+    if data_augmentation_size != 1:
         length = int(max([len(seq) for seq in seqs.values()]) * 1.2)
-        seqs = augment_data(seqs, length)
+        seqs = augment_data(seqs, length,
+                            rand_uniform=True,
+                            num_normaldist_ave=data_augmentation_size - 2)
     
     sample_names = list(seqs.keys())
 
@@ -66,3 +70,6 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_fi
     time_fd.write("num_samples: %d\n" % num_samples)
     time_fd.write("average_time_per_gak: %.5f\n" % (duration / (num_samples ** 2)))
     time_fd.close()
+
+
+    
