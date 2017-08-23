@@ -108,7 +108,7 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0):
         recent_running_time = sum(list_duration_time[-num_eta_calculation_resource:])
         num_involved_jobs_in_recent_running_time = min(len(list_duration_time),
                                                        num_eta_calculation_resource) * parallelism
-        eta = recent_running_time * num_job / num_involved_jobs_in_recent_running_time - running_time
+        eta = recent_running_time * (num_job - num_finished_job) / num_involved_jobs_in_recent_running_time
 
         print("[%d/%d], %ds, ETA:%ds                             " % \
               (num_finished_job, num_job, running_time, eta), end='\r')
