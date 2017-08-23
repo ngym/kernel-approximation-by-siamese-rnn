@@ -86,7 +86,7 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_percentage=0):
     num_finished_job = 0
     list_duration_time = [time.time()]
     num_eta_calculation_resource = 5
-    jobs = [(i, j) for j in range(i) for i in range(l)]
+    jobs = [(i, j) for i in range(l) for j in range(i)]
     num_job = len(jobs)
     if drop_percentage:
         num_job = int(len(jobs) * (100 - drop_percentage))
