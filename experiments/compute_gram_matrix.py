@@ -18,7 +18,7 @@ def cfg():
     output_dir = "results/"
     sigma = None
     triangular  = None
-    drop_percentage = 0
+    drop_rate = 0
 
 @ex.named_config
 def upperChar():
