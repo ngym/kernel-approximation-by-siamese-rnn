@@ -11,12 +11,14 @@ from datasets import others
 from datasets.read_sequences import read_sequences
 from utils import file_utils
 
-def augment_data(seqs, length, rand_uniform=True, num_normaldist_ave=3):
+def augment_data(seqs, key_to_str, length, rand_uniform=True, num_normaldist_ave=3):
     np.random.seed(1)
     
     new_seqs = OrderedDict()
+    new_key_to_str = OrderedDict()
     for sample_name, seq in seqs.items():
         new_seqs[sample_name] = seq
+        label = key_to_str[sample_name]
         
         # uniform random insertion
         if rand_uniform:
@@ -26,7 +28,8 @@ def augment_data(seqs, length, rand_uniform=True, num_normaldist_ave=3):
                 augmented_seq = delete_random(seq, length)
             augmented_name = sample_name + "_augrand_uniform.pkl"
             new_seqs[augmented_name] = augmented_seq
-        
+            new_key_to_str[augmented_name] = label
+            
         # normal distribution random insertion
         for ave_p in [(i + 1) / (num_normaldist_ave + 1)
                       for i in range(num_normaldist_ave)]:
@@ -43,7 +46,8 @@ def augment_data(seqs, length, rand_uniform=True, num_normaldist_ave=3):
             augmented_name = sample_name + "_augrand_normaldist"\
                              + str(ave_p) + ".pkl"
             new_seqs[augmented_name] = augmented_seq
-    return new_seqs
+            new_key_to_str[augmented_name] = label
+    return new_seqs, new_key_to_str
 
 #############################
 #         Insert            #
