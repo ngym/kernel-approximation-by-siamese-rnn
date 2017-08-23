@@ -82,7 +82,7 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0):
     l = len(seqs)
     gram = -1 * np.ones((l, l), dtype=np.float32)
 
-    parallelism = 10000
+    parallelism = 1000
     num_finished_job = 0
     list_duration_time = [time.time()]
     num_eta_calculation_resource = 5
@@ -92,7 +92,7 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0):
     num_job = int(num_job * (1 - drop_rate))
     pool = ProcessingPool()
     for current_jobs in jobs_gen:
-        result_current_jobs = pool.map(lambda i, j: (i, j, gak(seqs[i], seqs[j], sigma, triangular)), current_jobs)
+        result_current_jobs = pool.map(lambda tup: (tup[0], tup[1], gak(seqs[tup[0]], seqs[tup[1]], sigma, triangular)), current_jobs)
         for i, j, gak_value in result_current_jobs:
             gram[i, j] = gak_value
             
