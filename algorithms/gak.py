@@ -61,7 +61,7 @@ def calculate_gak_triangular(seqs):
     triangular = np.median([len(seq) for seq in seqs]) * 0.5
     return triangular
 
-def gram_gak(seqs, sigma=None, triangular=None, drop_percentage=0):
+def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0):
     """TGA Gram matrix computation for a list of time series.
 
     :param seqs: List of time series to be processed
@@ -86,19 +86,12 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_percentage=0):
     num_finished_job = 0
     list_duration_time = [time.time()]
     num_eta_calculation_resource = 5
-    jobs = [(i, j) for i in range(l) for j in range(i)]
-    num_job = len(jobs)
-    if drop_percentage:
-        num_job = int(len(jobs) * (100 - drop_percentage))
-        jobs = np.permutation(jobs)
-        jobs = jobs[:num_job]
-        dropped_jobs = jobs[num_job:]
-        for i, j in dropped_jobs:
-            gram[i, j] = np.nan
+    
+    jobs_gen = jobs_generator(l, parallelism, drop_rate)
+    num_job = (l + 1) * l / 2
+    num_job = int(num_job * (1 - drop_rate))
     pool = ProcessingPool()
-    while jobs != []:
-        current_jobs = jobs[:parallelism]
-        jobs = jobs[parallelism:]
+    for current_jobs in jobs_gen:
         result_current_jobs = pool.map(lambda i, j: (i, j, gak(seqs[i], seqs[j], sigma, triangular)), current_jobs)
         for i, j, gak_value in result_current_jobs:
             gram[i, j] = gak_value
@@ -116,7 +109,30 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_percentage=0):
         print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, running_time, eta), end='\r')
     pool.close()
     print("[%d/%d], %ds" % (num_finished_job, num_job, running_time))
+
+
+    for i in len(gram):
+        for j in len(gram[0]):
+            if gram[i][j] == -1:
+                gram[i][j] = np.nan
+    
     return gram
 
+def jobs_generator(l, parallelism, drop_rate):
+    jobs = []
+    for i in range(l):
+        for j in range(i):
+            if np.random.rand() < drop_rate:
+                continue
+            jobs.append((i,j))
+            if len(jobs) == parallelism:
+                yield jobs
+                jobs = []
+    yield jobs
+
+    
 
 
+
+
+    
