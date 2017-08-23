@@ -82,9 +82,10 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0):
     l = len(seqs)
     gram = -1 * np.ones((l, l), dtype=np.float32)
 
-    parallelism = 1000
+    parallelism = 10000
     num_finished_job = 0
-    list_duration_time = [time.time()]
+    current_time = time.time()
+    list_duration_time = []
     num_eta_calculation_resource = 5
     
     jobs_gen = jobs_generator(l, parallelism, drop_rate)
@@ -98,15 +99,19 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0):
             
         num_finished_job += len(current_jobs)
 
-        list_duration_time.append(time.time() - list_duration_time[-1])
+        prev_time = current_time
+        current_time = time.time()
+        duration_time = current_time - prev_time
+        list_duration_time.append(duration_time)
 
         running_time = sum(list_duration_time)
         recent_running_time = sum(list_duration_time[-num_eta_calculation_resource:])
         num_involved_jobs_in_recent_running_time = min(len(list_duration_time),
                                                        num_eta_calculation_resource) * parallelism
         eta = recent_running_time * num_job / num_involved_jobs_in_recent_running_time - running_time
-        
-        print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, running_time, eta), end='\r')
+
+        print("[%d/%d], %ds, ETA:%ds                             " % \
+              (num_finished_job, num_job, running_time, eta), end='\r')
     pool.close()
     print("[%d/%d], %ds" % (num_finished_job, num_job, running_time))
 
