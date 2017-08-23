@@ -61,7 +61,7 @@ def calculate_gak_triangular(seqs):
     triangular = np.median([len(seq) for seq in seqs]) * 0.5
     return triangular
 
-def gram_gak(seqs, sigma=None, triangular=None):
+def gram_gak(seqs, sigma=None, triangular=None, drop_percentage=0):
     """TGA Gram matrix computation for a list of time series.
 
     :param seqs: List of time series to be processed
@@ -82,18 +82,41 @@ def gram_gak(seqs, sigma=None, triangular=None):
     l = len(seqs)
     gram = -1 * np.ones((l, l), dtype=np.float32)
 
-    start_time = time.time()
-    num_job = (1 + l) * l / 2
+    parallelism = 10000
+    num_finished_job = 0
+    list_duration_time = [time.time()]
+    num_eta_calculation_resource = 5
+    jobs = [(i, j) for j in range(i) for i in range(l)]
+    num_job = len(jobs)
+    if drop_percentage:
+        num_job = int(len(jobs) * (100 - drop_percentage))
+        jobs = np.permutation(jobs)
+        jobs = jobs[:num_job]
+        dropped_jobs = jobs[num_job:]
+        for i, j in dropped_jobs:
+            gram[i, j] = np.nan
     pool = ProcessingPool()
-    for i in reversed(range(l)):
-        gram[i, :i] = pool.map(lambda j: gak(seqs[i], seqs[j], sigma, triangular), range(i)) 
-        gram[i, i] = 1.
-        gram[:i, i] = gram[i, :i].T
-        num_finished_job = (i + l) * (l - i) / 2
-        current_time = time.time()
-        duration_time = current_time - start_time
-        eta = duration_time * num_job / num_finished_job - duration_time
-        print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, duration_time, eta), end='\r')
+    while jobs != []:
+        current_jobs = jobs[:parallelism]
+        jobs = jobs[parallelism:]
+        result_current_jobs = pool.map(lambda i, j: (i, j, gak(seqs[i], seqs[j], sigma, triangular)), current_jobs)
+        for i, j, gak_value in result_current_jobs:
+            gram[i, j] = gak_value
+            
+        num_finished_job += len(current_jobs)
+
+        list_duration_time.append(time.time() - list_duration_time[-1])
+
+        running_time = sum(list_duration_time)
+        recent_running_time = sum(list_duration_time[-num_eta_calculation_resource:])
+        num_involved_jobs_in_recent_running_time = min(len(list_duration_time),
+                                                       num_eta_calculation_resource) * parallelism
+        eta = recent_running_time * num_job / num_involved_jobs_in_recent_running_time - running_time
+        
+        print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, running_time, eta), end='\r')
     pool.close()
-    print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, duration_time, eta))
+    print("[%d/%d], %ds" % (num_finished_job, num_job, running_time))
     return gram
+
+
+
