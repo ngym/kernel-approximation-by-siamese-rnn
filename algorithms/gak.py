@@ -61,7 +61,7 @@ def calculate_gak_triangular(seqs):
     triangular = np.median([len(seq) for seq in seqs]) * 0.5
     return triangular
 
-def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0):
+def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, nodes=4):
     """TGA Gram matrix computation for a list of time series.
 
     :param seqs: List of time series to be processed
@@ -91,7 +91,7 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0):
     jobs_gen = jobs_generator(l, parallelism, drop_rate)
     num_job = (l + 1) * l / 2
     num_job = int(num_job * (1 - drop_rate))
-    pool = ProcessingPool()
+    pool = ProcessingPool(nodes=nodes)
     for current_jobs in jobs_gen:
         result_current_jobs = pool.map(lambda tup: (tup[0], tup[1], gak(seqs[tup[0]], seqs[tup[1]], sigma, triangular)), current_jobs)
         for i, j, gak_value in result_current_jobs:
@@ -135,7 +135,7 @@ def jobs_generator(l, parallelism, drop_rate):
                 jobs = []
     yield jobs
 
-    
+def worker()    
 
 
 

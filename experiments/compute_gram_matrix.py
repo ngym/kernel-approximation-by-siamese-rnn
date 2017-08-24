@@ -19,6 +19,7 @@ def cfg():
     sigma = None
     triangular  = None
     drop_rate = 0
+    nodes = 4
 
 @ex.named_config
 def upperChar():
@@ -33,7 +34,7 @@ def UCIauslan():
     dataset_type = "UCIauslan"
 
 @ex.automain
-def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_filename_format, labels_to_use, data_augmentation_size, drop_rate):
+def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_filename_format, labels_to_use, data_augmentation_size, drop_rate, nodes):
     assert others.is_valid_dataset_type(dataset_type)
 
     dataset_location = os.path.abspath(dataset_location)
@@ -53,7 +54,7 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_fi
     sample_names = list(seqs.keys())
 
     start = time.time()
-    gram = gak.gram_gak(list(seqs.values()), sigma, triangular, drop_rate)
+    gram = gak.gram_gak(list(seqs.values()), sigma, triangular, drop_rate, nodes)
     end = time.time()
 
     output_filename_format = output_filename_format.replace("${sigma}", str(sigma))\
