@@ -1,6 +1,8 @@
 import time
 
 import numpy as np
+import multiprocessing as mp
+import pathos
 from pathos.multiprocessing import ProcessingPool
 
 import algorithms.global_align as ga
@@ -92,6 +94,8 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, nodes=4):
     num_job = (l + 1) * l / 2
     num_job = int(num_job * (1 - drop_rate))
     print("using %d nodes." % nodes)
+
+    mp.set_start_method('forkserver')
     pool = ProcessingPool(nodes=nodes)
     for current_jobs in jobs_gen:
         result_current_jobs = pool.map(lambda tup: (tup[0], tup[1], gak(seqs[tup[0]], seqs[tup[1]], sigma, triangular)), current_jobs)
