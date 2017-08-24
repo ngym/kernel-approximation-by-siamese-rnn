@@ -84,13 +84,13 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, nodes=4):
     l = len(seqs)
     gram = -1 * np.ones((l, l), dtype=np.float32)
 
-    parallelism = 10000
+    num_gak_per_job = 10000
     num_finished_job = 0
     current_time = time.time()
     list_duration_time = []
     num_eta_calculation_resource = 5
     
-    jobs_gen = jobs_generator(l, parallelism, drop_rate)
+    jobs_gen = jobs_generator(l, nodes, num_gak_per_job, drop_rate)
     num_job = (l + 1) * l / 2
     num_job = int(num_job * (1 - drop_rate))
     print("using %d nodes." % nodes)
@@ -98,7 +98,7 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, nodes=4):
     mp.set_start_method('forkserver')
     pool = ProcessingPool(nodes=nodes)
     for current_jobs in jobs_gen:
-        result_current_jobs = pool.map(lambda tup: (tup[0], tup[1], gak(seqs[tup[0]], seqs[tup[1]], sigma, triangular)), current_jobs)
+        result_current_jobs = pool.map(lambda jobs: worker(jobs, sigma, triangular), current_jobs)
         for i, j, gak_value in result_current_jobs:
             gram[i, j] = gak_value
             
@@ -128,19 +128,24 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, nodes=4):
     
     return gram
 
-def jobs_generator(l, parallelism, drop_rate):
+def jobs_generator(l, nodes, num_gak_per_job, drop_rate):
     jobs = []
+    gak_per_job = []
     for i in range(l):
         for j in range(i):
             if np.random.rand() < drop_rate:
                 continue
-            jobs.append((i,j))
-            if len(jobs) == parallelism:
+            gak_per_job.append((i,j))
+            if len(gak_per_job) == num_gak_per_job:
+                jobs.append(gak_per_job)
+                gak_per_job = []
+            if len(jobs) == nodes:
                 yield jobs
                 jobs = []
     yield jobs
 
-
-
-
-    
+def worker(jobs, sigma, triangular):
+    result_jobs = []
+    for i, j in jobs:
+        result_jobs.append(gak(i, j, sigma, triangular))
+    return result_jobs
