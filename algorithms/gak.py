@@ -84,7 +84,7 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, nodes=4):
     l = len(seqs)
     gram = -1 * np.ones((l, l), dtype=np.float32)
 
-    num_gak_per_job = 10000
+    num_gak_per_job = 1000
     num_finished_job = 0
     current_time = time.time()
     list_duration_time = []
