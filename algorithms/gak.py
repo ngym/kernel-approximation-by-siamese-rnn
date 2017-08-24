@@ -98,11 +98,13 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, nodes=4):
     mp.set_start_method('forkserver')
     pool = ProcessingPool(nodes=nodes)
     for current_jobs in jobs_gen:
-        result_current_jobs = pool.map(lambda jobs: worker(jobs, sigma, triangular), current_jobs)
-        for i, j, gak_value in result_current_jobs:
-            gram[i, j] = gak_value
+        print(current_jobs)
+        result_current_jobs = pool.map(lambda jobs: worker(jobs, seqs, sigma, triangular), current_jobs)
+        for rcj in result_current_jobs:
+            for i, j, gak_value in rcj:
+                gram[i, j] = gak_value
             
-        num_finished_job += len(current_jobs)
+        num_finished_job += sum([len(c) for c in current_jobs])
 
         prev_time = current_time
         current_time = time.time()
@@ -112,7 +114,7 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, nodes=4):
         running_time = sum(list_duration_time)
         recent_running_time = sum(list_duration_time[-num_eta_calculation_resource:])
         num_involved_jobs_in_recent_running_time = min(len(list_duration_time),
-                                                       num_eta_calculation_resource) * parallelism
+                                                       num_eta_calculation_resource) * sum([len(c) for c in current_jobs])
         eta = recent_running_time * (num_job - num_finished_job) / num_involved_jobs_in_recent_running_time
 
         print("[%d/%d], %ds, ETA:%ds                             " % \
@@ -144,8 +146,8 @@ def jobs_generator(l, nodes, num_gak_per_job, drop_rate):
                 jobs = []
     yield jobs
 
-def worker(jobs, sigma, triangular):
+def worker(jobs, seqs, sigma, triangular):
     result_jobs = []
     for i, j in jobs:
-        result_jobs.append(gak(i, j, sigma, triangular))
+        result_jobs.append((i, j, gak(seqs[i], seqs[j], sigma, triangular)))
     return result_jobs
