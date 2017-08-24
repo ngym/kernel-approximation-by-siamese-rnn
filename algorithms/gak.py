@@ -135,8 +135,6 @@ def jobs_generator(l, parallelism, drop_rate):
                 jobs = []
     yield jobs
 
-def worker()    
-
 
 
 
