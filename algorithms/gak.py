@@ -98,7 +98,6 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, nodes=4):
     mp.set_start_method('forkserver')
     pool = ProcessingPool(nodes=nodes)
     for current_jobs in jobs_gen:
-        print(current_jobs)
         result_current_jobs = pool.map(lambda jobs: worker(jobs, seqs, sigma, triangular), current_jobs)
         for rcj in result_current_jobs:
             for i, j, gak_value in rcj:
