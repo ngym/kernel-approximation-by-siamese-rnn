@@ -26,7 +26,7 @@ def augment_data(seqs, key_to_str, length, rand_uniform=True, num_normaldist_ave
                 augmented_seq = insert_random(seq, length)
             else:
                 augmented_seq = delete_random(seq, length)
-            augmented_name = sample_name + "_augrand_uniform.pkl"
+            augmented_name = sample_name + "_augrand_uniform"
             new_seqs[augmented_name] = augmented_seq
             new_key_to_str[augmented_name] = label
             
@@ -44,7 +44,7 @@ def augment_data(seqs, key_to_str, length, rand_uniform=True, num_normaldist_ave
                                                            length,
                                                            ave, std)
             augmented_name = sample_name + "_augrand_normaldist"\
-                             + str(ave_p) + ".pkl"
+                             + str(ave_p)
             new_seqs[augmented_name] = augmented_seq
             new_key_to_str[augmented_name] = label
     return new_seqs, new_key_to_str
