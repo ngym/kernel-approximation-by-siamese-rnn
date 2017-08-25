@@ -19,7 +19,7 @@ def cfg():
     sigma = None
     triangular  = None
     drop_rate = 0
-    nodes = 4
+    num_process = 4
 
 @ex.named_config
 def upperChar():
@@ -34,7 +34,7 @@ def UCIauslan():
     dataset_type = "UCIauslan"
 
 @ex.automain
-def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_filename_format, labels_to_use, data_augmentation_size, drop_rate, nodes):
+def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_filename_format, labels_to_use, data_augmentation_size, drop_rate, num_process):
     assert others.is_valid_dataset_type(dataset_type)
 
     dataset_location = os.path.abspath(dataset_location)
@@ -46,7 +46,7 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_fi
     if data_augmentation_size != 1:
         if labels_to_use != []:
             seqs = pick_labels(dataset_type, seqs, labels_to_use)
-        length = int(max([len(seq) for seq in seqs.values()]) * 1.2)
+        length = int(max([len(seq) for seq in seqs.values()]) * 1.05)
         seqs, key_to_str = augment_data(seqs, key_to_str, length,
                                         rand_uniform=True,
                                         num_normaldist_ave=data_augmentation_size - 2)
@@ -54,7 +54,7 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_fi
     sample_names = list(seqs.keys())
 
     start = time.time()
-    gram = gak.gram_gak(list(seqs.values()), sigma, triangular, drop_rate, nodes)
+    gram = gak.gram_gak(list(seqs.values()), sigma, triangular, drop_rate, num_process)
     end = time.time()
 
     output_filename_format = output_filename_format.replace("${sigma}", str(sigma))\
@@ -71,7 +71,7 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_fi
     time_fd.write("gram_gak_end: %d\n" % end)
     time_fd.write("gram_gak_duration: %d\n" % duration)
     time_fd.write("num_samples: %d\n" % num_samples)
-    time_fd.write("average_time_per_gak: %.5f\n" % (duration / (num_samples ** 2)))
+    time_fd.write("average_time_per_gak: %.5f\n" % (duration / (num_samples ** 2) * num_process))
     time_fd.close()
 
 
