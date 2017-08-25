@@ -1,9 +1,8 @@
-import time
+import sys, time
 
 import numpy as np
 import multiprocessing as mp
-import pathos
-from pathos.multiprocessing import ProcessingPool
+import concurrent.futures
 
 import algorithms.global_align as ga
 
@@ -63,7 +62,7 @@ def calculate_gak_triangular(seqs):
     triangular = np.median([len(seq) for seq in seqs]) * 0.5
     return triangular
 
-def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, nodes=4):
+def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, num_process=4):
     """TGA Gram matrix computation for a list of time series.
 
     :param seqs: List of time series to be processed
@@ -84,69 +83,89 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, nodes=4):
     l = len(seqs)
     gram = -1 * np.ones((l, l), dtype=np.float32)
 
-    num_gak_per_job = 1000
-    num_finished_job = 0
+    num_gak_per_job = 10000
+    num_finished_gak = 0
+    start_time = time.time()
+    """
     current_time = time.time()
     list_duration_time = []
     num_eta_calculation_resource = 5
+    """
     
-    jobs_gen = jobs_generator(l, nodes, num_gak_per_job, drop_rate)
-    num_job = (l + 1) * l / 2
-    num_job = int(num_job * (1 - drop_rate))
-    print("using %d nodes." % nodes)
+    job_gen = job_generator(l, num_gak_per_job, drop_rate)
+    num_gak = (l + 1) * l / 2
+    num_gak = int(num_gak * (1 - drop_rate))
+    print("using %d multi processes." % num_process)
 
-    mp.set_start_method('forkserver')
-    pool = ProcessingPool(nodes=nodes)
-    for current_jobs in jobs_gen:
-        result_current_jobs = pool.map(lambda jobs: worker(jobs, seqs, sigma, triangular), current_jobs)
-        for rcj in result_current_jobs:
-            for i, j, gak_value in rcj:
-                gram[i, j] = gak_value
-            
-        num_finished_job += sum([len(c) for c in current_jobs])
+    with concurrent.futures.ProcessPoolExecutor(max_workers=num_process) as executor:
+        first_jobs = []
+        for i in range(num_process + 1):
+            try:
+                first_jobs.append(next(job_gen))
+            except StopIteration:
+                pass
+        print("Start submitting jobs.")
+        futures = [executor.submit(worker, job, seqs, sigma, triangular)
+                   for job in first_jobs]
+        while futures != []:
+            for future in concurrent.futures.as_completed(futures):
+                futures.remove(future)
+                worker_result = future.result()
+                for i, j, gak_value in worker_result:
+                    gram[i, j] = gak_value
+                    gram[j, i] = gak_value
+                try:
+                    job = next(job_gen)
+                    futures.append(executor.submit(worker, job, seqs, sigma, triangular))
+                except StopIteration:
+                    pass
 
-        prev_time = current_time
-        current_time = time.time()
-        duration_time = current_time - prev_time
-        list_duration_time.append(duration_time)
+                num_finished_gak += len(worker_result)
 
-        running_time = sum(list_duration_time)
-        recent_running_time = sum(list_duration_time[-num_eta_calculation_resource:])
-        num_involved_jobs_in_recent_running_time = min(len(list_duration_time),
-                                                       num_eta_calculation_resource) * sum([len(c) for c in current_jobs])
-        eta = recent_running_time * (num_job - num_finished_job) / num_involved_jobs_in_recent_running_time
+                """
+                prev_time = current_time
+                current_time = time.time()
+                duration_time = current_time - prev_time
+                list_duration_time.append(duration_time)
 
-        print("[%d/%d], %ds, ETA:%ds                             " % \
-              (num_finished_job, num_job, running_time, eta), end='\r')
-    pool.close()
-    print("[%d/%d], %ds" % (num_finished_job, num_job, running_time))
+                running_time = sum(list_duration_time)
+                recent_running_time = sum(list_duration_time[-num_eta_calculation_resource:])
+                num_involved_jobs_in_recent_running_time = min(len(list_duration_time),
+                                                               num_eta_calculation_resource)\
+                                                               * len(worker_result)
+                eta = recent_running_time / num_involved_jobs_in_recent_running_time\
+                      * (num_gak - num_finished_gak)
+                """
+                running_time = time.time() - start_time
+                eta = running_time / num_finished_gak\
+                      * (num_gak - num_finished_gak)
 
+                print("[%d/%d], %ds, ETA:%ds" % (num_finished_gak, num_gak,
+                                                 running_time, eta)\
+                      + " " * 30, end='\r')
+    print("[%d/%d], %ds" % (num_finished_gak, num_gak, running_time) + " " * 30)
 
-    for i in len(gram):
-        for j in len(gram[0]):
+    for i in range(len(gram)):
+        for j in range(len(gram[0])):
             if gram[i][j] == -1:
                 gram[i][j] = np.nan
     
     return gram
 
-def jobs_generator(l, nodes, num_gak_per_job, drop_rate):
-    jobs = []
-    gak_per_job = []
+def job_generator(l, num_gak_per_job, drop_rate):
+    job = []
     for i in range(l):
-        for j in range(i):
+        for j in range(i + 1):
             if np.random.rand() < drop_rate:
                 continue
-            gak_per_job.append((i,j))
-            if len(gak_per_job) == num_gak_per_job:
-                jobs.append(gak_per_job)
-                gak_per_job = []
-            if len(jobs) == nodes:
-                yield jobs
-                jobs = []
-    yield jobs
+            job.append((i, j))
+            if len(job) == num_gak_per_job:
+                yield job
+                job = []
+    yield job
 
-def worker(jobs, seqs, sigma, triangular):
-    result_jobs = []
-    for i, j in jobs:
-        result_jobs.append((i, j, gak(seqs[i], seqs[j], sigma, triangular)))
-    return result_jobs
+def worker(job, seqs, sigma, triangular):
+    result_job = []
+    for i, j in job:
+        result_job.append((i, j, gak(seqs[i], seqs[j], sigma, triangular)))
+    return result_job
