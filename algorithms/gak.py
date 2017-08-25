@@ -100,7 +100,7 @@ def gram_gak(seqs, sigma=None, triangular=None,
     num_gak = (num_seq + 1) * num_seq / 2
     print(num_gak)
     if drop_flag_matrix is not None:
-        num_gak = num_seq ** 2 - sum([sum(m) for m in drop_flag_matrix])
+        num_gak = num_seq ** 2 - np.count_nonzero(drop_flag_matrix)
     print(num_gak)
 
     print("using %d multi processes." % num_process)
