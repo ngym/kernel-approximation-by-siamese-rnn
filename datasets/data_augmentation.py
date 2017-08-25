@@ -14,6 +14,7 @@ from utils import file_utils
 def augment_data(seqs, key_to_str, augmentation_magnification,
                  rand_uniform=True, num_normaldist_ave=3):
     np.random.seed(1)
+    flag_augmented = []
     
     new_seqs = OrderedDict()
     new_key_to_str = OrderedDict()
@@ -21,6 +22,7 @@ def augment_data(seqs, key_to_str, augmentation_magnification,
         new_seqs[sample_name] = seq
         length = int(seq.shape[0] * augmentation_magnification)
         label = key_to_str[sample_name]
+        flag_augmented.append(False)
         
         # uniform random insertion
         if rand_uniform:
@@ -31,6 +33,7 @@ def augment_data(seqs, key_to_str, augmentation_magnification,
             augmented_name = sample_name + "_augrand_uniform"
             new_seqs[augmented_name] = augmented_seq
             new_key_to_str[augmented_name] = label
+            flag_augmented.append(True)
             
         # normal distribution random insertion
         for ave_p in [(i + 1) / (num_normaldist_ave + 1)
@@ -49,7 +52,8 @@ def augment_data(seqs, key_to_str, augmentation_magnification,
                              + str(ave_p)
             new_seqs[augmented_name] = augmented_seq
             new_key_to_str[augmented_name] = label
-    return new_seqs, new_key_to_str
+            flag_augmented.append(True)
+    return new_seqs, new_key_to_str, flag_augmented
 
 #############################
 #         Insert            #

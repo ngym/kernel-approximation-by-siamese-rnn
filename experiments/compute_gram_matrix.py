@@ -18,7 +18,7 @@ def cfg():
     output_dir = "results/"
     sigma = None
     triangular  = None
-    drop_rate = 0
+    drop_rate_between_augmenteds = 0
     num_process = 4
 
 @ex.named_config
@@ -34,7 +34,9 @@ def UCIauslan():
     dataset_type = "UCIauslan"
 
 @ex.automain
-def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_filename_format, labels_to_use, data_augmentation_size, drop_rate, num_process):
+def run(dataset_type, dataset_location, sigma, triangular, output_dir,
+        output_filename_format, labels_to_use, data_augmentation_size,
+        drop_rate_between_augmenteds, num_process):
     assert others.is_valid_dataset_type(dataset_type)
 
     dataset_location = os.path.abspath(dataset_location)
@@ -42,19 +44,24 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_fi
     assert os.path.isdir(output_dir)
 
     seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location)
+    flag_augmented = [False] * len(seqs)
     
     if data_augmentation_size != 1:
         if labels_to_use != []:
             seqs = pick_labels(dataset_type, seqs, labels_to_use)
         augmentation_magnification = 1.2
-        seqs, key_to_str = augment_data(seqs, key_to_str, augmentation_magnification,
-                                        rand_uniform=True,
-                                        num_normaldist_ave=data_augmentation_size - 2)
+        seqs, key_to_str, flag_augmented = augment_data(seqs, key_to_str,
+                                                        augmentation_magnification,
+                                                        rand_uniform=True,
+                                                        num_normaldist_ave=data_augmentation_size - 2)
     
     sample_names = list(seqs.keys())
 
     start = time.time()
-    gram = gak.gram_gak(list(seqs.values()), sigma, triangular, drop_rate, num_process)
+    gram = gak.gram_gak(list(seqs.values()), sigma, triangular,
+                        num_process=num_process,
+                        drop_rate_between_augmenteds=drop_rate_between_augmenteds,
+                        flag_augmented=flag_augmented)
     end = time.time()
 
     output_filename_format = output_filename_format.replace("${sigma}", str(sigma))\

@@ -62,7 +62,10 @@ def calculate_gak_triangular(seqs):
     triangular = np.median([len(seq) for seq in seqs]) * 0.5
     return triangular
 
-def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, num_process=4):
+def gram_gak(seqs, sigma=None, triangular=None,
+             num_process=4,
+             drop_rate_between_augmenteds=0,
+             flag_augmented=None):
     """TGA Gram matrix computation for a list of time series.
 
     :param seqs: List of time series to be processed
@@ -80,8 +83,8 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, num_process=4):
     if triangular is None:
         triangular = calculate_gak_triangular(seqs)
 
-    l = len(seqs)
-    gram = -1 * np.ones((l, l), dtype=np.float32)
+    num_seq = len(seqs)
+    gram = -1 * np.ones((num_seq, num_seq), dtype=np.float32)
 
     num_gak_per_job = 10000
     num_finished_gak = 0
@@ -91,10 +94,23 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, num_process=4):
     list_duration_time = []
     num_eta_calculation_resource = 5
     """
-    
-    job_gen = job_generator(l, num_gak_per_job, drop_rate)
-    num_gak = (l + 1) * l / 2
-    num_gak = int(num_gak * (1 - drop_rate))
+
+    job_gen = job_generator(num_seq, num_gak_per_job,
+                            drop_rate_between_augmenteds, flag_augmented)
+    num_gak = (num_seq + 1) * num_seq / 2
+    if drop_rate_between_augmenteds != 0:
+        num_augmented_seqs = sum(flag_augmented)
+        num_original_seqs = num_seq - num_augmented_seqs
+        num_gak_between_originals = (num_original_seqs + 1) * num_original_seqs / 2
+        num_gak_between_original_and_augmented = num_original_seqs * num_augmented_seqs
+        num_gak_between_augmenteds = num_gak - num_gak_between_originals\
+                                     - num_gak_between_original_and_augmented
+        num_gak_between_augmenteds = int(num_gak_between_augmenteds * \
+                                         (1 - drop_rate_between_augmenteds))
+        num_gak = num_gak_between_originals +\
+                  num_gak_between_original_and_augmented +\
+                  num_gak_between_augmenteds
+
     print("using %d multi processes." % num_process)
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=num_process) as executor:
@@ -122,26 +138,17 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, num_process=4):
 
                 num_finished_gak += len(worker_result)
 
-                """
-                prev_time = current_time
-                current_time = time.time()
-                duration_time = current_time - prev_time
-                list_duration_time.append(duration_time)
-
-                running_time = sum(list_duration_time)
-                recent_running_time = sum(list_duration_time[-num_eta_calculation_resource:])
-                num_involved_jobs_in_recent_running_time = min(len(list_duration_time),
-                                                               num_eta_calculation_resource)\
-                                                               * len(worker_result)
-                eta = recent_running_time / num_involved_jobs_in_recent_running_time\
-                      * (num_gak - num_finished_gak)
-                """
                 running_time = time.time() - start_time
                 eta = running_time / num_finished_gak\
                       * (num_gak - num_finished_gak)
 
-                print("[%d/%d], %ds, ETA:%ds" % (num_finished_gak, num_gak,
-                                                 running_time, eta)\
+                sec = eta % 60
+                minu = (eta // 60) % 60
+                hour = (eta // (60 * 60)) % 24
+                day = eta // (60 * 60 * 24)
+                print("[%d/%d], %ds, ETA:%dd:%dh:%dm:%ds" % (num_finished_gak, num_gak,
+                                                             running_time,
+                                                             day, hour, minu, sec)\
                       + " " * 30, end='\r')
     print("[%d/%d], %ds" % (num_finished_gak, num_gak, running_time) + " " * 30)
 
@@ -152,12 +159,19 @@ def gram_gak(seqs, sigma=None, triangular=None, drop_rate=0, num_process=4):
     
     return gram
 
-def job_generator(l, num_gak_per_job, drop_rate):
+def job_generator(l, num_gak_per_job,
+                  drop_rate_between_augmenteds,
+                  flag_augmented):
+    if drop_rate_between_augmenteds != 0:
+        assert flag_augmented != None
+        assert len(flag_augmented) == l
     job = []
     for i in range(l):
         for j in range(i + 1):
-            if np.random.rand() < drop_rate:
-                continue
+            if flag_augmented != None:
+                if flag_augmented[i] and flag_augmented[j]:
+                    if np.random.rand() < drop_rate_between_augmenteds:
+                        continue
             job.append((i, j))
             if len(job) == num_gak_per_job:
                 yield job
