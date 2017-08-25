@@ -47,6 +47,7 @@ def calculate_gak_sigma(seqs):
     seq_ts_diff_norms = np.sqrt(np.sum(np.square(seq_ts[:, None, :] - seq_ts[None, :, :]), axis=-1))
     del seq_ts
     sigma = np.median(seq_ts_diff_norms) * np.median([len(seq) for seq in seqs]) * 5.
+
     del seq_ts_diff_norms
     return sigma
 
@@ -64,8 +65,7 @@ def calculate_gak_triangular(seqs):
 
 def gram_gak(seqs, sigma=None, triangular=None,
              num_process=4,
-             drop_rate_between_augmenteds=0,
-             flag_augmented=None):
+             drop_flag_matrix=None):
     """TGA Gram matrix computation for a list of time series.
 
     :param seqs: List of time series to be processed
@@ -86,7 +86,7 @@ def gram_gak(seqs, sigma=None, triangular=None,
     num_seq = len(seqs)
     gram = -1 * np.ones((num_seq, num_seq), dtype=np.float32)
 
-    num_gak_per_job = 10000
+    num_gak_per_job = 1000
     num_finished_gak = 0
     start_time = time.time()
     """
@@ -96,20 +96,12 @@ def gram_gak(seqs, sigma=None, triangular=None,
     """
 
     job_gen = job_generator(num_seq, num_gak_per_job,
-                            drop_rate_between_augmenteds, flag_augmented)
+                            drop_flag_matrix=drop_flag_matrix)
     num_gak = (num_seq + 1) * num_seq / 2
-    if drop_rate_between_augmenteds != 0:
-        num_augmented_seqs = sum(flag_augmented)
-        num_original_seqs = num_seq - num_augmented_seqs
-        num_gak_between_originals = (num_original_seqs + 1) * num_original_seqs / 2
-        num_gak_between_original_and_augmented = num_original_seqs * num_augmented_seqs
-        num_gak_between_augmenteds = num_gak - num_gak_between_originals\
-                                     - num_gak_between_original_and_augmented
-        num_gak_between_augmenteds = int(num_gak_between_augmenteds * \
-                                         (1 - drop_rate_between_augmenteds))
-        num_gak = num_gak_between_originals +\
-                  num_gak_between_original_and_augmented +\
-                  num_gak_between_augmenteds
+    print(num_gak)
+    if drop_flag_matrix is not None:
+        num_gak = num_seq ** 2 - sum([sum(m) for m in drop_flag_matrix])
+    print(num_gak)
 
     print("using %d multi processes." % num_process)
 
@@ -150,7 +142,12 @@ def gram_gak(seqs, sigma=None, triangular=None,
                                                              running_time,
                                                              day, hour, minu, sec)\
                       + " " * 30, end='\r')
-    print("[%d/%d], %ds" % (num_finished_gak, num_gak, running_time) + " " * 30)
+    sec = running_time % 60
+    minu = (running_time // 60) % 60
+    hour = (running_time // (60 * 60)) % 24
+    day = running_time // (60 * 60 * 24)
+    print("[%d/%d], %dd:%dh:%dm:%ds" % (num_finished_gak, num_gak,
+                                        day, hour, minu, sec) + " " * 30)
 
     for i in range(len(gram)):
         for j in range(len(gram[0])):
@@ -160,18 +157,13 @@ def gram_gak(seqs, sigma=None, triangular=None,
     return gram
 
 def job_generator(l, num_gak_per_job,
-                  drop_rate_between_augmenteds,
-                  flag_augmented):
-    if drop_rate_between_augmenteds != 0:
-        assert flag_augmented != None
-        assert len(flag_augmented) == l
+                  drop_flag_matrix=None):
     job = []
     for i in range(l):
         for j in range(i + 1):
-            if flag_augmented != None:
-                if flag_augmented[i] and flag_augmented[j]:
-                    if np.random.rand() < drop_rate_between_augmenteds:
-                        continue
+            if drop_flag_matrix is not None:
+                if drop_flag_matrix[i, j]:
+                    continue
             job.append((i, j))
             if len(job) == num_gak_per_job:
                 yield job

@@ -8,7 +8,7 @@ from algorithms import gak
 from datasets import others
 from datasets.read_sequences import read_sequences, pick_labels
 from utils import file_utils
-from datasets.data_augmentation import augment_data
+from datasets.data_augmentation import augment_data, create_drop_flag_matrix
 
 ex = Experiment('calculate_gram_matrix')
 
@@ -54,14 +54,15 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir,
                                                         augmentation_magnification,
                                                         rand_uniform=True,
                                                         num_normaldist_ave=data_augmentation_size - 2)
+    drop_flag_matrix = create_drop_flag_matrix(drop_rate_between_augmenteds,
+                                               flag_augmented)
     
     sample_names = list(seqs.keys())
 
     start = time.time()
     gram = gak.gram_gak(list(seqs.values()), sigma, triangular,
                         num_process=num_process,
-                        drop_rate_between_augmenteds=drop_rate_between_augmenteds,
-                        flag_augmented=flag_augmented)
+                        drop_flag_matrix=drop_flag_matrix)
     end = time.time()
 
     output_filename_format = output_filename_format.replace("${sigma}", str(sigma))\

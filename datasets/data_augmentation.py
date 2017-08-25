@@ -193,6 +193,18 @@ def main():
             file_utils.save_pickle(f_path, dic)
         i += 1
 
+def create_drop_flag_matrix(drop_rate_between_augmenteds,
+                            flag_augmented):
+    num_seq = len(flag_augmented)
+    matrix = np.ones((num_seq, num_seq), dtype=np.float16)
+    for i in range(num_seq):
+        for j in range(i + 1):
+            if flag_augmented[i] and flag_augmented[j]:
+                if np.random.rand() < drop_rate_between_augmenteds:
+                    continue
+            matrix[i, j] = 0
+    return matrix
+        
 if __name__ == "__main__":
     main()
 
