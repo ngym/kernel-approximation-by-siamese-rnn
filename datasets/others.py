@@ -6,7 +6,7 @@ GET_LABEL = dict.fromkeys(["6DMG", "6DMGupperChar", "upperChar"], lambda fn: fn.
 GET_LABEL["UCIcharacter"] = lambda str: str[0]
 GET_LABEL["UCIauslan"] = lambda fn: fn.split('/')[-1].split('-')[0]
 
-GET_SAMPLE_NAME = dict.fromkeys(["6DMG", "6DMGupperChar", "upperChar"], lambda fn: fn.split('/')[-1])
+GET_SAMPLE_NAME = dict.fromkeys(["6DMG", "6DMGupperChar", "upperChar"], lambda fn: fn.split('/')[-1].replace('.mat', ''))
 GET_SAMPLE_NAME["UCIcharacter"] = lambda str: str
 GET_SAMPLE_NAME["UCIauslan"] = lambda fn: os.path.join(*fn.split('/')[-2:])
 
