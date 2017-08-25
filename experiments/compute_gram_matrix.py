@@ -46,8 +46,8 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir, output_fi
     if data_augmentation_size != 1:
         if labels_to_use != []:
             seqs = pick_labels(dataset_type, seqs, labels_to_use)
-        length = int(max([len(seq) for seq in seqs.values()]) * 1.05)
-        seqs, key_to_str = augment_data(seqs, key_to_str, length,
+        augmentation_magnification = 1.2
+        seqs, key_to_str = augment_data(seqs, key_to_str, augmentation_magnification,
                                         rand_uniform=True,
                                         num_normaldist_ave=data_augmentation_size - 2)
     
