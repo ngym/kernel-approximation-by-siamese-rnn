@@ -1,7 +1,7 @@
 import json
 
 import pickle
-
+import h5py
 
 def load_pickle(filename):
     file = open(filename, 'rb')
@@ -108,3 +108,48 @@ def save_analysis(filename, drop_count, calculated_count,
     analysis_json['relative_error_of_dropped_elements'] = re_dropped
 
     save_json(filename, analysis_json)
+
+
+
+
+
+##################
+#      HDF5      #
+##################
+
+def load_hdf5(filename):
+    dic = {}
+    with h5py.File(filename, 'r') as hdf5_value:
+        for k, v in hdf5_value.items():
+            dic[k] = load_hdf5_rec(v)
+    return dic
+
+def load_hdf5_rec(hdf5_obj):
+    if isinstance(hdf5_obj, h5py.Group):
+        dic = {}
+        for k, v in hdf5_obj.items():
+            dic[k] = load_hdf5_rec(v)
+        return dic
+    elif isinstance(hdf5_obj, h5py.Dataset):
+        return hdf5_obj.value
+    else:
+        assert False
+
+def save_hdf5(filename, dic):
+    file = h5py.File(filename, 'w')
+    for k, v in dic.items():
+        save_hdf5_rec(file, k, v)
+    file.flush()
+    file.close()
+
+def save_hdf5_rec(hdf5_obj, key, dic_or_value):
+    if isinstance(dic_or_value, dict):
+        hdf5_obj.create_group(key)
+        for k, v in dic_or_value.items():
+            save_hdf5_rec(hdf5_obj[key], k, v)
+    else:
+        hdf5_obj.create_dataset(key, data=dic_or_value)
+
+
+
+    
