@@ -1,6 +1,9 @@
+import sys, os
 import unittest
 import numpy as np
-import utils.file_utils as fu
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from utils import file_utils as fu
 
 class TestFileUtilHDF5(unittest.TestCase):
     def setUp(self):
@@ -8,7 +11,8 @@ class TestFileUtilHDF5(unittest.TestCase):
         arr = np.arange(length ** 2)
         arr.resize((length, length))
         name_string = "name_string"
-        self.dic = dict(dic=dict(arr=arr), name_string=name_string)
+        num = 5
+        self.dic = dict(dic=dict(arr=arr), name_string=name_string, num=num)
     def test_save_and_load_hdf5(self):
         filename = "test.hdf5"
         fu.save_hdf5(filename, self.dic)
