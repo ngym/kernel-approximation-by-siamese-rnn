@@ -7,16 +7,20 @@ from utils import file_utils as fu
 
 class TestFileUtilHDF5(unittest.TestCase):
     def setUp(self):
-        length = 6501 * 8
+        length = 20 * 8
         arr = np.arange(length ** 2)
         arr.resize((length, length))
         name_string = "name_string"
         num = 5
-        self.dic = dict(dic=dict(arr=arr), name_string=name_string, num=num)
+        list_string = ["asdf", ["poiu", "hoge"]]
+        self.dic = dict(dic=dict(arr=arr), name_string=name_string, num=num,
+                        list_string=list_string)
     def test_save_and_load_hdf5(self):
         filename = "test.hdf5"
         fu.save_hdf5(filename, self.dic)
         dic = fu.load_hdf5(filename)
+        print(dic)
+        print(self.dic)
         self.__test_save_and_load_hdf5_rec(dic, self.dic)
     def __test_save_and_load_hdf5_rec(self, dic_loaded, dic_orig):
         for k in dic_loaded:
