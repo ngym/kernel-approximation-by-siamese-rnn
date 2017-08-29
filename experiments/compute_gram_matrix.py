@@ -20,6 +20,7 @@ def cfg():
     triangular  = None
     drop_rate_between_augmenteds = 0
     num_process = 4
+    hdf5 = False
 
 @ex.named_config
 def upperChar():
@@ -36,7 +37,7 @@ def UCIauslan():
 @ex.automain
 def run(dataset_type, dataset_location, sigma, triangular, output_dir,
         output_filename_format, labels_to_use, data_augmentation_size,
-        drop_rate_between_augmenteds, num_process):
+        drop_rate_between_augmenteds, num_process, hdf5):
     assert others.is_valid_dataset_type(dataset_type)
 
     dataset_location = os.path.abspath(dataset_location)
@@ -67,9 +68,11 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir,
 
     output_filename_format = output_filename_format.replace("${sigma}", str(sigma))\
                                                    .replace("${triangular}", str(triangular))
-    
-    log_file = os.path.join(output_dir, output_filename_format + ".pkl")
-    file_utils.save_new_result(log_file, dataset_type, gram, sample_names)
+    if hdf5:
+        log_file = os.path.join(output_dir, output_filename_format + ".hdf5")
+    else:
+        log_file = os.path.join(output_dir, output_filename_format + ".pkl")
+    file_utils.save_new_result(log_file, dataset_type, gram, sample_names, hdf5=hdf5)
 
     timelog = log_file.replace(".pkl", ".timelog")
     duration = end - start

@@ -35,8 +35,10 @@ def save_new_result(filename, dataset_type, gram, sample_names,
                sample_names=sample_names,
                log=["made by GAK"])
     if hdf5:
+        print("save result in hdf5.")
         save_hdf5(filename, dic)
     else:
+        print("save result in pickle.")
         save_pickle(filename, dic)
 
 

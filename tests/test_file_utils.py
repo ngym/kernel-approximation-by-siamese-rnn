@@ -12,9 +12,9 @@ class TestFileUtilHDF5(unittest.TestCase):
         arr.resize((length, length))
         name_string = "name_string"
         num = 5
-        list_string = ["asdf", ["poiu", "hoge"]]
-        self.dic = dict(dic=dict(arr=arr), name_string=name_string, num=num,
-                        list_string=list_string)
+        list_string = ["asdf", ["poiu", dict(arr=arr)]]
+        self.dic = dict(dic=dict(name_string=name_string, num=num,
+                        list_string=list_string))
     def test_save_and_load_hdf5(self):
         filename = "test.hdf5"
         fu.save_hdf5(filename, self.dic)
@@ -23,11 +23,19 @@ class TestFileUtilHDF5(unittest.TestCase):
         print(self.dic)
         self.__test_save_and_load_hdf5_rec(dic, self.dic)
     def __test_save_and_load_hdf5_rec(self, dic_loaded, dic_orig):
+        i = 0
         for k in dic_loaded:
+            if isinstance(dic_loaded, list):
+                k = i
+                i += 1
+            print(type(dic_loaded))
             if isinstance(dic_loaded[k], np.ndarray):
                 self.assertTrue(np.all(dic_loaded[k] == dic_orig[k]))
             elif isinstance(dic_loaded[k], dict):
                 self.assertTrue(isinstance(dic_orig[k], dict))
+                self.__test_save_and_load_hdf5_rec(dic_loaded[k], dic_orig[k])
+            elif isinstance(dic_loaded[k], list):
+                self.assertTrue(isinstance(dic_orig[k], list))
                 self.__test_save_and_load_hdf5_rec(dic_loaded[k], dic_orig[k])
             else:
                 self.assertEqual(dic_loaded[k], dic_orig[k])
