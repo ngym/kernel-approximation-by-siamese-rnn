@@ -70,11 +70,12 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir,
                                                    .replace("${triangular}", str(triangular))
     if hdf5:
         log_file = os.path.join(output_dir, output_filename_format + ".hdf5")
+        timelog = log_file.replace(".hdf5", ".timelog")
     else:
         log_file = os.path.join(output_dir, output_filename_format + ".pkl")
+        timelog = log_file.replace(".pkl", ".timelog")
     file_utils.save_new_result(log_file, dataset_type, gram, sample_names, hdf5=hdf5)
 
-    timelog = log_file.replace(".pkl", ".timelog")
     duration = end - start
     num_samples = len(sample_names)
     time_fd = open(timelog, 'w')
