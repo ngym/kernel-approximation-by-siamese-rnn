@@ -101,27 +101,31 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 
 
 @ex.automain
-def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
+def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         algorithm, params, output_dir, output_filename_format,
-        data_augmentation_size):
+        labels_to_use, data_augmentation_size):
     check_fold(fold_count, fold_to_drop)
     check_algorithm(algorithm)
     check_params(algorithm, params)
 
-    pickle_location = os.path.abspath(pickle_location)
+    pickle_or_hdf5_location = os.path.abspath(pickle_or_hdf5_location)
     dataset_location = os.path.abspath(dataset_location)
     output_dir = os.path.abspath(output_dir)
     assert os.path.isdir(output_dir)
-    assert os.path.exists(pickle_location)
+    assert os.path.exists(pickle_or_hdf5_location)
 
     main_start = time.time()
 
-    pkl = file_utils.load_pickle(pickle_location)
-    check_pickle_format(pkl)
+    hdf5 = pickle_or_hdf5_location[-4:] == "hdf5"
+    if hdf5:
+        loaded_data = file_utils.load_hdf5(pickle_or_hdf5_location)
+    else:
+        loaded_data = file_utils.load_pickle(pickle_or_hdf5_location)
+        check_pickle_format(loaded_data)
 
-    dataset_type = pkl['dataset_type']
-    sample_names = [s.split('/')[-1] for s in pkl['sample_names']]
-    gram_matrices = pkl['gram_matrices']
+    dataset_type = loaded_data['dataset_type']
+    sample_names = [s.split('/')[-1] for s in loaded_data['sample_names']]
+    gram_matrices = loaded_data['gram_matrices']
     if len(gram_matrices) == 1:
         gram = gram_matrices[0]['original']
     else:
@@ -132,14 +136,16 @@ def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
     indices_to_drop = folds[fold_to_drop - 1]
     gram_drop, dropped_elements = make_matrix_incomplete.gram_drop_samples(gram, indices_to_drop)
 
-    seqs = OrderedDict((k, v) for k, v in read_sequences(dataset_type, direc=dataset_location)[0].items()
-                       if k in sample_names)
+    seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location)
     
     if data_augmentation_size != 1:
-        length = int(max([len(seq) for seq in seqs.values()]) * 1.2)
-        seqs = augment_data(seqs, length,
-                            rand_uniform=True,
-                            num_normaldist_ave=data_augmentation_size - 2)
+        if labels_to_use != []:
+            seqs = pick_labels(dataset_type, seqs, labels_to_use)
+        augmentation_magnification = 1.2
+        seqs, key_to_str, flag_augmented = augment_data(seqs, key_to_str,
+                                                        augmentation_magnification,
+                                                        rand_uniform=True,
+                                                        num_normaldist_ave=data_augmentation_size - 2)
 
     train_start = None
     train_end = None
@@ -155,7 +161,10 @@ def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
             = matrix_completion.softimpute_matrix_completion(gram_drop)
         action = "Softimpute"
     elif algorithm == "rnn":
-        logfile_hdf5 = pickle_location.replace(".pkl", ".hdf5")
+        if hdf5:
+            logfile_hdf5 = pickle_or_hdf5_location.replace(".hdf5", "_rnn_model.hdf5")
+        else:
+            logfile_hdf5 = pickle_or_hdf5_location.replace(".pkl", "_nrr_model.hdf5")
         logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
         gram_completed, train_start, train_end, completion_start, completion_end \
             = matrix_completion.rnn_matrix_completion(gram_drop, list(seqs.values()),
@@ -169,6 +178,22 @@ def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
                                                       params['batchnormalization'],
                                                       mode=params['mode'])
         action = "SiameseRNN"
+    elif algorithm == "kss":
+        
+        logfile_hdf5 = pickle_or_hdf5_location.replace(".pkl", ".hdf5")
+        logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
+        gram_completed, train_start, train_end, completion_start, completion_end \
+            = matrix_completion.kss_matrix_completion(gram_drop, list(seqs.values()),
+                                                      params['epochs'], params['patience'],
+                                                      logfile_loss, logfile_hdf5,
+                                                      params['rnn'],
+                                                      params['rnn_units'], params['dense_units'],
+                                                      params['dropout'],
+                                                      params['implementation'],
+                                                      params['bidirectional'],
+                                                      params['batchnormalization'],
+                                                      mode=params['mode'])
+        action = "KSS"
     else:
         assert False
 
@@ -178,10 +203,13 @@ def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
     npsd_end = time.time()
 
     # save results
-    log_file = os.path.join(output_dir, output_filename_format + ".pkl")
+    if hdf5:
+        log_file = os.path.join(output_dir, output_filename_format + ".hdf5")
+    else:
+        log_file = os.path.join(output_dir, output_filename_format + ".pkl")
     action += " " + time.asctime(time.localtime())
-    file_utils.append_and_save_result(log_file, pkl, gram_drop, gram_completed, gram_completed_npsd, indices_to_drop,
-                                      action)
+    file_utils.append_and_save_result(log_file, loaded_data, gram_drop, gram_completed, gram_completed_npsd, indices_to_drop,
+                                      action, hdf5=hdf5)
 
     # claculate errors
     mse, mse_dropped, mae, mae_dropped, re, re_dropped = calculate_errors(gram, gram_completed_npsd, dropped_elements)
@@ -189,9 +217,16 @@ def run(seed, pickle_location, dataset_location, fold_count, fold_to_drop,
     main_end = time.time()
 
     # save run times and errors
-    analysis_file = log_file.replace(".pkl", ".json")
+    if hdf5:
+        analysis_file = log_file.replace(".hdf5", ".json")
+    else:
+        analysis_file = log_file.replace(".pkl", ".json")
     num_calculated_elements = len(dropped_elements) - len(indices_to_drop) // 2
     file_utils.save_analysis(analysis_file, len(dropped_elements), num_calculated_elements,
                              completion_start, completion_end, npsd_start, npsd_end, main_start, main_end,
                              mse, mse_dropped, mae, mae_dropped, re, re_dropped,
                              train_start=train_start, train_end=train_end)
+
+
+
+    
