@@ -132,9 +132,12 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         gram = gram_matrices[-1]['completed_npsd']
 
     # drop elements
-    folds = k_fold_cross_validation.get_kfolds(dataset_type, sample_names, fold_count)
-    indices_to_drop = folds[fold_to_drop - 1]
-    gram_drop, dropped_elements = make_matrix_incomplete.gram_drop_samples(gram, indices_to_drop)
+    if fold_count == 0:        
+        gram_drop = gram
+    else:
+        folds = k_fold_cross_validation.get_kfolds(dataset_type, sample_names, fold_count)
+        indices_to_drop = folds[fold_to_drop - 1]
+        gram_drop, dropped_elements = make_matrix_incomplete.gram_drop_samples(gram, indices_to_drop)
 
     seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location)
     
