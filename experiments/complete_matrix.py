@@ -59,8 +59,8 @@ def check_algorithm(algorithm):
 
 
 @ex.capture
-def check_fold(fold_count, fold_to_drop):
-    assert 1 < fold_count and 0 < fold_to_drop <= fold_count
+def check_fold(fold_count, fold_to_drop, hdf5):
+    assert (1 < fold_count and 0 < fold_to_drop <= fold_count) or hdf5
 
 
 @ex.capture
@@ -104,7 +104,8 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         algorithm, params, output_dir, output_filename_format,
         labels_to_use, data_augmentation_size):
-    check_fold(fold_count, fold_to_drop)
+    hdf5 = pickle_or_hdf5_location[-4:] == "hdf5"
+    check_fold(fold_count, fold_to_drop, hdf5)
     check_algorithm(algorithm)
     check_params(algorithm, params)
 
