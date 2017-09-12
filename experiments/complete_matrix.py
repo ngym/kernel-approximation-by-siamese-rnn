@@ -168,7 +168,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         if hdf5:
             logfile_hdf5 = pickle_or_hdf5_location.replace(".hdf5", "_rnn_model.hdf5")
         else:
-            logfile_hdf5 = pickle_or_hdf5_location.replace(".pkl", "_nrr_model.hdf5")
+            logfile_hdf5 = pickle_or_hdf5_location.replace(".pkl", "_rnn_model.hdf5")
         logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
         gram_completed, train_start, train_end, completion_start, completion_end \
             = matrix_completion.rnn_matrix_completion(gram_drop, list(seqs.values()),
@@ -183,7 +183,6 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                                                       mode=params['mode'])
         action = "SiameseRNN"
     elif algorithm == "kss":
-        
         logfile_hdf5 = pickle_or_hdf5_location.replace(".pkl", ".hdf5")
         logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
         gram_completed, train_start, train_end, completion_start, completion_end \
