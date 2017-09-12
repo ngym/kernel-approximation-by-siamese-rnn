@@ -60,7 +60,7 @@ def check_algorithm(algorithm):
 
 @ex.capture
 def check_fold(fold_count, fold_to_drop, hdf5):
-    assert (1 < fold_count and 0 < fold_to_drop <= fold_count) or hdf5
+    assert (0 <= fold_to_drop <= fold_count) or hdf5
 
 
 @ex.capture
