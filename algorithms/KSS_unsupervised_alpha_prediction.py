@@ -22,7 +22,7 @@ from utils import multi_gpu
 from rnn import Rnn
 from algorithms.kernel_group_lasso import kernel_group_lasso
 
-class Columnar_network(Rnn):
+class unsupervised_alpha_prediction_network(Rnn):
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization,
                  gram, size_groups, lmbd):
