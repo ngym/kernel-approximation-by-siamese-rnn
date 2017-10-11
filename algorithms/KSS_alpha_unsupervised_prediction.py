@@ -4,11 +4,19 @@ import numpy as np
 
 import keras.backend as K
 from keras.models import Sequential, Model
-from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.callbacks import ModelCheckpoint, EarlyStopping, Callback
 from keras.layers import Dense, Dropout, Input, SimpleRNN, LSTM, GRU, Masking, Activation, BatchNormalization
 from keras.optimizers import Adam
 from keras.layers.wrappers import Bidirectional
 from keras.layers.merge import Concatenate
+
+import keras.initializers as initializers
+import keras.regularizers as regularizers
+import keras.constraints as constraints
+from keras.legacy import interfaces
+from keras.engine import Layer, InputSpec
+
+import tensorflow as tf
 
 from utils import multi_gpu
 from rnn import Rnn
@@ -17,7 +25,7 @@ from algorithms.kernel_group_lasso import kernel_group_lasso
 class Columnar_network(Rnn):
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization,
-                 lmbd, size_groups):
+                 gram, size_groups, lmbd):
         """
         :param input_shape: Keras input shape
         :param pad_value: Padding value to be skipped among time steps
@@ -41,15 +49,15 @@ class Columnar_network(Rnn):
         super().__init__(input_shape, pad_value, rnn_units, dense_units,
                          rnn, dropout, implementation,
                          bidirectional, batchnormalization)
-        self.model = self.__create_RNN_columnar_network()
-        
+        self.model = self.__create_RNN_columnar_network(gram, size_groups)
+
         self.hyperparams = {'lambda_start': lmbd / 10.,
                             'lambda_end': lmbd,
                             'end_epoch': 15}
 
         self.size_groups = size_groups
-        
-    def __create_RNN_columnar_network(self):
+
+    def __create_RNN_columnar_network(self, gram, size_groups):
         """
 
         :return: Keras Deep RNN Siamese network
@@ -59,7 +67,7 @@ class Columnar_network(Rnn):
                                                         end=self.hyperparams['lambda_end'],
                                                         end_epoch=self.hyperparams['end_epoch'])
         
-        base_network = self.__create_RNN_base_network()
+        base_network = self.create_RNN_base_network()
         input_ = Input(shape=self.input_shape)
         processed = base_network(input_)
         parent = Dense(units=1, use_bias=False
@@ -73,14 +81,16 @@ class Columnar_network(Rnn):
         optimizer = Adam(clipnorm=1.)
         if self.gpu_count > 1:
             model = multi_gpu.make_parallel(model, self.gpu_count)
-        model.compile(loss=, optimizer=optimizer)
+
+        loss_function = KSS_Loss(gram, size_groups, self.sparse_rate_callback.var)
+
+        model.compile(loss=loss_function, optimizer=optimizer)
 
         return model
 
-    def train_and_validate(self, trval_indices, 
+    def train_and_validate(self, trval_indices,
                            seqs,
                            alphas,
-                           
                            epochs,
                            patience,
                            logfile_hdf5):
@@ -103,24 +113,24 @@ class Columnar_network(Rnn):
         """
         trval_x = seqs[trval_indices]
         trval_y = alphas[trval_indices]
-    
+
         tr_start = time.time()
-        
+
         batch_size = 1024 * self.gpu_count
-        
+
         mcp = ModelCheckpoint(filepath=logfile_hdf5, verbose=1, save_best_only=True)
         er = EarlyStopping(monitor='val_loss', min_delta=0, patience=patience,
                            verbose=0, mode='auto')
         callbacks = [mcp, er, self.sparse_rate_callback]
-        
+
         self.model.fit(trval_x, trval_y, batch_size=batch_size,
                        verbose=2, epochs=epochs,
                        validation_split=0.1, shuffle=True,
                        callbacks=callbacks)
-        
+
         tr_end = time.time()
         return tr_start, tr_end
-                
+
     def predict(self, te_indices, seqs):
         """Keras Siamese RNN prediction function.
         Carries out predicting for given data
@@ -136,12 +146,12 @@ class Columnar_network(Rnn):
         :rtype: np.ndarrays
         """
         te_x = seqs[te_indices]
-        
+
         # prediction
         pred_start = time.time()
         pred = self.model.predict(te_x)
         pred_end = time.time()
-    
+
         return pred, pred_start, pred_end
 
 class SoftThresholdingLayer(Layer):
@@ -282,9 +292,10 @@ class GroupSoftThresholdingLayer(Layer):
 
     def call(self, inputs, mask=None):
         inputs_permute = K.permute_dimensions(inputs, [len(inputs.shape) - 1] + list(range(len(inputs.shape) - 1)))
-        input_g = [inputs_permute[s:e] for (s, e) in zip(np.concatenate([np.array([0]), cumsum[:-1]]), cumsum)]
+        input_g = [inputs_permute[s:e] for (s, e) in zip(np.concatenate([np.array([0]), self.cumsum[:-1]]), self.cumsum)]
         input_g_norm = [K.sqrt(K.sum(K.square(g), keepdims=True) + K.epsilon()) for g in input_g]
-        input_g_thres = [g / nrm * K.relu(nrm - t) for (g, nrm, t) in zip(input_g, input_g_norm, self.theta)]
+        input_g_thres = [g / nrm * K.relu(nrm - t) for (g, nrm, t)
+                         in zip(input_g, input_g_norm, self.theta)]
         outputs = K.permute_dimensions(input_g_thres, list(range(1, len(inputs.shape))) + [0])
         return outputs
 
@@ -297,9 +308,6 @@ class GroupSoftThresholdingLayer(Layer):
         base_config = super(GroupSoftThresholdingLayer, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
-########################
-# 
-
 class LambdaRateScheduler(Callback):
     '''Sparse rate scheduler.
     # Arguments
@@ -308,43 +316,38 @@ class LambdaRateScheduler(Callback):
             learning rate as output (float).
     '''
     def __init__(self, start, end, end_epoch):
-        super(SparseRateScheduler, self).__init__()
-        self.var = K.variable(start, dtype=K.floatX(), name='k')
+        super(LambdaRateScheduler, self).__init__()
+        self.var = K.variable(start, dtype=K.floatx(), name='k')
         self.start = start
         self.end = end
         self.end_epoch = end_epoch
 
     def on_epoch_begin(self, epoch, logs={}):
         l = np.min([epoch / self.end_epoch, 1.])
-        lmbd = np.round((1 - l) * self.start + l * self.end)
+        lmbd = (1 - l) * self.start + l * self.end
         K.set_value(self.var, lmbd)
-        print(self.var.get_value())
+        print(K.get_value(self.var))
 
-class kss_loss:
-    def __init__(self, gram, size_groups, ks):
+class KSS_Loss:
+    def __init__(self, gram, size_groups, lmbd):
         self.gram = gram
         self.size_groups = size_groups
-        self.ks = ks
-    def update_lmbd(self, lmbd):
         self.lmbd = lmbd
-    def __call__(self, y_true, y_pred):
-        i = 0
-        losses = []
-        ks =
-        cumsum = np.cumsum(size_groups)
-        for i in range(y_pred.shape[0]):
-            alpha = y_pred[i]
-            k = ks[i]
-            loss = (0.5 * alpha.T.dot(self.gram).dot(alpha)\
-                    - k.T.dot(alpha))\
-                    + self.lmbd * K.sum([K.sum(K.square(alpha[s:e]))
-                                         for (s, e)
-                                         in zip(np.concatenate([np.array([0]),
-                                                                cumsum[:-1]]),
-                                                cumsum)])
-                    )
-            losses.append(loss)
-        return K.mean(K.square(np.array(losses)), axis=-1)
+    def __call__(self, k_true, alpha_pred):
+        cumsum = np.cumsum(self.size_groups)
+
+        quad = K.batch_dot(K.dot(alpha_pred.T, self.gram),
+                           alpha_pred,
+                           axis=-1)
+        linear = K.batch_dot(k_true, alpha_pred, axis=-1)
+
+        reg = K.stack([K.sum([K.sum(K.square(a[s:e]))
+                              for (s, e)
+                              in zip(np.concatenate([np.array([0]),
+                                                     cumsum[:-1]]),
+                              cumsum)])
+                       for a in tf.unstack(alpha_pred)])
+        return .5 * quad - linear + self.lmbd * reg
 
 
 

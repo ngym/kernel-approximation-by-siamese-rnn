@@ -119,3 +119,18 @@ def gram_drop_in_samples_random(gram, indices, percent):
         indices_drop += indices_drop_i
     return gram_drop, indices_drop
 
+from collections import OrderedDict
+
+def trim_nan(gram_drop, seqs):
+    seqs = np.array(seqs)
+    to_remove = [i for i in range(len(gram_drop))
+                 if np.isnan(gram_drop[i][0])]
+    gram_drop = np.delete(gram_drop, to_remove, axis=0)
+    gram_drop = np.delete(gram_drop, to_remove, axis=1)
+    seqs = np.delete(seqs, to_remove, axis=0)
+    return gram_drop, seqs
+
+
+
+
+
