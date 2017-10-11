@@ -13,7 +13,8 @@ from algorithms.rnn import Rnn
 
 class SiameseRnn(Rnn):
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
-                 rnn, dropout, implementation, bidirectional, batchnormalization):
+                 rnn, dropout, implementation, bidirectional, batchnormalization,
+                 loss_function):
         """
         :param input_shape: Keras input shape
         :param pad_value: Padding value to be skipped among time steps
@@ -36,10 +37,12 @@ class SiameseRnn(Rnn):
         """
         super().__init__(input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization)
-        self.model = self.__create_RNN_siamese_network()
+        self.model = self.__create_RNN_siamese_network(loss_function)
 
-    def __create_RNN_siamese_network(self):
+    def __create_RNN_siamese_network(self, loss_function):
         """
+        :param loss_function: Name of loss function
+        :type loss_function: str
 
         :return: Keras Deep RNN Siamese network
         :rtype: keras.models.Model
@@ -60,15 +63,19 @@ class SiameseRnn(Rnn):
         optimizer = Adam(clipnorm=1.)
         if self.gpu_count > 1:
             model = multi_gpu.make_parallel(model, self.gpu_count)
-        model.compile(loss='mse', optimizer=optimizer)
+
+        loss_weights = None
+        model.compile(loss=loss_function, loss_weights=loss_weights, optimizer=optimizer)
 
         return model
 
     def train_and_validate(self, tr_indices, val_indices,
                            gram_drop,
                            seqs,
+                           labels,
                            epochs,
                            patience,
+                           loss_weight_ratio,
                            logfile_loss,
                            logfile_hdf5):
         """Keras Siamese RNN training function.
@@ -94,18 +101,19 @@ class SiameseRnn(Rnn):
         """
 
         def do_epoch(action, current_epoch, epoch_count,
-                     indices, gram_drop, seqs, log_file):
+                     indices, gram_drop, seqs, labels, loss_weight_ratio, log_file):
             processed_sample_count = 0
             average_loss = 0
             if action == "training":
                 np.random.shuffle(indices)
-            gen = self.__generator_sequence_pairs(indices, gram_drop, seqs)
+            gen = self.__generator_sequence_pairs(indices, gram_drop, seqs, labels,
+                                                  loss_weight_ratio)
             start = curr_time = time.time()
             current_batch_iteration = 0
             while processed_sample_count < len(indices):
                 # training batch
-                x, y = next(gen)
-                batch_loss = self.model.train_on_batch(x, y)
+                x, y, sample_weights = next(gen)
+                batch_loss = self.model.train_on_batch(x, y, sample_weight=sample_weights)
                 average_loss = (average_loss * processed_sample_count + batch_loss * y.shape[0]) / \
                                (processed_sample_count + y.shape[0])
                 processed_sample_count += y.shape[0]
@@ -155,11 +163,13 @@ class SiameseRnn(Rnn):
         for epoch in range(1, epochs + 1):
             # training
             _ = do_epoch("training", epoch, epochs,
-                         tr_indices, gram_drop, seqs, loss_file)
+                         tr_indices, gram_drop, seqs, labels, loss_weight_ratio, loss_file)
 
             # validation
             average_validation_loss = do_epoch("validation", epoch, epochs,
-                                               val_indices, gram_drop, seqs, loss_file)
+                                               tr_indices, gram_drop, seqs, labels,
+                                               loss_weight_ratio, loss_file)
+
 
             if average_validation_loss < best_validation_loss:
                 best_validation_loss = average_validation_loss
@@ -199,7 +209,7 @@ class SiameseRnn(Rnn):
             num_predicted_samples += preds_batch.shape[0]
         return np.array(preds)
 
-    def __generator_sequence_pairs(self, indices, gram_drop, seqs):
+    def __generator_sequence_pairs(self, indices, gram_drop, seqs, labels, loss_weight_ratio):
         """Siamese RNN data batch generator.
         Yields minibatches of 2 time series and their corresponding output value (Triangular Global Alignment kernel in our case)
 
@@ -217,10 +227,14 @@ class SiameseRnn(Rnn):
         input_0 = []
         input_1 = []
         y = []
+        sample_weights = []
+        base_weight = 1.0
         for i, j in indices_copy:
             input_0.append(seqs[i])
             input_1.append(seqs[j])
             y.append([gram_drop[i][j]])
+            
+            sample_weights.append(base_weight * (loss_weight_ratio if labels[i] == labels[j] else 1.0))
             if len(input_0) == batch_size:
                 yield ([np.array(input_0), np.array(input_1)], np.array(y))
                 input_0 = []

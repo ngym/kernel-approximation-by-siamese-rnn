@@ -77,12 +77,16 @@ def rnn_matrix_completion(gram_drop, seqs,
                           epochs, patience,
                           logfile_loss, logfile_hdf5,
                           rnn,
-                          rnn_units, dense_units,
+                          rnn_units,
+                          dense_units,
                           dropout,
                           implementation,
                           bidirectional,
                           batchnormalization,
-                          mode='train'):
+                          mode,
+                          loss_function,
+                          loss_weight_ratio,
+                          labels):
     """Fill in Gram matrix with dropped elements with Keras Siamese RNN.
     Trains the network on given part of Gram matrix and the corresponding sequences
     Fills in missing elements by network prediction
@@ -138,12 +142,13 @@ def rnn_matrix_completion(gram_drop, seqs,
 
     # build network
     model = siamese_rnn.SiameseRnn(input_shape, pad_value,
-                                  rnn_units, dense_units,
-                                  rnn,
-                                  dropout,
-                                  implementation,
-                                  bidirectional,
-                                  batchnormalization)
+                                   rnn_units, dense_units,
+                                   rnn,
+                                   dropout,
+                                   implementation,
+                                   bidirectional,
+                                   batchnormalization,
+                                   loss_function)
 
     # training
     # make 90% + 10% training validation random split
@@ -156,12 +161,14 @@ def rnn_matrix_completion(gram_drop, seqs,
     train_start = time.time()
     if mode == 'train':
         model.train_and_validate(train_indices, validation_indices,
-                           gram_drop,
-                           seqs,
-                           epochs,
-                           patience,
-                           logfile_loss,
-                           logfile_hdf5)
+                                 gram_drop,
+                                 seqs,
+                                 labels,
+                                 epochs,
+                                 patience,
+                                 loss_weight_ratio,
+                                 logfile_loss,
+                                 logfile_hdf5)
     elif mode == 'load_pretrained':
         print("load from hdf5 file: %s", logfile_hdf5)
         model.load_weights(logfile_hdf5)

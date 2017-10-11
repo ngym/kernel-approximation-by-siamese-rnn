@@ -15,6 +15,7 @@ from utils import make_matrix_incomplete
 
 from datasets.read_sequences import read_sequences, pick_labels
 from datasets.data_augmentation import augment_data
+from datasets.others import filter_samples
 
 ex = Experiment('complete_matrix')
 
@@ -42,6 +43,7 @@ def softimpute():
 @ex.named_config
 def rnn():
     algorithm = "rnn"
+    labels_to_use = []
     params = dict(epochs=100,
                   patience=2,
                   rnn="LSTM",
@@ -51,7 +53,9 @@ def rnn():
                   bidirectional=False,
                   batchnormalization=True,
                   implementation=1,
-                  mode="train") # mode="load_pretrained")
+                  mode="train", # mode="load_pretrained"
+                  loss_function='mse',
+                  loss_weight_ratio = 10.0)
 
 @ex.capture
 def check_algorithm(algorithm):
@@ -125,7 +129,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         check_pickle_format(loaded_data)
 
     dataset_type = loaded_data['dataset_type']
-    sample_names = [s.split('/')[-1] for s in loaded_data['sample_names']]
+    sample_names = [s.split('/')[-1].split('.')[0] for s in loaded_data['sample_names']]
     gram_matrices = loaded_data['gram_matrices']
     if len(gram_matrices) == 1:
         gram = gram_matrices[0]['original']
@@ -141,8 +145,10 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         gram_drop, dropped_elements = make_matrix_incomplete.gram_drop_samples(gram, indices_to_drop)
 
     seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location)
+    seqs = filter_samples(seqs, sample_names)
+    key_to_str = filter_samples(key_to_str, sample_names)
     
-    if data_augmentation_size != 1:
+    if data_augmentation_size > 1:
         if labels_to_use != []:
             seqs = pick_labels(dataset_type, seqs, labels_to_use)
         augmentation_magnification = 1.2
@@ -171,32 +177,23 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
             logfile_hdf5 = pickle_or_hdf5_location.replace(".pkl", "_rnn_model.hdf5")
         logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
         gram_completed, train_start, train_end, completion_start, completion_end \
-            = matrix_completion.rnn_matrix_completion(gram_drop, list(seqs.values()),
-                                                      params['epochs'], params['patience'],
+            = matrix_completion.rnn_matrix_completion(gram_drop,
+                                                      list(seqs.values()),
+                                                      params['epochs'],
+                                                      params['patience'],
                                                       logfile_loss, logfile_hdf5,
                                                       params['rnn'],
-                                                      params['rnn_units'], params['dense_units'],
+                                                      params['rnn_units'],
+                                                      params['dense_units'],
                                                       params['dropout'],
                                                       params['implementation'],
                                                       params['bidirectional'],
                                                       params['batchnormalization'],
-                                                      mode=params['mode'])
+                                                      params['mode'],
+                                                      params['loss_function'],
+                                                      params['loss_weight_ratio'],
+                                                      list(key_to_str.values()))
         action = "SiameseRNN"
-    elif algorithm == "kss":
-        logfile_hdf5 = pickle_or_hdf5_location.replace(".pkl", ".hdf5")
-        logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
-        gram_completed, train_start, train_end, completion_start, completion_end \
-            = matrix_completion.kss_matrix_completion(gram_drop, list(seqs.values()),
-                                                      params['epochs'], params['patience'],
-                                                      logfile_loss, logfile_hdf5,
-                                                      params['rnn'],
-                                                      params['rnn_units'], params['dense_units'],
-                                                      params['dropout'],
-                                                      params['implementation'],
-                                                      params['bidirectional'],
-                                                      params['batchnormalization'],
-                                                      mode=params['mode'])
-        action = "KSS"
     else:
         assert False
 
