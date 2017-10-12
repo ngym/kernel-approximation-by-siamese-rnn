@@ -46,8 +46,7 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir,
     output_dir = os.path.abspath(output_dir)
     assert os.path.isdir(output_dir)
 
-    seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location,
-                                         list_glob_arg=list_glob_arg)
+    seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location, list_glob_arg=list_glob_arg)
     flag_augmented = [False] * len(seqs)
     
     if data_augmentation_size != 1:
