@@ -240,5 +240,5 @@ class SiameseRnn(Rnn):
                 input_0 = []
                 input_1 = []
                 y = []
-        yield ([np.array(input_0), np.array(input_1)], np.array(y))
+        yield ([np.array(input_0), np.array(input_1)], np.array(y), sample_weights)
 
