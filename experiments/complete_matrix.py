@@ -80,7 +80,7 @@ def check_pickle_format(result_):
     result = list(result_.keys())
     assert "dataset_type" in result \
            and "gram_matrices" in result \
-           and "dropped_indices" in result \
+           and "drop_indices" in result \
            and "sample_names" in result \
            and "log" in result
 
