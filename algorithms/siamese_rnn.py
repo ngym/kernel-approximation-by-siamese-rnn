@@ -236,9 +236,9 @@ class SiameseRnn(Rnn):
             
             sample_weights.append(base_weight * (loss_weight_ratio if labels[i] == labels[j] else 1.0))
             if len(input_0) == batch_size:
-                yield ([np.array(input_0), np.array(input_1)], np.array(y), sample_weights)
+                yield ([np.array(input_0), np.array(input_1)], np.array(y), np.array(sample_weights))
                 input_0 = []
                 input_1 = []
                 y = []
-        yield ([np.array(input_0), np.array(input_1)], np.array(y), sample_weights)
+        yield ([np.array(input_0), np.array(input_1)], np.array(y), np.array(sample_weights))
 
