@@ -50,7 +50,9 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir,
         dataset_location = os.path.abspath(dataset_location)
         seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location)
     else:
-        seqs, key_to_str, _ = read_sequences(dataset_type, list_glob_arg=list_glob_arg)       
+        seqs, key_to_str, _ = read_sequences(dataset_type, list_glob_arg=list_glob_arg)
+
+    print("%d samples." % len(seqs))
     flag_augmented = [False] * len(seqs)
     
     if data_augmentation_size != 1:
