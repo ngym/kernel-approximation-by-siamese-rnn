@@ -20,7 +20,6 @@ def cfg():
 @ex.automain
 def run(pickle_or_hdf5_locations, regularization_costs, output_file):
     output_file = os.path.abspath(output_file)
-    pickle_or_hdf5_locations = glob.glob(pickle_or_hdf5_locations)
 
     dic = {}
     for pickle_or_hdf5_location in pickle_or_hdf5_locations:
