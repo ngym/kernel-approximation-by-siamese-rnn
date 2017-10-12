@@ -209,7 +209,7 @@ class SiameseRnn(Rnn):
             num_predicted_samples += preds_batch.shape[0]
         return np.array(preds)
 
-    def __generator_sequence_pairs(self, indices, gram_drop, seqs, labels, loss_weight_ratio):
+    def __generator_sequence_pairs(self, indices, gram_drop, seqs, labels=None, loss_weight_ratio=None):
         """Siamese RNN data batch generator.
         Yields minibatches of 2 time series and their corresponding output value (Triangular Global Alignment kernel in our case)
 
@@ -227,19 +227,30 @@ class SiameseRnn(Rnn):
         input_0 = []
         input_1 = []
         y = []
-        sample_weights = []
-        base_weight = 1.0
+        weight_flag = labels != None
+        if weight_flag:
+            sample_weights = []
+            base_weight = 1.0
         for i, j in indices_copy:
             input_0.append(seqs[i])
             input_1.append(seqs[j])
             y.append([gram_drop[i][j]])
-            
-            sample_weights.append(base_weight * (loss_weight_ratio if labels[i] == labels[j] else 1.0))
+            if weight_flag:
+                sample_weights.append(base_weight * (loss_weight_ratio if labels[i] == labels[j] else 1.0))
             if len(input_0) == batch_size:
-                yield ([np.array(input_0), np.array(input_1)], np.array(y), np.array(sample_weights))
+                if weight_flag:
+                    yield ([np.array(input_0), np.array(input_1)], np.array(y), np.array(sample_weights))
+                    sample_weights = []
+                else:
+                    yield ([np.array(input_0), np.array(input_1)], np.array(y))
                 input_0 = []
                 input_1 = []
                 y = []
-                sample_weights = []
-        yield ([np.array(input_0), np.array(input_1)], np.array(y), np.array(sample_weights))
+        if weight_flag:
+            yield ([np.array(input_0), np.array(input_1)], np.array(y), np.array(sample_weights))
+        else:
+            yield ([np.array(input_0), np.array(input_1)], np.array(y))
+
+
+            
 
