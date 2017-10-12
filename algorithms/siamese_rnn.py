@@ -167,7 +167,7 @@ class SiameseRnn(Rnn):
 
             # validation
             average_validation_loss = do_epoch("validation", epoch, epochs,
-                                               validation_indices, gram_drop, seqs, labels,
+                                               val_indices, gram_drop, seqs, labels,
                                                loss_weight_ratio, loss_file)
 
 
