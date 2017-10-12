@@ -80,8 +80,8 @@ def check_pickle_format(result):
     assert "dataset_type" in result \
            and "gram_matrices" in result \
            and "dropped_indices" in result \
-           and "sample_names" in result \
-           and "log" in result
+           and "sample_names" in result 
+    #and "log" in result
 
 
 def calculate_errors(gram, gram_completed_npsd, dropped_elements):
