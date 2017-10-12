@@ -20,6 +20,7 @@ def cfg():
     triangular  = None
     drop_rate_between_augmenteds = 0
     num_process = 4
+    dataset_location = None
     list_glob_arg = None
     hdf5 = False
 
@@ -42,11 +43,14 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir,
         list_glob_arg):
     assert others.is_valid_dataset_type(dataset_type)
 
-    dataset_location = os.path.abspath(dataset_location)
     output_dir = os.path.abspath(output_dir)
     assert os.path.isdir(output_dir)
 
-    seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location, list_glob_arg=list_glob_arg)
+    if dataset_location != None:
+        dataset_location = os.path.abspath(dataset_location)
+        seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location)
+    else:
+        seqs, key_to_str, _ = read_sequences(dataset_type, list_glob_arg=list_glob_arg)       
     flag_augmented = [False] * len(seqs)
     
     if data_augmentation_size != 1:
