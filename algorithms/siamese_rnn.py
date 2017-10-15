@@ -12,6 +12,10 @@ import keras.backend as K
 from utils import multi_gpu
 from algorithms.rnn import Rnn
 
+def batch_dot(vects):
+    x, y = vects
+    return K.batch_dot(x, y, axes=1)
+
 class SiameseRnn(Rnn):
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization,
@@ -60,7 +64,7 @@ class SiameseRnn(Rnn):
                 parent = BatchNormalization()(parent)
             out = Activation('sigmoid')(parent)
         elif siamese_joint_method == "weighted_dot_product":
-            dot = Lambda(K.batch_dot, output_shape=(1,))((processed_a, processed_b))
+            dot = Lambda(batch_dot, output_shape=(1,))((processed_a, processed_b))
             """
             dot = processed_a * processed_b
             """
