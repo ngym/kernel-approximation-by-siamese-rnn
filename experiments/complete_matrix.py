@@ -110,7 +110,7 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         algorithm, params, output_dir, output_filename_format,
         labels_to_use, data_augmentation_size):
-    os.makedirs(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
     shutil.copy(os.path.abspath(sys.argv[2]), os.path.join(output_dir, os.path.basename(sys.argv[3])))
     hdf5 = pickle_or_hdf5_location[-4:] == "hdf5"
     check_fold(fold_count, fold_to_drop, hdf5)
