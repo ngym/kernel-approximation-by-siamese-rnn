@@ -60,11 +60,11 @@ class SiameseRnn(Rnn):
                 parent = BatchNormalization()(parent)
             out = Activation('sigmoid')(parent)
         elif siamese_joint_method == "weighted_dot_product":
-            dot = processed_a * processed_b
-            parent = Dense(units=1, use_bias=False if self.batchnormalization else True)(dot)
-            """
             dot = Lambda(K.batch_dot, output_shape=(1,))([processed_a, processed_b])
             """
+            dot = processed_a * processed_b
+            """
+            parent = Dense(units=1, use_bias=False if self.batchnormalization else True)(dot)
             out = Activation('sigmoid')(parent)  
         else:
             assert False, ("Non-supported siamese_joint_method %s" % siamese_joint_method)
