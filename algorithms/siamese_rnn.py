@@ -65,7 +65,7 @@ class SiameseRnn(Rnn):
             """
             dot = Lambda(K.batch_dot, output_shape=(1,))([processed_a, processed_b])
             """
-            out = Activation('sigmoid')(dot)  
+            out = Activation('sigmoid')(parent)  
         else:
             assert False, ("Non-supported siamese_joint_method %s" % siamese_joint_method)
 
