@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, shutil
 import time
 from collections import OrderedDict
 
@@ -55,7 +55,8 @@ def rnn():
                   implementation=1,
                   mode="train", # mode="load_pretrained"
                   loss_function='mse',
-                  loss_weight_ratio = 10.0)
+                  loss_weight_ratio=10.0,
+                  siamese_joint_method="weighted_dot_product")
 
 @ex.capture
 def check_algorithm(algorithm):
@@ -108,7 +109,8 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 @ex.automain
 def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         algorithm, params, output_dir, output_filename_format,
-        labels_to_use, data_augmentation_size):
+        labels_to_use, data_augmentation_size, siamese_joint_method):
+    shutil.copy(os.path.abspath(sys.argv[2]), os.path.join(output_dir, os.path.basename(sys.argv[3])))
     hdf5 = pickle_or_hdf5_location[-4:] == "hdf5"
     check_fold(fold_count, fold_to_drop, hdf5)
     check_algorithm(algorithm)
@@ -193,7 +195,8 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                                                       params['mode'],
                                                       params['loss_function'],
                                                       params['loss_weight_ratio'],
-                                                      list(key_to_str.values()))
+                                                      list(key_to_str.values()),
+                                                      params['siamese_joint_method'])
         action = "SiameseRNN"
     else:
         assert False

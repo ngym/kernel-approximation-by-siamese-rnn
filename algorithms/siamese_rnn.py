@@ -3,10 +3,11 @@ import copy, time
 import numpy as np
 
 from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Input, SimpleRNN, LSTM, GRU, Masking, Activation, BatchNormalization
+from keras.layers import Dense, Dropout, Input, SimpleRNN, LSTM, GRU, Masking, Activation, BatchNormalization, Lambda
 from keras.optimizers import Adam
 from keras.layers.wrappers import Bidirectional
 from keras.layers.merge import Concatenate
+import keras.backend as K
 
 from utils import multi_gpu
 from algorithms.rnn import Rnn
@@ -14,7 +15,7 @@ from algorithms.rnn import Rnn
 class SiameseRnn(Rnn):
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization,
-                 loss_function):
+                 loss_function, siamese_joint_method):
         """
         :param input_shape: Keras input shape
         :param pad_value: Padding value to be skipped among time steps
@@ -37,9 +38,9 @@ class SiameseRnn(Rnn):
         """
         super().__init__(input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization)
-        self.model = self.__create_RNN_siamese_network(loss_function)
+        self.model = self.__create_RNN_siamese_network(loss_function, siamese_joint_method)
 
-    def __create_RNN_siamese_network(self, loss_function):
+    def __create_RNN_siamese_network(self, loss_function, siamese_joint_method):
         """
         :param loss_function: Name of loss function
         :type loss_function: str
@@ -52,11 +53,21 @@ class SiameseRnn(Rnn):
         input_b = Input(shape=self.input_shape)
         processed_a = base_network(input_a)
         processed_b = base_network(input_b)
-        con = Concatenate()([processed_a, processed_b])
-        parent = Dense(units=1, use_bias=False if self.batchnormalization else True)(con)
-        if self.batchnormalization:
-            parent = BatchNormalization()(parent)
-        out = Activation('sigmoid')(parent)
+        if siamese_joint_method == "dense":
+            con = Concatenate()([processed_a, processed_b])
+            parent = Dense(units=1, use_bias=False if self.batchnormalization else True)(con)
+            if self.batchnormalization:
+                parent = BatchNormalization()(parent)
+            out = Activation('sigmoid')(parent)
+        elif siamese_joint_method == "weighted_dot_product":
+            dot = processed_a * processed_b
+            parent = Dense(units=1, use_bias=False if self.batchnormalization else True)(dot)
+            """
+            dot = Lambda(K.batch_dot, output_shape=(1,))([processed_a, processed_b])
+            """
+            out = Activation('sigmoid')(dot)  
+        else:
+            assert False, ("Non-supported siamese_joint_method %s" % siamese_joint_method)
 
         model = Model([input_a, input_b], out)
 
@@ -230,12 +241,14 @@ class SiameseRnn(Rnn):
         weight_flag = labels != None
         if weight_flag:
             sample_weights = []
-            base_weight = 1.0
+            unique, counts = np.unique(np.array(labels), return_counts=True)
+            dict_counts = dict(zip(unique, counts))
         for i, j in indices_copy:
             input_0.append(seqs[i])
             input_1.append(seqs[j])
             y.append([gram_drop[i][j]])
             if weight_flag:
+                base_weight = 1. / (dict_counts[labels[i]] * dict_counts[labels[j]])
                 sample_weights.append(base_weight * (loss_weight_ratio if labels[i] == labels[j] else 1.0))
             if len(input_0) == batch_size:
                 if weight_flag:
