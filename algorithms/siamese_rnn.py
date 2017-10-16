@@ -4,7 +4,7 @@ import numpy as np
 
 from keras.models import Sequential, Model
 from keras.layers import Dense, Dropout, Input, SimpleRNN, LSTM, GRU, Masking, Activation, BatchNormalization, Lambda
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
 from keras.layers.wrappers import Bidirectional
 from keras.layers.merge import Concatenate
 import keras.backend as K
@@ -64,10 +64,7 @@ class SiameseRnn(Rnn):
                 parent = BatchNormalization()(parent)
             out = Activation('sigmoid')(parent)
         elif siamese_joint_method == "weighted_dot_product":
-            dot = Lambda(batch_dot, output_shape=(1,))([processed_a, processed_b])
-            """
-            dot = processed_a * processed_b
-            """
+            dot = Lambda(batch_dot)([processed_a, processed_b])
             parent = Dense(units=1, use_bias=False if self.batchnormalization else True)(dot)
             out = Activation('sigmoid')(parent)  
         else:
@@ -75,7 +72,8 @@ class SiameseRnn(Rnn):
 
         model = Model([input_a, input_b], out)
 
-        optimizer = Adam(clipnorm=1.)
+        #optimizer = Adam(clipnorm=1.)
+        optimizer = RMSprop()
         if self.gpu_count > 1:
             model = multi_gpu.make_parallel(model, self.gpu_count)
 
