@@ -49,7 +49,8 @@ class unsupervised_alpha_prediction_network(Rnn):
         super().__init__(input_shape, pad_value, rnn_units, dense_units,
                          rnn, dropout, implementation,
                          bidirectional, batchnormalization)
-        self.model = self.__create_RNN_columnar_network(gram, size_groups)
+        self.model = self.__create_RNN_unsupervised_alpha_prediction_network(gram,
+                                                                             size_groups)
 
         self.hyperparams = {'lambda_start': lmbd / 10.,
                             'lambda_end': lmbd,
@@ -57,7 +58,7 @@ class unsupervised_alpha_prediction_network(Rnn):
 
         self.size_groups = size_groups
 
-    def __create_RNN_columnar_network(self, gram, size_groups):
+    def __create_RNN_unsupervised_alpha_prediction_network(self, gram, size_groups):
         """
 
         :return: Keras Deep RNN Siamese network
