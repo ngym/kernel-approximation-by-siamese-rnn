@@ -66,7 +66,7 @@ class SiameseRnn(Rnn):
         elif siamese_joint_method == "weighted_dot_product":
             dot = Lambda(batch_dot)([processed_a, processed_b])
             parent = Dense(units=1, use_bias=False)(dot)
-            out = Activation('sigmoid')(parent)  
+            out = Activation('linear')(parent)  
         else:
             assert False, ("Non-supported siamese_joint_method %s" % siamese_joint_method)
 

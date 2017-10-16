@@ -83,9 +83,9 @@ class Rnn:
             if self.batchnormalization:
                 seq.add(BatchNormalization())
             if i < len(self.dense_units) - 1:
-                seq.add(Activation('relu'))
+                seq.add(Activation('sigmoid'))
             else:
-                seq.add(Activation('relu', name='base_output'))
+                seq.add(Activation('sigmoid', name='base_output'))
         return seq
 
     def load_weights(self, logfile_hdf5):
