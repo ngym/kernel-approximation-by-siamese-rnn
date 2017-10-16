@@ -12,6 +12,8 @@ import keras.backend as K
 from utils import multi_gpu
 from algorithms.rnn import Rnn
 
+from keras.layers.core import add_shared_layer, LambdaMerge
+
 def batch_dot(vects):
     x, y = vects
     return K.batch_dot(x, y, axes=1)
@@ -52,22 +54,33 @@ class SiameseRnn(Rnn):
         :return: Keras Deep RNN Siamese network
         :rtype: keras.models.Model
         """
-        base_network_a = super().create_RNN_base_network()
-        base_network_b = super().create_RNN_base_network()
+        """
+        base_network = super().create_RNN_base_network()
         input_a = Input(shape=self.input_shape)
         input_b = Input(shape=self.input_shape)
-        processed_a = base_network_a(input_a)
-        processed_b = base_network_b(input_b)
+        processed_a = base_network(input_a)
+        processed_b = base_network(input_b)
+        """
         if siamese_joint_method == "dense":
+            base_network = super().create_RNN_base_network()
+            input_a = Input(shape=self.input_shape)
+            input_b = Input(shape=self.input_shape)
+            processed_a = base_network(input_a)
+            processed_b = base_network(input_b)
             con = Concatenate()([processed_a, processed_b])
             parent = Dense(units=1, use_bias=False if self.batchnormalization else True)(con)
             if self.batchnormalization:
                 parent = BatchNormalization()(parent)
             out = Activation('sigmoid')(parent)
         elif siamese_joint_method == "weighted_dot_product":
-            dot = Lambda(batch_dot)([processed_a, processed_b])
+            base_network = super().create_RNN_base_network()
+            input_a = Input(shape=self.input_shape)
+            input_b = Input(shape=self.input_shape)
+            add_shared_layer(base_network, [input_a, input_b])
+            dot = LambdaMerge([input_a, input_b], batch_dot)
+            #dot = Lambda(batch_dot)([processed_a, processed_b])
             parent = Dense(units=1, use_bias=False)(dot)
-            out = Activation('linear')(parent)  
+            out = Activation('linear')(parent)
         else:
             assert False, ("Non-supported siamese_joint_method %s" % siamese_joint_method)
 
