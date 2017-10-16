@@ -12,8 +12,6 @@ import keras.backend as K
 from utils import multi_gpu
 from algorithms.rnn import Rnn
 
-from keras.layers.core import add_shared_layer, LambdaMerge
-
 def batch_dot(vects):
     x, y = vects
     return K.batch_dot(x, y, axes=1)
