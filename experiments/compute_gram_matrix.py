@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, shutil
 import time
 
 from sacred import Experiment
@@ -41,6 +41,9 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir,
         output_filename_format, labels_to_use, data_augmentation_size,
         drop_rate_between_augmenteds, num_process, hdf5,
         list_glob_arg):
+    os.makedirs(output_dir, exist_ok=True)
+    shutil.copy(os.path.abspath(sys.argv[2]), os.path.join(output_dir, os.path.basename(sys.argv[2])))
+
     assert others.is_valid_dataset_type(dataset_type)
 
     output_dir = os.path.abspath(output_dir)
