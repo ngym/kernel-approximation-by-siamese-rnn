@@ -175,10 +175,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
             = matrix_completion.softimpute_matrix_completion(gram_drop)
         action = "Softimpute"
     elif algorithm == "rnn":
-        if hdf5:
-            logfile_hdf5 = pickle_or_hdf5_location.replace(".hdf5", "_rnn_model.hdf5")
-        else:
-            logfile_hdf5 = pickle_or_hdf5_location.replace(".pkl", "_rnn_model.hdf5")
+        logfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
         logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
         gram_completed, train_start, train_end, completion_start, completion_end \
             = matrix_completion.rnn_matrix_completion(gram_drop,
