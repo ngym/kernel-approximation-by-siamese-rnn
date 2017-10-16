@@ -14,7 +14,7 @@ from algorithms.rnn import Rnn
 
 def batch_dot(vects):
     x, y = vects
-    return K.batch_dot(x, y, axes=0)
+    return K.batch_dot(x, y, axes=2)
 
 class SiameseRnn(Rnn):
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
