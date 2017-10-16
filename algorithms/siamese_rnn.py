@@ -52,11 +52,12 @@ class SiameseRnn(Rnn):
         :return: Keras Deep RNN Siamese network
         :rtype: keras.models.Model
         """
-        base_network = super().create_RNN_base_network()
+        base_network_a = super().create_RNN_base_network()
+        base_network_b = super().create_RNN_base_network()
         input_a = Input(shape=self.input_shape)
         input_b = Input(shape=self.input_shape)
-        processed_a = base_network(input_a)
-        processed_b = base_network(input_b)
+        processed_a = base_network_a(input_a)
+        processed_b = base_network_b(input_b)
         if siamese_joint_method == "dense":
             con = Concatenate()([processed_a, processed_b])
             parent = Dense(units=1, use_bias=False if self.batchnormalization else True)(con)
