@@ -131,7 +131,7 @@ class SiameseRnn(Rnn):
                      indices, gram_drop, seqs, labels, loss_weight_ratio, log_file):
             processed_sample_count = 0
             average_loss = 0
-            if action === "training":
+            if action == "training":
                 np.random.shuffle(indices)
             gen = self.__generator_sequence_pairs(indices, gram_drop, seqs, labels,
                                                   loss_weight_ratio)
