@@ -87,7 +87,9 @@ def rnn_matrix_completion(gram_drop, seqs,
                           loss_function,
                           loss_weight_ratio,
                           labels,
-                          siamese_joint_method):
+                          siamese_joint_method,
+                          classify_one_by_all=False,
+                          target_label=None):
     """Fill in Gram matrix with dropped elements with Keras Siamese RNN.
     Trains the network on given part of Gram matrix and the corresponding sequences
     Fills in missing elements by network prediction
