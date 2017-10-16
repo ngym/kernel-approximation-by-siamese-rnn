@@ -18,6 +18,12 @@ def batch_dot(vects):
     x, y = vects
     return K.batch_dot(x, y, axes=1)
 
+
+def euclidean_distance(vects):
+    x, y = vects
+    return K.sqrt(K.sum(K.square(x - y), axis=1, keepdims=True))
+
+
 class SiameseRnn(Rnn):
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization,
@@ -54,33 +60,22 @@ class SiameseRnn(Rnn):
         :return: Keras Deep RNN Siamese network
         :rtype: keras.models.Model
         """
-        """
         base_network = super().create_RNN_base_network()
         input_a = Input(shape=self.input_shape)
         input_b = Input(shape=self.input_shape)
         processed_a = base_network(input_a)
         processed_b = base_network(input_b)
-        """
         if siamese_joint_method == "dense":
-            base_network = super().create_RNN_base_network()
-            input_a = Input(shape=self.input_shape)
-            input_b = Input(shape=self.input_shape)
-            processed_a = base_network(input_a)
-            processed_b = base_network(input_b)
             con = Concatenate()([processed_a, processed_b])
             parent = Dense(units=1, use_bias=False if self.batchnormalization else True)(con)
             if self.batchnormalization:
                 parent = BatchNormalization()(parent)
             out = Activation('sigmoid')(parent)
         elif siamese_joint_method == "weighted_dot_product":
-            base_network = super().create_RNN_base_network()
-            input_a = Input(shape=self.input_shape)
-            input_b = Input(shape=self.input_shape)
-            add_shared_layer(base_network, [input_a, input_b])
-            dot = LambdaMerge([input_a, input_b], batch_dot)
+            dot = Lambda(euclidean_distance)([processed_a, processed_b])
             #dot = Lambda(batch_dot)([processed_a, processed_b])
             parent = Dense(units=1, use_bias=False)(dot)
-            out = Activation('linear')(parent)
+            out = Activation('sigmoid')(parent)
         else:
             assert False, ("Non-supported siamese_joint_method %s" % siamese_joint_method)
 
