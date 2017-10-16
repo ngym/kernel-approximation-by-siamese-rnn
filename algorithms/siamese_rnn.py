@@ -77,7 +77,7 @@ class SiameseRnn(Rnn):
             out = dot
         elif siamese_joint_method == "weighted_dot_product":
             dot = processed_a * processed_b
-            parent = Dense(units=1, use_bias=False if self.batchnormalization else True)(con)
+            parent = Dense(units=1, use_bias=False if self.batchnormalization else True)(dot)
             if self.batchnormalization:
                 parent = BatchNormalization()(parent)
             out = Activation('sigmoid')(parent)
