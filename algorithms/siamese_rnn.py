@@ -169,7 +169,7 @@ class SiameseRnn(Rnn):
                                  processed_sample_count, total_sample_count,
                                  elapsed_time, eta, average_loss, loss_batch,
                                  end='\n'):
-            print("epoch:[%d/%d] %s:[%d/%d] %ds, ETA:%ds, ave_loss:%.5f, loss_batch:%.5f" %
+            print("epoch:[%d/%d] %s:[%d/%d] %ds, ETA:%ds, ave_loss:%.8f, loss_batch:%.8f" %
                   (current_epoch, epoch_count,
                    action, processed_sample_count, total_sample_count,
                    elapsed_time, eta,
