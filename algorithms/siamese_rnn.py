@@ -69,12 +69,18 @@ class SiameseRnn(Rnn):
             if self.batchnormalization:
                 parent = BatchNormalization()(parent)
             out = Activation('sigmoid')(parent)
-        elif siamese_joint_method == "weighted_dot_product":
+        elif siamese_joint_method == "dot_product":
             #dot = Lambda(euclidean_distance)([processed_a, processed_b])
             dot = Lambda(batch_dot)([processed_a, processed_b])
             #parent = Dense(units=1, use_bias=False)(dot)
             #out = Activation('sigmoid')(parent)
             out = dot
+        elif siamese_joint_method == "weighted_dot_product":
+            dot = processed_a * processed_b
+            parent = Dense(units=1, use_bias=False if self.batchnormalization else True)(con)
+            if self.batchnormalization:
+                parent = BatchNormalization()(parent)
+            out = Activation('sigmoid')(parent)
         else:
             assert False, ("Non-supported siamese_joint_method %s" % siamese_joint_method)
 
@@ -125,7 +131,7 @@ class SiameseRnn(Rnn):
                      indices, gram_drop, seqs, labels, loss_weight_ratio, log_file):
             processed_sample_count = 0
             average_loss = 0
-            if action == "training":
+            if action === "training":
                 np.random.shuffle(indices)
             gen = self.__generator_sequence_pairs(indices, gram_drop, seqs, labels,
                                                   loss_weight_ratio)
@@ -157,9 +163,9 @@ class SiameseRnn(Rnn):
 
         def log_current_status(file, action, current_epoch, batch_iteration, average_loss, batch_loss):
             if action == "training":
-                text = "%d, %d, %.5f, %.5f, nan, nan\n"
+                text = "%d, %d, %.10f, %.10f, nan, nan\n"
             else:
-                text = "%d, %d, nan, nan, %.5f, %.5f\n"
+                text = "%d, %d, nan, nan, %.10f, %.10f\n"
             file.write(text %
                        (current_epoch, batch_iteration,
                         average_loss, batch_loss))
@@ -169,7 +175,7 @@ class SiameseRnn(Rnn):
                                  processed_sample_count, total_sample_count,
                                  elapsed_time, eta, average_loss, loss_batch,
                                  end='\n'):
-            print("epoch:[%d/%d] %s:[%d/%d] %ds, ETA:%ds, ave_loss:%.8f, loss_batch:%.8f" %
+            print("epoch:[%d/%d] %s:[%d/%d] %ds, ETA:%ds, ave_loss:%.10f, loss_batch:%.10f                       " %
                   (current_epoch, epoch_count,
                    action, processed_sample_count, total_sample_count,
                    elapsed_time, eta,
@@ -274,6 +280,4 @@ class SiameseRnn(Rnn):
         else:
             yield ([np.array(input_0), np.array(input_1)], np.array(y))
 
-
-            
 

@@ -83,7 +83,7 @@ class Rnn:
             if self.batchnormalization:
                 seq.add(BatchNormalization())
             if i < len(self.dense_units) - 1:
-                seq.add(Activation('sigmoid'))
+                seq.add(Activation('relu'))
             else:
                 seq.add(Activation('linear', name='base_output'))
         return seq

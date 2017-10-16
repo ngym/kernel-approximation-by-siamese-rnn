@@ -154,7 +154,24 @@ def rnn_matrix_completion(gram_drop, seqs,
 
     # training
     # make 90% + 10% training validation random split
-    train_and_validation_indices = np.random.permutation([(i, j)
+    if classify_one_by_all:
+        target_class_indexes = [i for i, l in enumerate(labels) if l == target_label]
+        nontarget_class_indexes = [i for i, l in enumerate(labels) if l != target_label]
+
+        target_class_indices = [(i, j)
+                                for i in range(len(target_class_indexes))
+                                for j in range(i, len(target_class_indexes))
+                                if not np.isnan(gram_drop[i][j])]
+        nontarget_class_indices = [(i, j)
+                                   for i in range(len(nontarget_class_indexes))
+                                   for j in range(i, len(nontarget_class_indexes))
+                                   if not np.isnan(gram_drop[i][j])]
+        
+        train_and_validation_indices = np.random.permutation(
+            target_class_indices +\
+            np.random.permutation(nontarget_class_indices[:len(target_class_indices)]))
+    else:
+        train_and_validation_indices = np.random.permutation([(i, j)
                                            for i in range(num_seqs)
                                            for j in range(i, num_seqs)
                                            if not np.isnan(gram_drop[i][j])])
@@ -162,6 +179,18 @@ def rnn_matrix_completion(gram_drop, seqs,
     validation_indices = train_and_validation_indices[int(len(train_and_validation_indices) * 0.9):]
     train_start = time.time()
     if mode == 'train':
+        model.train_and_validate(train_indices, validation_indices,
+                                 gram_drop,
+                                 seqs,
+                                 labels,
+                                 epochs,
+                                 patience,
+                                 loss_weight_ratio,
+                                 logfile_loss,
+                                 logfile_hdf5)
+    elif mode == 'continue_train':
+        print("load from hdf5 file: %s", logfile_hdf5)
+        model.load_weights(logfile_hdf5)
         model.train_and_validate(train_indices, validation_indices,
                                  gram_drop,
                                  seqs,
