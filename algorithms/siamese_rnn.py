@@ -140,7 +140,12 @@ class SiameseRnn(Rnn):
             while processed_sample_count < len(indices):
                 # training batch
                 x, y, sample_weights = next(gen)
-                batch_loss = self.model.train_on_batch(x, y, sample_weight=sample_weights)
+                if action == "training":
+                    batch_loss = self.model.train_on_batch(x, y, sample_weight=sample_weights)
+                elif action == "validation":
+                    batch_loss = self.model.test_on_batch(x, y, sample_weight=sample_weights)
+                else:
+                    assert False
                 average_loss = (average_loss * processed_sample_count + batch_loss * y.shape[0]) / \
                                (processed_sample_count + y.shape[0])
                 processed_sample_count += y.shape[0]
