@@ -22,6 +22,7 @@ def augment_data(seqs, key_to_str, augmentation_magnification,
         new_seqs[sample_name] = seq
         length = int(seq.shape[0] * augmentation_magnification)
         label = key_to_str[sample_name]
+        new_key_to_str[sample_name] = label
         flag_augmented.append(False)
         
         # uniform random insertion
