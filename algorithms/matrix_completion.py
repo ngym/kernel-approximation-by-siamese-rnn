@@ -188,6 +188,7 @@ def rnn_matrix_completion(gram_drop, seqs,
                                  labels,
                                  epochs,
                                  patience,
+                                 epoch_start_from,
                                  loss_weight_ratio,
                                  logfile_loss,
                                  logfile_hdf5)
