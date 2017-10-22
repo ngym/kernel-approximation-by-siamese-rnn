@@ -182,6 +182,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     validation_indices = train_and_validation_indices[int(len(train_and_validation_indices) * 0.9):]
     train_start = time.time()
     if mode == 'train':
+        assert epoch_start_from == 1
         model.train_and_validate(train_indices, validation_indices,
                                  gram_drop,
                                  seqs,
@@ -201,6 +202,7 @@ def rnn_matrix_completion(gram_drop, seqs,
                                  labels,
                                  epochs,
                                  patience,
+                                 epoch_start_from,
                                  loss_weight_ratio,
                                  logfile_loss,
                                  logfile_hdf5)
