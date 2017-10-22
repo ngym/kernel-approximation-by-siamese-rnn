@@ -48,12 +48,13 @@ def get_classification_error(gram,
                              mode,
                              labels,
                              lmbd):
+    gram = gram.astype('float16')
     seqs = np.array(seqs_)
     # pre-processing
     time_dim = max([seq.shape[0] for seq in seqs])
     pad_value = -4444
     seqs = pad_sequences([seq.tolist() for seq in seqs],
-                         maxlen=time_dim, dtype='float32',
+                         maxlen=time_dim, dtype='float16',
                          padding='post', value=pad_value)
     feat_dim = seqs[0].shape[1]
     input_shape = (time_dim, feat_dim)
