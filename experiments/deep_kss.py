@@ -11,6 +11,7 @@ from datasets import k_fold_cross_validation
 from algorithms import KSS_unsupervised_alpha_prediction 
 from utils import file_utils
 from utils import make_matrix_incomplete
+from datasets.data_augmentation import augment_data, create_drop_flag_matrix
 
 ex = Experiment('deep_kernel_group_lasso')
 
@@ -38,7 +39,7 @@ def cfg():
 @ex.automain
 def run(pickle_or_hdf5_location, dataset_location, fold_to_test, fold_to_tv,
         fold_count, params,
-        output_dir, output_filename_format):
+        output_dir, output_filename_format, data_augmentation_size):
     os.makedirs(output_dir, exist_ok=True)
     shutil.copy(os.path.abspath(sys.argv[2]), os.path.join(output_dir, os.path.basename(sys.argv[2])))
     hdf5 = pickle_or_hdf5_location[-4:] == "hdf5"
@@ -63,6 +64,13 @@ def run(pickle_or_hdf5_location, dataset_location, fold_to_test, fold_to_tv,
     gram_indices = np.concatenate(folds[fold_for_gram]).astype(int)
     
     seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location)
+    augmentation_magnification = 1.2
+    seqs, key_to_str, flag_augmented = augment_data(seqs, key_to_str,
+                                                    augmentation_magnification,
+                                                    rand_uniform=True,
+                                                    num_normaldist_ave=data_augmentation_size - 2)
+
+    
     seqs = filter_samples(seqs, sample_names)
     key_to_str = filter_samples(key_to_str, sample_names)
 
