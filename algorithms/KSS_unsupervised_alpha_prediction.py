@@ -547,7 +547,7 @@ class LambdaRateScheduler(Callback):
 class KSS_Loss:
     def __init__(self, lmbd, gram, size_groups):
         self.lmbd = lmbd
-        self.gram = K.variable(gram)
+        self.gram = K.variable(gram, dtype='float16')
         self.size_groups = size_groups
         self.__name__ = "custom"
         self.cumsum = np.cumsum(self.size_groups)
