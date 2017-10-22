@@ -102,6 +102,7 @@ class SiameseRnn(Rnn):
                            labels,
                            epochs,
                            patience,
+                           epoch_start_from,
                            loss_weight_ratio,
                            logfile_loss,
                            logfile_hdf5):
@@ -192,7 +193,7 @@ class SiameseRnn(Rnn):
         best_validation_loss = np.inf
         loss_file.write("epoch, batch_iteration, average_training_loss, training_batch_loss, "
                         "average_validation_loss, validation_batch_loss\n")
-        for epoch in range(1, epochs + 1):
+        for epoch in range(epoch_start_from, epochs + 1):
             # training
             _ = do_epoch("training", epoch, epochs,
                          tr_indices, gram_drop, seqs, labels, loss_weight_ratio, loss_file)

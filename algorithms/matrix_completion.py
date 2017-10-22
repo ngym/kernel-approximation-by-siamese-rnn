@@ -75,6 +75,7 @@ def softimpute_matrix_completion(gram_drop):
 
 def rnn_matrix_completion(gram_drop, seqs,
                           epochs, patience,
+                          epoch_start_from,
                           logfile_loss, logfile_hdf5,
                           rnn,
                           rnn_units,
