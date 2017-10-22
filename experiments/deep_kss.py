@@ -3,7 +3,7 @@ import os, sys, shutil
 import numpy as np
 
 from sacred import Experiment
-
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from datasets.read_sequences import read_sequences
 from datasets.others import filter_samples
 
