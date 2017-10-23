@@ -23,6 +23,8 @@ def cfg():
     dataset_location = None
     list_glob_arg = None
     hdf5 = False
+    num_distribution = 1
+    node_id = 0
 
 @ex.named_config
 def upperChar():
@@ -40,7 +42,8 @@ def UCIauslan():
 def run(dataset_type, dataset_location, sigma, triangular, output_dir,
         output_filename_format, labels_to_use, data_augmentation_size,
         drop_rate_between_augmenteds, num_process, hdf5,
-        list_glob_arg):
+        list_glob_arg,
+        num_distribution, node_id):
     os.makedirs(output_dir, exist_ok=True)
     shutil.copy(os.path.abspath(sys.argv[2]), os.path.join(output_dir, os.path.basename(sys.argv[2])))
 
@@ -74,7 +77,9 @@ def run(dataset_type, dataset_location, sigma, triangular, output_dir,
     start = time.time()
     gram = gak.gram_gak(list(seqs.values()), sigma, triangular,
                         num_process=num_process,
-                        drop_flag_matrix=drop_flag_matrix)
+                        drop_flag_matrix=drop_flag_matrix,
+                        num_distribution=num_distribution,
+                        node_id=node_id)
     end = time.time()
 
     output_filename_format = output_filename_format.replace("${sigma}", str(sigma))\
