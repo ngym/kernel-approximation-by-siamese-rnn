@@ -104,6 +104,8 @@ def gram_gak(seqs, sigma=None, triangular=None,
     num_eta_calculation_resource = 5
     """
 
+    print("node_id:%d" % node_id)
+    print(i_per_dist[node_id])
     job_gen = job_generator(i_per_dist[node_id], num_gak_per_job, 
                             drop_flag_matrix=drop_flag_matrix)
     num_gak = (num_seq + 1) * num_seq / 2
