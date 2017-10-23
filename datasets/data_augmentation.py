@@ -19,7 +19,7 @@ def augment_data(seqs, key_to_str, augmentation_magnification,
     new_seqs = OrderedDict()
     new_key_to_str = OrderedDict()
     for sample_name, seq in seqs.items():
-        new_seqs[sample_name] = seq
+        new_seqs[sample_name] = seq.astype('float16')
         length = int(seq.shape[0] * augmentation_magnification)
         label = key_to_str[sample_name]
         new_key_to_str[sample_name] = label
@@ -32,7 +32,7 @@ def augment_data(seqs, key_to_str, augmentation_magnification,
             else:
                 augmented_seq = delete_random(seq, length)
             augmented_name = sample_name + "_augrand_uniform"
-            new_seqs[augmented_name] = augmented_seq
+            new_seqs[augmented_name] = augmented_seq.astype('float16')
             new_key_to_str[augmented_name] = label
             flag_augmented.append(True)
             
@@ -51,7 +51,7 @@ def augment_data(seqs, key_to_str, augmentation_magnification,
                                                            ave, std)
             augmented_name = sample_name + "_augrand_normaldist"\
                              + str(ave_p)
-            new_seqs[augmented_name] = augmented_seq
+            new_seqs[augmented_name] = augmented_seq.astype('float16')
             new_key_to_str[augmented_name] = label
             flag_augmented.append(True)
     return new_seqs, new_key_to_str, flag_augmented
