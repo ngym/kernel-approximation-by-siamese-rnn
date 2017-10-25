@@ -553,7 +553,7 @@ class KSS_Loss:
         self.__name__ = "custom"
         self.cumsum = np.cumsum(self.size_groups)
         group_start_and_end = [(s, e) for (s, e) in zip(np.concatenate([np.array([0]), self.cumsum[:-1]]), self.cumsum)]
-        self.group_indices = [np.arange(s, e).tolist() for (s, e) in group_start_and_end]
+        self.group_indices = [K.variable(np.arange(s, e)) for (s, e) in group_start_and_end]
         self.alpha_permute_order = K.variable([1, 0], dtype='int32')
         self.gram_sliced = [K.variable(gram[s:e]) for s, e in group_start_and_end]
     def __call__(self, k_true, alpha_pred):
@@ -565,7 +565,7 @@ class KSS_Loss:
         quad = K.batch_dot(alpha_pred_T, dot, axes=0)
         linear = K.batch_dot(k_true, alpha_pred, axes=1)
 
-        alpha_g = K.stack([K.gather(alpha_pred_T, K.variable(g)) for g in self.group_indices]) # [group, dict/group, sample]
+        alpha_g = K.stack([K.gather(alpha_pred_T, g) for g in self.group_indices]) # [group, dict/group, sample]
         alpha_g_norm = K.sqrt(K.sum(K.square(alpha_g), axis=1) + K.epsilon()) # [group, sample]
         reg = K.sum(alpha_g_norm, axis=0)
         
