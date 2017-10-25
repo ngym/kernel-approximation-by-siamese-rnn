@@ -565,7 +565,7 @@ class KSS_Loss:
         quad = K.batch_dot(alpha_pred_T, dot, axes=0)
         linear = K.batch_dot(k_true, alpha_pred, axes=1)
 
-        alpha_g = K.gather(alpha_pred_T, self.group_indices) # [group, dict/group, sample]
+        alpha_g = K.stack([K.gather(alpha_pred_T, K.variable(g)) for g in self.group_indices]) # [group, dict/group, sample]
         alpha_g_norm = K.sqrt(K.sum(K.square(alpha_g), axis=1) + K.epsilon()) # [group, sample]
         reg = K.sum(alpha_g_norm, axis=0)
         
