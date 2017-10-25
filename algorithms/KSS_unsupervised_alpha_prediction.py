@@ -547,18 +547,22 @@ class LambdaRateScheduler(Callback):
 class KSS_Loss:
     def __init__(self, lmbd, gram, size_groups):
         self.lmbd = lmbd
-        self.gram = K.variable(gram, dtype='float16')
+        num_slice = 10
+        #self.gram_sliced = [K.variable(gram[start//num_slice:end//num_slice]) for start, end in enumerate(list(range(1, num_slice + 1)))]
         self.size_groups = size_groups
         self.__name__ = "custom"
         self.cumsum = np.cumsum(self.size_groups)
         group_start_and_end = [(s, e) for (s, e) in zip(np.concatenate([np.array([0]), self.cumsum[:-1]]), self.cumsum)]
         self.group_indices = K.variable([np.arange(s, e).tolist() for (s, e) in group_start_and_end], dtype='int32')
         self.alpha_permute_order = K.variable([1, 0], dtype='int32')
+        self.gram_sliced = [K.variable(gram[s:e]) for s, e in group_start_and_end]
     def __call__(self, k_true, alpha_pred):
         # alpha_pred: [sample, dict]
         alpha_pred_T = K.transpose(alpha_pred) # [dict, sample]
 
-        quad = K.batch_dot(alpha_pred_T, K.dot(self.gram, alpha_pred_T), axes=0)
+        dot = K.concatenate([K.dot(g, alpha_pred_T) for g in self.gram_sliced], axis=0)
+        
+        quad = K.batch_dot(alpha_pred_T, dot, axes=0)
         linear = K.batch_dot(k_true, alpha_pred, axes=1)
 
         alpha_g = K.gather(alpha_pred_T, self.group_indices) # [group, dict/group, sample]
