@@ -553,7 +553,7 @@ class KSS_Loss:
         self.__name__ = "custom"
         self.cumsum = np.cumsum(self.size_groups)
         group_start_and_end = [(s, e) for (s, e) in zip(np.concatenate([np.array([0]), self.cumsum[:-1]]), self.cumsum)]
-        self.group_indices = K.variable([np.arange(s, e).tolist() for (s, e) in group_start_and_end], dtype='int32')
+        self.group_indices = K.variable(np.array([np.arange(s, e).tolist() for (s, e) in group_start_and_end], dtype='int32'))
         self.alpha_permute_order = K.variable([1, 0], dtype='int32')
         self.gram_sliced = [K.variable(gram[s:e]) for s, e in group_start_and_end]
     def __call__(self, k_true, alpha_pred):
