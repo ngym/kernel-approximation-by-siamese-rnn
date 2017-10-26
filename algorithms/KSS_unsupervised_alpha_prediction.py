@@ -564,12 +564,12 @@ class KSS_Loss:
         quad = K.batch_dot(alpha_pred_T, dot, axes=0)
         linear = K.batch_dot(k_true, alpha_pred, axes=1)
 
-        reg = sum([K.sqrt(K.sum(K.square(K.gather(alpha_pred_T, g)), axis=0) + K.epsilon()) for g in self.group_indices])
+        reg = K.sum(K.stack([K.sqrt(K.sum(K.square(K.gather(alpha_pred_T, g)), axis=0) + K.epsilon()) for g in self.group_indices]), axis=0)
         #alpha_g = K.stack([K.gather(alpha_pred_T, g) for g in self.group_indices]) # [group, dict/group, sample]
         #alpha_g_norm = K.sqrt(K.sum(K.square(alpha_g), axis=1) + K.epsilon()) # [group, sample]
         #reg = K.sum(alpha_g_norm, axis=0)
         
-        return K.mean(.5 * quad - linear + self.lmbd * reg)
+        return K.mean(.5 * K.flatten(quad) - K.flatten(linear) + self.lmbd * reg)
         """
         #alpha_pred_permute = K.permute_dimensions(alpha_pred, [len(alpha_pred.shape) - 1] + list(range(len(alpha_pred.shape) - 1)))
         alpha_pred_permute = K.permute_dimensions(alpha_pred, self.alpha_permute_order)
