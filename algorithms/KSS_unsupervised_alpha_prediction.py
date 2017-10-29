@@ -222,7 +222,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
             gen = self.__generator_seqs_and_alpha(seqs, ks)
             start = curr_time = time.time()
             current_batch_iteration = 0
-            self.on_epoch_begin(current_epoch)
+            self.sparse_rate_callback.on_epoch_begin(current_epoch)
             while processed_sample_count < seqs.shape[0]:
                 # training batch
                 seqs_batch, ks_batch = next(gen)
