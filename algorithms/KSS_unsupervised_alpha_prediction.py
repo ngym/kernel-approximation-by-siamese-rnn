@@ -222,11 +222,13 @@ class Unsupervised_alpha_prediction_network(Rnn):
             gen = self.__generator_seqs_and_alpha(seqs, ks)
             start = curr_time = time.time()
             current_batch_iteration = 0
+            self.on_epoch_begin(current_epoch)
             while processed_sample_count < seqs.shape[0]:
                 # training batch
                 seqs_batch, ks_batch = next(gen)
                 if action == "training":
                     batch_loss = self.model.train_on_batch(seqs_batch, ks_batch)
+                    self.sparse_rate_callback.on_train_end()
                 elif action == "validation":
                     batch_loss = self.model.test_on_batch(seqs_batch, ks_batch)
                 else:
@@ -547,14 +549,11 @@ class LambdaRateScheduler(Callback):
 class KSS_Loss:
     def __init__(self, lmbd, gram, size_groups):
         self.lmbd = lmbd
-        num_slice = 10
-        #self.gram_sliced = [K.variable(gram[start//num_slice:end//num_slice]) for start, end in enumerate(list(range(1, num_slice + 1)))]
-        self.size_groups = size_groups
         self.__name__ = "custom"
-        self.cumsum = np.cumsum(self.size_groups)
+        self.cumsum = np.cumsum(size_groups)
         group_start_and_end = [(s, e) for (s, e) in zip(np.concatenate([np.array([0]), self.cumsum[:-1]]), self.cumsum)]
         self.group_indices = [K.variable(np.arange(s, e), dtype='int32') for (s, e) in group_start_and_end]
-        self.gram_sliced = [K.variable(gram[s:e]) for s, e in group_start_and_end]
+        self.gram_sliced = [K.gather(gram, g) for g in self.group_indices]
     def __call__(self, k_true, alpha_pred):
         # alpha_pred: [sample, dict]
         alpha_pred_T = K.transpose(alpha_pred) # [dict, sample]
