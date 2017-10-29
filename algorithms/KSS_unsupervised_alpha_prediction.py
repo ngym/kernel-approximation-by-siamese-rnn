@@ -48,7 +48,7 @@ def get_classification_error(gram,
                              mode,
                              labels,
                              lmbd):
-    gram = gram.astype('float16')
+    gram = gram.astype('float32')
     seqs = np.array(seqs_)
     # pre-processing
     time_dim = max([seq.shape[0] for seq in seqs])
@@ -228,7 +228,6 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 seqs_batch, ks_batch = next(gen)
                 if action == "training":
                     batch_loss = self.model.train_on_batch(seqs_batch, ks_batch)
-                    self.sparse_rate_callback.on_train_end()
                 elif action == "validation":
                     batch_loss = self.model.test_on_batch(seqs_batch, ks_batch)
                 else:
@@ -251,6 +250,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                                  processed_sample_count, seqs.shape[0],
                                  elapsed_time, eta,
                                  average_loss, batch_loss)
+            self.sparse_rate_callback.on_train_end()
             return average_loss
 
         def log_current_status(file, action, current_epoch, batch_iteration, average_loss, batch_loss):
@@ -539,11 +539,11 @@ class LambdaRateScheduler(Callback):
         l = np.min([epoch / self.end_epoch, 1.])
         lmbd = (1 - l) * self.start + l * self.end
         K.set_value(self.var, lmbd.astype(self.dtype))
-        print(K.get_value(self.var))
+        print(("lmbd at epoch beginning:%f" % K.get_value(self.var)))
         
     def on_train_end(self, logs=None):
         K.set_value(self.var, self.end)
-        print(K.get_value(self.var))
+        print(("lmbd at epoch ending   :%f" % K.get_value(self.var)))
         
 
 class KSS_Loss:
