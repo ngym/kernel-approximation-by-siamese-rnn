@@ -48,7 +48,7 @@ def get_classification_error(gram,
                              mode,
                              labels,
                              lmbd):
-    gram = gram.astype('float32')
+    gram = gram.astype('float16')
     seqs = np.array(seqs_)
     # pre-processing
     time_dim = max([seq.shape[0] for seq in seqs])
@@ -167,7 +167,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
         """
         self.sparse_rate_callback = LambdaRateScheduler(start=self.hyperparams['lambda_start'],
                                                         end=self.hyperparams['lambda_end'],
-                                                        end_epoch=self.hyperparams['end_epoch'])
+                                                        end_epoch=self.hyperparams['end_epoch'],
+                                                        dtype='float16')
         
         base_network = self.create_RNN_base_network()
         input_ = Input(shape=self.input_shape)
@@ -553,7 +554,7 @@ class KSS_Loss:
         self.cumsum = np.cumsum(size_groups)
         group_start_and_end = [(s, e) for (s, e) in zip(np.concatenate([np.array([0]), self.cumsum[:-1]]), self.cumsum)]
         self.group_indices = [K.variable(np.arange(s, e), dtype='int32') for (s, e) in group_start_and_end]
-        self.gram_sliced = [K.gather(gram, g) for g in self.group_indices]
+        self.gram_sliced = [K.gather(gram, g, dtype='float16') for g in self.group_indices]
     def __call__(self, k_true, alpha_pred):
         # alpha_pred: [sample, dict]
         alpha_pred_T = K.transpose(alpha_pred) # [dict, sample]
