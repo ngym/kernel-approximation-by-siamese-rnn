@@ -111,8 +111,7 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 @ex.automain
 def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         algorithm, params, output_dir, output_filename_format,
-        labels_to_use, data_augmentation_size,
-        discrete_similarity):
+        labels_to_use, data_augmentation_size):
     os.makedirs(output_dir, exist_ok=True)
     shutil.copy(os.path.abspath(sys.argv[2]), os.path.join(output_dir, os.path.basename(sys.argv[2])))
     hdf5 = pickle_or_hdf5_location[-4:] == "hdf5"
@@ -201,7 +200,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                                                       params['siamese_joint_method'],
                                                       classify_one_by_all=params['classify_one_by_all'],
                                                       target_label=params['target_label'],
-                                                      discrete_similarity)
+                                                      discrete_similarity=params['discrete_similarity'])
         action = "SiameseRNN"
     else:
         assert False
