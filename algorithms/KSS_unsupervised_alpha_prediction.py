@@ -98,12 +98,12 @@ def get_classification_error(gram,
 
     cumsum = np.cumsum(size_groups)
     group_start_and_end = [(s, e) for (s, e) in zip(np.concatenate([np.array([0]), cumsum[:-1]]), cumsum)]
-    group_indices = [np.arange(s, e).tolist() for (s, e) in group_start_and_end]
+    group_indices = [K.variable(np.arange(s, e), dtype='int32') for (s, e) in group_start_and_end]
 
     alpha_pred_T = K.transpose(K.variable(alpha_pred))
-    alpha_g = K.gather(alpha_pred_T, group_indices) # [group, dict, sample]
-    alpha_g_norm = K.sqrt(K.sum(K.square(alpha_g), axis=1) + K.epsilon()) # [group, sample]
-    
+    alpha_g_norm_ = [K.sqrt(K.sum(K.square(K.gather(alpha_pred_T, g)), axis=0) + K.epsilon()) for g in group_indices]
+    alpha_g_norm = K.stack(alpha_g_norm_)
+
     pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
     labels_order = sorted(set(labels), key=labels.index)
     true_labels = [labels[i] for i in test_indices] # label
