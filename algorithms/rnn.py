@@ -74,7 +74,7 @@ class Rnn:
             return_sequences = (i < (len(self.rnn_units) - 1))
             seq.add(b(r(rnn_unit,
                         dropout=self.dropout, implementation=self.implementation,
-                        return_sequences=return_sequences)))
+                        return_sequences=return_sequences, activation='sigmoid')))
             if self.batchnormalization and return_sequences:
                 seq.add(BatchNormalization())
         for i in range(len(self.dense_units)):
@@ -83,7 +83,7 @@ class Rnn:
             if self.batchnormalization:
                 seq.add(BatchNormalization())
             if i < len(self.dense_units) - 1:
-                seq.add(Activation('relu'))
+                seq.add(Activation('sigmoid'))
             else:
                 seq.add(Activation('linear', name='base_output'))
         return seq
