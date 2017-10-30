@@ -48,7 +48,7 @@ def get_classification_error(gram,
                              mode,
                              labels,
                              lmbd):
-    gram = gram.astype('float16')
+    gram = gram.astype('float32')
     seqs = np.array(seqs_)
     # pre-processing
     time_dim = max([seq.shape[0] for seq in seqs])
@@ -168,7 +168,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
         self.sparse_rate_callback = LambdaRateScheduler(start=self.hyperparams['lambda_start'],
                                                         end=self.hyperparams['lambda_end'],
                                                         end_epoch=self.hyperparams['end_epoch'],
-                                                        dtype='float16')
+                                                        dtype='float32')
         
         base_network = self.create_RNN_base_network()
         input_ = Input(shape=self.input_shape)
