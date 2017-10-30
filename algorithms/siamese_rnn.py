@@ -66,6 +66,7 @@ class SiameseRnn(Rnn):
         input_b = Input(shape=self.input_shape)
         processed_a = base_network(input_a)
         processed_b = base_network(input_b)
+        print("batchnormalization:" + str(self.batchnormalization))
         if siamese_joint_method == "dense":
             con = Concatenate()([processed_a, processed_b])
             parent = Dense(units=1, use_bias=False if self.batchnormalization else True)(con)
@@ -78,13 +79,13 @@ class SiameseRnn(Rnn):
             parent = dot
             if self.batchnormalization:
                 parent = BatchNormalization()(parent)
-            out = Activation('sigmoid')(parent)
+            out = Activation('relu')(parent)
         elif siamese_joint_method == "weighted_dot_product":
             dot = Lambda(product)([processed_a, processed_b])
             parent = Dense(units=1)(dot)
             if self.batchnormalization:
                 parent = BatchNormalization()(parent)
-            out = Activation('sigmoid')(parent)
+            out = Activation('relu')(parent)
         else:
             assert False, ("Non-supported siamese_joint_method %s" % siamese_joint_method)
 
