@@ -17,7 +17,6 @@ ex = Experiment('deep_kernel_group_lasso')
 
 @ex.config
 def cfg():
-    lmbd = 0.5
     output_dir = "results"
     fold_count = 5
     fold_to_test = 0

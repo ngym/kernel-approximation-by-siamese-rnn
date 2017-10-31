@@ -182,7 +182,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
 
         model = Model(input_, out)
 
-        optimizer = Adam(clipnorm=1.)
+        optimizer = RMSprop(clipnorm=1.)
         if self.gpu_count > 1:
             model = multi_gpu.make_parallel(model, self.gpu_count)
 
