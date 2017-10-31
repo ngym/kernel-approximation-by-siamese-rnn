@@ -79,20 +79,20 @@ class SiameseRnn(Rnn):
             parent = dot
             if self.batchnormalization:
                 parent = BatchNormalization()(parent)
-            out = Activation('relu')(parent)
+            out = Activation('sigmoid')(parent)
         elif siamese_joint_method == "weighted_dot_product":
             dot = Lambda(product)([processed_a, processed_b])
             parent = Dense(units=1)(dot)
             if self.batchnormalization:
                 parent = BatchNormalization()(parent)
-            out = Activation('relu')(parent)
+            out = Activation('sigmoid')(parent)
         else:
             assert False, ("Non-supported siamese_joint_method %s" % siamese_joint_method)
 
         model = Model([input_a, input_b], out)
 
         #optimizer = Adam(clipnorm=1.)
-        optimizer = RMSprop()
+        optimizer = RMSprop(clipnorm=1.)
         if self.gpu_count > 1:
             model = multi_gpu.make_parallel(model, self.gpu_count)
 
