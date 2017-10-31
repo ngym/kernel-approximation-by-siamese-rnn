@@ -223,7 +223,6 @@ class Unsupervised_alpha_prediction_network(Rnn):
             gen = self.__generator_seqs_and_alpha(seqs, ks)
             start = curr_time = time.time()
             current_batch_iteration = 0
-            self.sparse_rate_callback.on_epoch_begin(current_epoch)
             while processed_sample_count < seqs.shape[0]:
                 # training batch
                 seqs_batch, ks_batch = next(gen)
@@ -251,7 +250,6 @@ class Unsupervised_alpha_prediction_network(Rnn):
                                  processed_sample_count, seqs.shape[0],
                                  elapsed_time, eta,
                                  average_loss, batch_loss)
-            self.sparse_rate_callback.on_train_end()
             return average_loss
 
         def log_current_status(file, action, current_epoch, batch_iteration, average_loss, batch_loss):
@@ -294,8 +292,10 @@ class Unsupervised_alpha_prediction_network(Rnn):
             val_ks = permutated_tv_ks[num_tr:]
             
             # training
+            self.sparse_rate_callback.on_epoch_begin(current_epoch)
             _ = do_epoch("training", epoch, epochs,
                          tr_seqs, tr_ks, loss_file)
+            self.sparse_rate_callback.on_train_end()
 
             # validation
             average_validation_loss = do_epoch("validation", epoch, epochs,
