@@ -292,7 +292,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
             val_ks = permutated_tv_ks[num_tr:]
             
             # training
-            self.sparse_rate_callback.on_epoch_begin(current_epoch)
+            self.sparse_rate_callback.on_epoch_begin(epoch)
             _ = do_epoch("training", epoch, epochs,
                          tr_seqs, tr_ks, loss_file)
             self.sparse_rate_callback.on_train_end()
