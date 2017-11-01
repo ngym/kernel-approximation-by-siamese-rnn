@@ -295,7 +295,6 @@ class Unsupervised_alpha_prediction_network(Rnn):
             self.sparse_rate_callback.on_epoch_begin(epoch)
             _ = do_epoch("training", epoch, epochs,
                          tr_seqs, tr_ks, loss_file)
-            self.sparse_rate_callback.on_train_end()
 
             # validation
             average_validation_loss = do_epoch("validation", epoch, epochs,
@@ -312,6 +311,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                     break
                 wait += 1
         loss_file.close()
+        self.sparse_rate_callback.on_train_end()
         
     def predict(self, test_seqs):
         """Keras Siamese RNN prediction function.
