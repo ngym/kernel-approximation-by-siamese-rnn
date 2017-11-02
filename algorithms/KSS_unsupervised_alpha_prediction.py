@@ -320,6 +320,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
             roc_auc_, f1_ = do_epoch("validation", epoch, epochs,
                                      val_seqs, val_ks, loss_file,
                                      val_indices, size_groups_small_gram, tv_labels)
+            print("validation roc_auc: %f" % roc_auc_)
+            print("validation f1     : %f" % f1_)
 
             if roc_auc_ > best_roc_auc_ or\
                (roc_auc_ == best_roc_auc_ and f1_ > best_f1_):
