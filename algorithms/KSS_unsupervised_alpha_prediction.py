@@ -562,10 +562,14 @@ class LambdaRateScheduler(Callback):
             K.set_value(self.var, self.best_lmbd)
         print(("lmbd at epoch beginning:%f" % K.get_value(self.var)))
     def on_train_end(self, logs=None):
+        print(("lmbd at ending         :%f" % K.get_value(self.var)))
+        """
         K.set_value(self.var, self.end)
         print(("lmbd at epoch ending   :%f" % K.get_value(self.var)))
+        """
     def save_best_lmbd(self):
         self.best_lmbd = K.get_value(self.var)
+        print(("save lmbd as best      :%f" % K.get_value(self.var)))
 
 class KSS_Loss:
     def __init__(self, lmbd, gram, size_groups):
