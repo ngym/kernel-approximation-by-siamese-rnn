@@ -69,6 +69,8 @@ def get_classification_error(gram,
     tv_seqs = seqs[tv_indices]
     test_seqs = seqs[test_indices]
     
+    tv_labels = [labels[i] for i in tv_indices]
+
     tmp = [labels[i] for i in small_gram_indices]
     counter = Counter(tmp)
     size_groups_small_gram = [counter[label] for label in sorted(set(tmp), key=tmp.index)]
@@ -93,7 +95,7 @@ def get_classification_error(gram,
                                  patience,
                                  logfile_hdf5,
                                  logfile_loss,
-                                 size_groups_small_gram, labels)
+                                 size_groups_small_gram, tv_labels)
 
     alpha_pred, pred_start, pred_end = model.predict(test_seqs)
     (roc_auc_, f1_) = calc_scores(size_groups_small_gram, alpha_pred, labels, test_indices)
@@ -205,7 +207,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                            patience,
                            logfile_hdf5,
                            logfile_loss,
-                           size_groups_small_gram, labels):
+                           size_groups_small_gram, tv_labels):
         """Keras Siamese RNN training function.
         Carries out training and validation for given data over given number of epochs
         Logs results and network parameters
@@ -223,7 +225,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
         """
 
         def do_epoch(action, current_epoch, epoch_count,
-                     seqs, ks, log_file, val_indices, size_groups_small_gram, labels):
+                     seqs, ks, log_file, val_indices, size_groups_small_gram, tv_labels):
             processed_sample_count = 0
             average_loss = 0
             gen = self.__generator_seqs_and_alpha(seqs, ks)
@@ -261,7 +263,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                     pred_alpha_batch_list.append(pred_alpha_batch)
                     processed_sample_count += seqs_batch.shape[0]
                 alpha_pred = np.concatenate(pred_alpha_batch_list)
-                roc_auc_, f1_ = calc_scores(size_groups_small_gram, alpha_pred, labels, val_indices)
+                roc_auc_, f1_ = calc_scores(size_groups_small_gram, alpha_pred, tv_labels, val_indices)
                 return (roc_auc_, f1_)
             else:
                 assert False
@@ -317,7 +319,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
             # validation
             roc_auc_, f1_ = do_epoch("validation", epoch, epochs,
                                      val_seqs, val_ks, loss_file,
-                                     val_indices, size_groups_small_gram, labels)
+                                     val_indices, size_groups_small_gram, tv_labels)
 
             if roc_auc_ > best_roc_auc_ or\
                (roc_auc_ == best_roc_auc_ and f1_ > best_f1_):
