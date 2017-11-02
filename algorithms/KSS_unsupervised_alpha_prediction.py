@@ -106,7 +106,7 @@ def get_classification_error(gram,
     true_labels = [labels[i] for i in test_indices] # label
     true_indices = [labels_order.index(l) for l in true_labels]
 
-    (roc_auc_, f1_) = calc_scores(pred_indices, true_indices, len(labels_order))
+    roc_auc_, f1_ = calc_scores(pred_indices, true_indices, len(labels_order))
     print("test roc_auc: %f" % roc_auc_)
     print("test f1     : %f" % f1_)
     assert False
@@ -273,7 +273,15 @@ class Unsupervised_alpha_prediction_network(Rnn):
                     pred_alpha_batch_list.append(pred_alpha_batch)
                     processed_sample_count += seqs_batch.shape[0]
                 alpha_pred = np.concatenate(pred_alpha_batch_list)
-                roc_auc_, f1_ = calc_scores(size_groups_small_gram, alpha_pred, tv_labels, val_indices)
+
+                alpha_g_norm = calc_group_norm(size_groups_small_gram, alpha_pred)
+                pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
+    
+                labels_order = sorted(set(tv_labels), key=tv_labels.index)
+                true_labels = [tv_labels[i] for i in val_indices] # label
+                true_indices = [labels_order.index(l) for l in true_labels]
+
+                roc_auc_, f1_ = calc_scores(pred_indices, true_indices, len(labels_order))
                 return (roc_auc_, f1_)
             else:
                 assert False
