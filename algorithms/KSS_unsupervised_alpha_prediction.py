@@ -98,29 +98,36 @@ def get_classification_error(gram,
                                  size_groups_small_gram, tv_labels)
 
     alpha_pred, pred_start, pred_end = model.predict(test_seqs)
-    (roc_auc_, f1_) = calc_scores(size_groups_small_gram, alpha_pred, labels, test_indices)
+
+    alpha_g_norm = calc_group_norm(size_groups_small_gram, alpha_pred)
+    pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
+    
+    labels_order = sorted(set(labels), key=labels.index)
+    true_labels = [labels[i] for i in test_indices] # label
+    true_indices = [labels_order.index(l) for l in true_labels]
+
+    (roc_auc_, f1_) = calc_scores(pred_indices, true_indices, len(labels_order))
     
     return (roc_auc_, f1_)
 
-def calc_scores(size_groups_small_gram, alpha_pred, labels, y_indices):
+
+def calc_group_norm(size_groups_small_gram, alpha_pred):
     cumsum = np.cumsum(size_groups_small_gram)
     group_start_and_end = [(s, e) for (s, e) in zip(np.concatenate([np.array([0]), cumsum[:-1]]), cumsum)]
     group_indices = [K.variable(np.arange(s, e), dtype='int32') for (s, e) in group_start_and_end]
-
+    
     alpha_pred_T = K.transpose(K.variable(alpha_pred))
     alpha_g_norm_ = [K.sqrt(K.sum(K.square(K.gather(alpha_pred_T, g)), axis=0) + K.epsilon()) for g in group_indices]
     alpha_g_norm = K.stack(alpha_g_norm_)
+    return alpha_g_norm
 
-    pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
-    labels_order = sorted(set(labels), key=labels.index)
-    true_labels = [labels[i] for i in y_indices] # label
-    true_indices = [labels_order.index(l) for l in true_labels]
 
-    pred_binary = np.zeros([len(true_labels), len(labels_order)])
+def calc_scores(pred_indices, true_indices, l)
+    pred_binary = np.zeros([len(true_indices), l])
     for i, index in enumerate(pred_indices):
         pred_binary[i][index] = 1
                              
-    true_binary = np.zeros([len(true_labels), len(labels_order)])
+    true_binary = np.zeros([len(true_indices), l])
     for i, index in enumerate(true_indices):
         true_binary[i][index] = 1
 
