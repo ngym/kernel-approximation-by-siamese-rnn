@@ -107,6 +107,9 @@ def get_classification_error(gram,
     true_indices = [labels_order.index(l) for l in true_labels]
 
     (roc_auc_, f1_) = calc_scores(pred_indices, true_indices, len(labels_order))
+    print("test roc_auc: %f" % roc_auc_)
+    print("test f1     : %f" % f1_)
+    assert False
     
     return (roc_auc_, f1_)
 
