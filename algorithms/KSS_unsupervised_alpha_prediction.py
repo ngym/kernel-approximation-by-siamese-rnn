@@ -92,7 +92,8 @@ def get_classification_error(gram,
                                  epochs,
                                  patience,
                                  logfile_hdf5,
-                                 logfile_loss)
+                                 logfile_loss,
+                                 size_groups_small_gram, labels)
 
     alpha_pred, pred_start, pred_end = model.predict(test_seqs)
     (roc_auc_, f1_) = calc_scores(size_groups_small_gram, alpha_pred, labels, test_indices)
@@ -203,7 +204,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
                            epochs,
                            patience,
                            logfile_hdf5,
-                           logfile_loss):
+                           logfile_loss,
+                           size_groups_small_gram, labels):
         """Keras Siamese RNN training function.
         Carries out training and validation for given data over given number of epochs
         Logs results and network parameters
@@ -221,7 +223,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
         """
 
         def do_epoch(action, current_epoch, epoch_count,
-                     seqs, ks, log_file):
+                     seqs, ks, log_file, val_indices, size_groups_small_gram, labels):
             processed_sample_count = 0
             average_loss = 0
             gen = self.__generator_seqs_and_alpha(seqs, ks)
@@ -253,12 +255,14 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 return None
             elif action == "validation":
                 pred_alpha_batch_list = []
+                ks_batch_list = []
                 while processed_sample_count < seqs.shape[0]:
                     seqs_batch, ks_batch = next(gen)
-                    pred_alpha_batch = self.model.predict_on_batch(seqs_batch, ks_batch)
+                    pred_alpha_batch = self.model.predict_on_batch(seqs_batch)
                     pred_alpha_batch_list.append(pred_alpha_batch)
+                    ks_batch_list.append(ks_batch)
                 alpha_pred = np.concatenate(pred_alpha_batch_list)
-                roc_auc_, f1_ = calc_scores(size_groups_small_gram, alpha_pred, labels, y_indices)
+                roc_auc_, f1_ = calc_scores(size_groups_small_gram, alpha_pred, labels, val_indices)
                 return (roc_auc_, f1_)
             else:
                 assert False
@@ -303,15 +307,18 @@ class Unsupervised_alpha_prediction_network(Rnn):
             
             tr_ks = permutated_tv_ks[:num_tr]
             val_ks = permutated_tv_ks[num_tr:]
+
+            val_indices = permutated_indices[num_tr:]
             
             # training
             self.sparse_rate_callback.on_epoch_begin(epoch)
             _ = do_epoch("training", epoch, epochs,
-                         tr_seqs, tr_ks, loss_file)
+                         tr_seqs, tr_ks, loss_file, None, None, None)
 
             # validation
             roc_auc_, f1_ = do_epoch("validation", epoch, epochs,
-                                     val_seqs, val_ks, loss_file)
+                                     val_seqs, val_ks, loss_file,
+                                     val_indices, size_groups_small_gram, labels)
 
             if roc_auc_ > best_roc_auc_ or\
                (roc_auc_ == best_roc_auc_ and f1_ > best_f1_):
