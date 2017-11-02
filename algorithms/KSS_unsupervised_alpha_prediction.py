@@ -99,7 +99,7 @@ def get_classification_error(gram,
     
     return (roc_auc_, f1_)
 
-def calc_scores(size_groups_small_gram, alpha_pred labels, y_indices):
+def calc_scores(size_groups_small_gram, alpha_pred, labels, y_indices):
     cumsum = np.cumsum(size_groups_small_gram)
     group_start_and_end = [(s, e) for (s, e) in zip(np.concatenate([np.array([0]), cumsum[:-1]]), cumsum)]
     group_indices = [K.variable(np.arange(s, e), dtype='int32') for (s, e) in group_start_and_end]
@@ -258,7 +258,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                     pred_alpha_batch = self.model.predict_on_batch(seqs_batch, ks_batch)
                     pred_alpha_batch_list.append(pred_alpha_batch)
                 alpha_pred = np.concatenate(pred_alpha_batch_list)
-                roc_auc_, f1_ = calc_scores(size_groups_small_gram, alpha_pred labels, y_indices)
+                roc_auc_, f1_ = calc_scores(size_groups_small_gram, alpha_pred, labels, y_indices)
                 return (roc_auc_, f1_)
             else:
                 assert False
