@@ -125,7 +125,7 @@ def calc_group_norm(size_groups_small_gram, alpha_pred):
     return alpha_g_norm
 
 
-def calc_scores(pred_indices, true_indices, l)
+def calc_scores(pred_indices, true_indices, l):
     pred_binary = np.zeros([len(true_indices), l])
     for i, index in enumerate(pred_indices):
         pred_binary[i][index] = 1
