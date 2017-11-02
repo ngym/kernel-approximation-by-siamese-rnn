@@ -255,12 +255,11 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 return None
             elif action == "validation":
                 pred_alpha_batch_list = []
-                ks_batch_list = []
                 while processed_sample_count < seqs.shape[0]:
                     seqs_batch, ks_batch = next(gen)
                     pred_alpha_batch = self.model.predict_on_batch(seqs_batch)
                     pred_alpha_batch_list.append(pred_alpha_batch)
-                    ks_batch_list.append(ks_batch)
+                    processed_sample_count += seqs_batch.shape[0]
                 alpha_pred = np.concatenate(pred_alpha_batch_list)
                 roc_auc_, f1_ = calc_scores(size_groups_small_gram, alpha_pred, labels, val_indices)
                 return (roc_auc_, f1_)
