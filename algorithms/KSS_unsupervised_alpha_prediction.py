@@ -317,7 +317,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                (roc_auc_ == best_roc_auc_ and f1_ > best_f1_):
                 best_roc_auc_ = roc_auc_
                 best_f1_ = f1_
-                best_lmbd = self.sparse_rate_callback.get_lmbd()
+                self.sparse_rate_callback.save_best_lmbd()
                 self.model.save_weights(logfile_hdf5)
                 best_weights = self.model.get_weights()
                 wait = 0
@@ -551,23 +551,21 @@ class LambdaRateScheduler(Callback):
         self.end = end
         self.end_epoch = end_epoch
         self.dtype = dtype
+        self.best_lmbd = np.nan
 
     def on_epoch_begin(self, epoch, logs={}):
-        if epoch <= end_epoch:
+        if epoch <= self.end_epoch:
             l = np.min([epoch / self.end_epoch, 1.])
             lmbd = (1 - l) * self.start + l * self.end
             K.set_value(self.var, lmbd.astype(self.dtype))
+        else:
+            K.set_value(self.var, self.best_lmbd)
         print(("lmbd at epoch beginning:%f" % K.get_value(self.var)))
-        
     def on_train_end(self, logs=None):
         K.set_value(self.var, self.end)
         print(("lmbd at epoch ending   :%f" % K.get_value(self.var)))
-
-    def get_lmbd(self):
-        return K.get_value(self.var)
-    def set_lmbd(self, lmbd):
-        K.set_value(self.var, lmbd)
-        
+    def save_best_lmbd(self):
+        self.best_lmbd = K.get_value(self.var)
 
 class KSS_Loss:
     def __init__(self, lmbd, gram, size_groups):
