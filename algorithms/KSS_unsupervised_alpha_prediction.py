@@ -59,7 +59,7 @@ def get_classification_error(gram,
     feat_dim = seqs[0].shape[1]
     input_shape = (time_dim, feat_dim)
 
-     
+    
     small_gram = gram[small_gram_indices][:, small_gram_indices]
     tv_ks = gram[tv_indices][:, small_gram_indices]
     #tv_ks = gram[small_gram_indices][:, tv_indices]
@@ -71,7 +71,7 @@ def get_classification_error(gram,
     
     tmp = [labels[i] for i in small_gram_indices]
     counter = Counter(tmp)
-    size_groups = [counter[label] for label in sorted(set(tmp), key=tmp.index)]
+    size_groups_small_gram = [counter[label] for label in sorted(set(tmp), key=tmp.index)]
 
     K.clear_session()
 
@@ -84,7 +84,7 @@ def get_classification_error(gram,
                                                   bidirectional,
                                                   batchnormalization,
                                                   lmbd,
-                                                  small_gram, size_groups)
+                                                  small_gram, size_groups_small_gram)
 
     if mode == 'train':
         model.train_and_validate(tv_seqs,
@@ -95,8 +95,12 @@ def get_classification_error(gram,
                                  logfile_loss)
 
     alpha_pred, pred_start, pred_end = model.predict(test_seqs)
+    (roc_auc_, f1_) = calc_scores(size_groups_small_gram, alpha_pred, labels, test_indices)
+    
+    return (roc_auc_, f1_)
 
-    cumsum = np.cumsum(size_groups)
+def calc_scores(size_groups_small_gram, alpha_pred labels, y_indices):
+    cumsum = np.cumsum(size_groups_small_gram)
     group_start_and_end = [(s, e) for (s, e) in zip(np.concatenate([np.array([0]), cumsum[:-1]]), cumsum)]
     group_indices = [K.variable(np.arange(s, e), dtype='int32') for (s, e) in group_start_and_end]
 
@@ -106,7 +110,7 @@ def get_classification_error(gram,
 
     pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
     labels_order = sorted(set(labels), key=labels.index)
-    true_labels = [labels[i] for i in test_indices] # label
+    true_labels = [labels[i] for i in y_indices] # label
     true_indices = [labels_order.index(l) for l in true_labels]
 
     pred_binary = np.zeros([len(true_labels), len(labels_order)])
@@ -223,34 +227,41 @@ class Unsupervised_alpha_prediction_network(Rnn):
             gen = self.__generator_seqs_and_alpha(seqs, ks)
             start = curr_time = time.time()
             current_batch_iteration = 0
-            while processed_sample_count < seqs.shape[0]:
-                # training batch
-                seqs_batch, ks_batch = next(gen)
-                if action == "training":
+            if action == "training":
+                while processed_sample_count < seqs.shape[0]:
+                    # training batch
+                    seqs_batch, ks_batch = next(gen)
                     batch_loss = self.model.train_on_batch(seqs_batch, ks_batch)
-                elif action == "validation":
-                    batch_loss = self.model.test_on_batch(seqs_batch, ks_batch)
-                else:
-                    assert False
-                average_loss = (average_loss * processed_sample_count + batch_loss * seqs_batch.shape[0]) / \
-                               (processed_sample_count + seqs_batch.shape[0])
-                processed_sample_count += seqs_batch.shape[0]
-                prev_time = curr_time
-                curr_time = time.time()
-                elapsed_time = curr_time - start
-                eta = ((curr_time - prev_time) * seqs.shape[0] / seqs_batch.shape[0]) - elapsed_time
+                    average_loss = (average_loss * processed_sample_count + batch_loss * seqs_batch.shape[0]) / \
+                                   (processed_sample_count + seqs_batch.shape[0])
+                    processed_sample_count += seqs_batch.shape[0]
+                    prev_time = curr_time
+                    curr_time = time.time()
+                    elapsed_time = curr_time - start
+                    eta = ((curr_time - prev_time) * seqs.shape[0] / seqs_batch.shape[0]) - elapsed_time
+                    print_current_status(action, current_epoch, epoch_count,
+                                         processed_sample_count, seqs.shape[0],
+                                         elapsed_time, eta,
+                                         average_loss, batch_loss,
+                                         end='\r')
+                    log_current_status(log_file, action, current_epoch, current_batch_iteration, average_loss, batch_loss)
+                    current_batch_iteration += 1
                 print_current_status(action, current_epoch, epoch_count,
                                      processed_sample_count, seqs.shape[0],
                                      elapsed_time, eta,
-                                     average_loss, batch_loss,
-                                     end='\r')
-                log_current_status(log_file, action, current_epoch, current_batch_iteration, average_loss, batch_loss)
-                current_batch_iteration += 1
-            print_current_status(action, current_epoch, epoch_count,
-                                 processed_sample_count, seqs.shape[0],
-                                 elapsed_time, eta,
-                                 average_loss, batch_loss)
-            return average_loss
+                                     average_loss, batch_loss)
+                return None
+            elif action == "validation":
+                pred_alpha_batch_list = []
+                while processed_sample_count < seqs.shape[0]:
+                    seqs_batch, ks_batch = next(gen)
+                    pred_alpha_batch = self.model.predict_on_batch(seqs_batch, ks_batch)
+                    pred_alpha_batch_list.append(pred_alpha_batch)
+                alpha_pred = np.concatenate(pred_alpha_batch_list)
+                roc_auc_, f1_ = calc_scores(size_groups_small_gram, alpha_pred labels, y_indices)
+                return (roc_auc_, f1_)
+            else:
+                assert False
 
         def log_current_status(file, action, current_epoch, batch_iteration, average_loss, batch_loss):
             if action == "training":
@@ -275,9 +286,11 @@ class Unsupervised_alpha_prediction_network(Rnn):
 
         loss_file = open(logfile_loss, "w")
         wait = 0
-        best_validation_loss = np.inf
+        best_roc_auc_ = -np.inf
+        best_f1_ = -np.inf
+        best_lmbd = None
         loss_file.write("epoch, batch_iteration, average_training_loss, training_batch_loss, "
-                        "average_validation_loss, validation_batch_loss\n")
+                        "validation_roc_auc_, validation_f1_\n")
         for epoch in range(1, epochs + 1):
             permutated_indices = np.random.permutation(np.arange(tv_seqs.shape[0]))
             num_tr = int(tv_seqs.shape[0] * 0.9)
@@ -297,11 +310,14 @@ class Unsupervised_alpha_prediction_network(Rnn):
                          tr_seqs, tr_ks, loss_file)
 
             # validation
-            average_validation_loss = do_epoch("validation", epoch, epochs,
-                                               val_seqs, val_ks, loss_file)
+            roc_auc_, f1_ = do_epoch("validation", epoch, epochs,
+                                     val_seqs, val_ks, loss_file)
 
-            if average_validation_loss < best_validation_loss:
-                best_validation_loss = average_validation_loss
+            if roc_auc_ > best_roc_auc_ or\
+               (roc_auc_ == best_roc_auc_ and f1_ > best_f1_):
+                best_roc_auc_ = roc_auc_
+                best_f1_ = f1_
+                best_lmbd = self.sparse_rate_callback.get_lmbd()
                 self.model.save_weights(logfile_hdf5)
                 best_weights = self.model.get_weights()
                 wait = 0
@@ -537,14 +553,20 @@ class LambdaRateScheduler(Callback):
         self.dtype = dtype
 
     def on_epoch_begin(self, epoch, logs={}):
-        l = np.min([epoch / self.end_epoch, 1.])
-        lmbd = (1 - l) * self.start + l * self.end
-        K.set_value(self.var, lmbd.astype(self.dtype))
+        if epoch <= end_epoch:
+            l = np.min([epoch / self.end_epoch, 1.])
+            lmbd = (1 - l) * self.start + l * self.end
+            K.set_value(self.var, lmbd.astype(self.dtype))
         print(("lmbd at epoch beginning:%f" % K.get_value(self.var)))
         
     def on_train_end(self, logs=None):
         K.set_value(self.var, self.end)
         print(("lmbd at epoch ending   :%f" % K.get_value(self.var)))
+
+    def get_lmbd(self):
+        return K.get_value(self.var)
+    def set_lmbd(self, lmbd):
+        K.set_value(self.var, lmbd)
         
 
 class KSS_Loss:
