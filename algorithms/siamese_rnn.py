@@ -109,8 +109,7 @@ class SiameseRnn(Rnn):
                            epoch_start_from,
                            loss_weight_ratio,
                            logfile_loss,
-                           logfile_hdf5,
-                           discrete_similarity):
+                           logfile_hdf5):
         """Keras Siamese RNN training function.
         Carries out training and validation for given data over given number of epochs
         Logs results and network parameters
@@ -134,15 +133,13 @@ class SiameseRnn(Rnn):
         """
 
         def do_epoch(action, current_epoch, epoch_count,
-                     indices, gram_drop, seqs, labels, loss_weight_ratio, log_file,
-                     discrete_similarity):
+                     indices, gram_drop, seqs, labels, loss_weight_ratio, log_file):
             processed_sample_count = 0
             average_loss = 0
             if action == "training":
                 np.random.shuffle(indices)
             gen = self.__generator_sequence_pairs(indices, gram_drop, seqs, labels=labels,
-                                                  loss_weight_ratio=loss_weight_ratio,
-                                                  discrete_similarity=discrete_similarity)
+                                                  loss_weight_ratio=loss_weight_ratio)
             start = curr_time = time.time()
             current_batch_iteration = 0
             while processed_sample_count < len(indices):
@@ -203,14 +200,12 @@ class SiameseRnn(Rnn):
         for epoch in range(epoch_start_from, epochs + 1):
             # training
             _ = do_epoch("training", epoch, epochs,
-                         tr_indices, gram_drop, seqs, labels, loss_weight_ratio, loss_file,
-                         discrete_similarity)
+                         tr_indices, gram_drop, seqs, labels, loss_weight_ratio, loss_file)
 
             # validation
             average_validation_loss = do_epoch("validation", epoch, epochs,
                                                val_indices, gram_drop, seqs, labels,
-                                               loss_weight_ratio, loss_file,
-                                               discrete_similarity)
+                                               loss_weight_ratio, loss_file)
 
 
             if average_validation_loss < best_validation_loss:
@@ -251,7 +246,7 @@ class SiameseRnn(Rnn):
             num_predicted_samples += preds_batch.shape[0]
         return np.array(preds)
 
-    def __generator_sequence_pairs(self, indices, gram_drop, seqs, labels=None, loss_weight_ratio=None, discrete_similarity=False):
+    def __generator_sequence_pairs(self, indices, gram_drop, seqs, labels=None, loss_weight_ratio=None):
         """Siamese RNN data batch generator.
         Yields minibatches of 2 time series and their corresponding output value (Triangular Global Alignment kernel in our case)
 
@@ -277,10 +272,7 @@ class SiameseRnn(Rnn):
         for i, j in indices_copy:
             input_0.append(seqs[i])
             input_1.append(seqs[j])
-            if discrete_similarity:
-                y.append([1. if labels[i] == labels[j] else 0.])
-            else:
-                y.append([gram_drop[i][j]])
+            y.append([gram_drop[i][j]])
             if weight_flag:
                 base_weight = 1. / (dict_counts[labels[i]] * dict_counts[labels[j]])
                 sample_weights.append(base_weight * (loss_weight_ratio if labels[i] == labels[j] else 1.0))
