@@ -102,6 +102,11 @@ def run(dataset_type, dataset_location, fold_count, fold_to_drop,
     sample_names = seqs.keys()
     
     gram = np.zeros([len(seqs), len(seqs)])
+    labels = list(key_to_str.values())
+    for i in len(seqs):
+        for j in len(seqs):
+            if labels[i] == labels[j]:
+                gram[i][j] = 1
 
     # drop elements
     if fold_count == 0:
