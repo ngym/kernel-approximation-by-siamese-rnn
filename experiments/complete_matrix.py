@@ -2,6 +2,8 @@ import sys, os, shutil
 import time
 from collections import OrderedDict
 
+import numpy as np
+
 from sacred import Experiment
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -236,35 +238,28 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                              mse, mse_dropped, mae, mae_dropped, re, re_dropped,
                              train_start=train_start, train_end=train_end)
 
+    test_indices = dropped_elements
+    labels_list = list(key_to_str.values())
+    labels = np.array(labels_list)
+    pred_indices_in_gram = np.argmax(gram_completed[test_indices], axis=0)
+    pred_labels = labels[pred_indices_in_gram]
+    true_labels = labels[test_indices]
 
-    gram_drop, labels = make_matrix_incomplete.trim_nan(gram_drop, key_to_str.values())
-    roc_auc_, f1_ = KSS_unsupervised_alpha_prediction.calc_scores(size_groups_small_gram, alpha_pred, labels, y_indices)
-
-
-def calc_scores:
-    cumsum = np.cumsum(size_groups_small_gram)
-    group_start_and_end = [(s, e) for (s, e) in zip(np.concatenate([np.array([0]), cumsum[:-1]]), cumsum)]
-    group_indices = [K.variable(np.arange(s, e), dtype='int32') for (s, e) in group_start_and_end]
-
-    alpha_pred_T = K.transpose(K.variable(alpha_pred))
-    alpha_g_norm_ = [K.sqrt(K.sum(K.square(K.gather(alpha_pred_T, g)), axis=0) + K.epsilon()) for g in group_indices]
-    alpha_g_norm = K.stack(alpha_g_norm_)
-
-    pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
-    labels_order = sorted(set(labels), key=labels.index)
-    true_labels = [labels[i] for i in y_indices] # label
+    labels_order = sorted(set(labels_list), key=labels_list.index)
+    pred_indices = [labels_order.index(l) for l in pred_labels]
     true_indices = [labels_order.index(l) for l in true_labels]
+    
+    roc_auc_, f1_ = KSS_unsupervised_alpha_prediction.calc_scores(pred_indices, true_indices, len(labels_order))
+    print("test roc_auc: %f" % roc_auc_)
+    print("test f1     : %f" % f1_)
 
-    pred_binary = np.zeros([len(true_labels), len(labels_order)])
-    for i, index in enumerate(pred_indices):
-        pred_binary[i][index] = 1
-                             
-    true_binary = np.zeros([len(true_labels), len(labels_order)])
-    for i, index in enumerate(true_indices):
-        true_binary[i][index] = 1
 
-    roc_auc_ = roc_auc_score(y_true=true_binary, y_score=pred_binary)
-    f1_ = f1_score(true_binary, pred_binary, average='weighted')
+
+
+
+
+
+
 
 
     
