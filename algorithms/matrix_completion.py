@@ -90,8 +90,7 @@ def rnn_matrix_completion(gram_drop, seqs,
                           labels,
                           siamese_joint_method,
                           classify_one_by_all=False,
-                          target_label=None,
-                          discrete_similarity=False):
+                          target_label=None):
     """Fill in Gram matrix with dropped elements with Keras Siamese RNN.
     Trains the network on given part of Gram matrix and the corresponding sequences
     Fills in missing elements by network prediction
@@ -193,8 +192,7 @@ def rnn_matrix_completion(gram_drop, seqs,
                                  epoch_start_from,
                                  loss_weight_ratio,
                                  logfile_loss,
-                                 logfile_hdf5,
-                                 discrete_similarity)
+                                 logfile_hdf5)
     elif mode == 'continue_train':
         print("load from hdf5 file: %s" % logfile_hdf5)
         model.load_weights(logfile_hdf5)
