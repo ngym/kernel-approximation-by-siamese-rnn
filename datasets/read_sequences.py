@@ -106,7 +106,7 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None,
                 label = i // 660
                 num = i % 660
             name = prefix + "_" + str(label) + "_" + str(num)
-            seqs[name] = seq
+            seqs[name] = np.array(seq).astype(np.float32)
         # space separated, blank line separated
         filenames = {("test", os.path.join(direc, "Test_Arabic_Digit.txt")),
                      ("train", os.path.join(direc, "Train_Arabic_Digit.txt"))}
