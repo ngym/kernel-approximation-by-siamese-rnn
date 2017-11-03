@@ -97,6 +97,33 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None,
             for r in reader:
                 seq.append(r)
             seqs[others.get_sample_name(dataset_type, sample_file)] = np.array(seq).astype(np.float32)
+    elif dataset_type == "UCIarabicdigits":
+        def add_seq(prefix, i, seqs, seq):
+            if prefix == "test":
+                label = i // 220
+                num = i % 220
+            else:
+                label = i // 660
+                num = i % 660
+            name = prefix + "_" + str(label) + "_" + str(num)
+            seqs[name] = seq
+        # space separated, blank line separated
+        filenames = {("test", os.path.join(direc, "Test_Arabic_Digit.txt")),
+                     ("train", os.path.join(direc, "Train_Arabic_Digit.txt"))}
+        for prefix, filename in filenames:
+            with open(filename, "r") as fd:
+                reader = csv.reader(fd, delimiter=' ')
+                seq = []
+                i = 0
+                next(reader)
+                for r in reader:
+                    if r == ['', '', '', '', '', '', '', '', '', '', '', '', '']:
+                        add_seq(prefix, i, seqs, seq)
+                        seq = []
+                    else:
+                        seq.append(r)
+                    i += 1
+                add_seq(prefix, i, seqs, seq)
     else:
         assert False
     key_to_str, key_to_int = get_labels(seqs, dataset_type)

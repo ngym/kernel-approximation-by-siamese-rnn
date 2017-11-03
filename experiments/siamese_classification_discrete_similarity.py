@@ -32,20 +32,7 @@ def cfg():
 
 
 @ex.named_config
-def gak():
-    algorithm = "gak"
-    params = dict(sigma=20,
-                  triangular=None)
-
-
-@ex.named_config
-def softimpute():
-    algorithm = "softimpute"
-
-
-@ex.named_config
 def rnn():
-    algorithm = "rnn"
     labels_to_use = []
     params = dict(epochs=100,
                   patience=2,
@@ -64,22 +51,9 @@ def rnn():
                   target_label="I")
 
 @ex.capture
-def check_algorithm(algorithm):
-    assert algorithm in {"gak", "softimpute", "rnn"}
-
-
-@ex.capture
 def check_fold(fold_count, fold_to_drop, hdf5):
     assert (0 <= fold_to_drop <= fold_count) or hdf5
 
-
-@ex.capture
-def check_params(algorithm, params):
-    if algorithm == "gak":
-        if 'sigma' not in params:  # TODO else
-            params['sigma'] = None
-        if 'triangular' not in params:  # TODO else
-            params['triangular'] = None
 
 @ex.capture
 def check_pickle_format(result_):
@@ -113,12 +87,10 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 
 @ex.automain
 def run(dataset_type, dataset_location, fold_count, fold_to_drop,
-        algorithm, params, output_dir, output_filename_format,
+        params, output_dir, output_filename_format,
         labels_to_use, data_augmentation_size):
     os.makedirs(output_dir, exist_ok=True)
     shutil.copy(os.path.abspath(sys.argv[2]), os.path.join(output_dir, os.path.basename(sys.argv[2])))
-    check_algorithm(algorithm)
-    check_params(algorithm, params)
 
     dataset_location = os.path.abspath(dataset_location)
     output_dir = os.path.abspath(output_dir)

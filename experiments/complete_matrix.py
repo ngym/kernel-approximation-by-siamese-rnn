@@ -202,8 +202,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                                                       list(key_to_str.values()),
                                                       params['siamese_joint_method'],
                                                       classify_one_by_all=params['classify_one_by_all'],
-                                                      target_label=params['target_label'],
-                                                      discrete_similarity=params['discrete_similarity'])
+                                                      target_label=params['target_label'])
         action = "SiameseRNN"
     else:
         assert False
@@ -238,21 +237,6 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                              mse, mse_dropped, mae, mae_dropped, re, re_dropped,
                              train_start=train_start, train_end=train_end)
 
-    test_indices = dropped_indices = loaded_data['dropped_indices'][-1]
-    
-    labels_list = list(key_to_str.values())
-    labels = np.array(labels_list)
-    pred_indices_in_gram = np.argmax(gram_completed[test_indices], axis=1)
-    pred_labels = labels[pred_indices_in_gram]
-    true_labels = labels[test_indices]
-
-    labels_order = sorted(set(labels_list), key=labels_list.index)
-    pred_indices = [labels_order.index(l) for l in pred_labels]
-    true_indices = [labels_order.index(l) for l in true_labels]
-    
-    roc_auc_, f1_ = KSS_unsupervised_alpha_prediction.calc_scores(pred_indices, true_indices, len(labels_order))
-    print("test roc_auc: %f" % roc_auc_)
-    print("test f1     : %f" % f1_)
 
 
 
