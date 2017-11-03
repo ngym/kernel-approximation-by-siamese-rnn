@@ -238,7 +238,8 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                              mse, mse_dropped, mae, mae_dropped, re, re_dropped,
                              train_start=train_start, train_end=train_end)
 
-    test_indices = dropped_elements
+    test_indices = dropped_indices = loaded_data['dropped_indices'][-1]
+    
     labels_list = list(key_to_str.values())
     labels = np.array(labels_list)
     pred_indices_in_gram = np.argmax(gram_completed[test_indices], axis=0)
