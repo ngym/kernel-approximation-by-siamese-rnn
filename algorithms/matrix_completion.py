@@ -196,7 +196,7 @@ def rnn_matrix_completion(gram_drop, seqs,
                                  logfile_hdf5,
                                  discrete_similarity)
     elif mode == 'continue_train':
-        print("load from hdf5 file: %s", logfile_hdf5)
+        print("load from hdf5 file: %s" % logfile_hdf5)
         model.load_weights(logfile_hdf5)
         model.train_and_validate(train_indices, validation_indices,
                                  gram_drop,
@@ -209,7 +209,7 @@ def rnn_matrix_completion(gram_drop, seqs,
                                  logfile_loss,
                                  logfile_hdf5)
     elif mode == 'load_pretrained':
-        print("load from hdf5 file: %s", logfile_hdf5)
+        print("load from hdf5 file: %s" % logfile_hdf5)
         model.load_weights(logfile_hdf5)
     else:
         print('Unsupported mode.')

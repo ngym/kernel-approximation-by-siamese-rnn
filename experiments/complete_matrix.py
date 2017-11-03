@@ -242,7 +242,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     
     labels_list = list(key_to_str.values())
     labels = np.array(labels_list)
-    pred_indices_in_gram = np.argmax(gram_completed[test_indices], axis=0)
+    pred_indices_in_gram = np.argmax(gram_completed[test_indices], axis=1)
     pred_labels = labels[pred_indices_in_gram]
     true_labels = labels[test_indices]
 
