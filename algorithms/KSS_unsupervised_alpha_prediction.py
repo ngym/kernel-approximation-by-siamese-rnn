@@ -273,8 +273,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
                     pred_alpha_batch_list.append(pred_alpha_batch)
                     processed_sample_count += seqs_batch.shape[0]
                 alpha_pred = np.concatenate(pred_alpha_batch_list)
-                print("len([ap for ap in alpha_pred if all(ap == 0)]) :%d" % len([ap for ap in alpha_pred if all(ap == 0)]))
-                print("len(alpha_pred)                                :%d" % len(alpha_pred))
+                print("np.mean([np.count_nonzero(ap) for ap in alpha_pred]) :%d" % np.mean([np.count_nonzero(ap) for ap in alpha_pred]))
+                print("alpha_pred.shape                                     :%d" + repr(alpha_pred.shape))
 
                 alpha_g_norm = calc_group_norm(size_groups_small_gram, alpha_pred)
                 pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
