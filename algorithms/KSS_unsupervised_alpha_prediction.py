@@ -281,7 +281,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 alpha_g_norm = calc_group_norm(size_groups_small_gram, alpha_pred)
                 pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
 
-                print("sparcity: %d/%d" % (np.mean(np.count_nonzero(alpha_g_norm)), len(alpha_g_norm)))
+                print("sparcity: %d/%d" % (np.mean([np.count_nonzero(a) for a in K.get_value(alpha_g_norm).T]),
+                                           K.get_value(K.shape(alpha_g_norm))[0]))
                 
                 labels_order = sorted(set(tv_labels), key=tv_labels.index)
                 true_labels = [tv_labels[i] for i in val_indices] # label
