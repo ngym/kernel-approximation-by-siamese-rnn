@@ -47,7 +47,8 @@ def get_classification_error(gram,
                              batchnormalization,
                              mode,
                              labels,
-                             lmbd):
+                             lmbd_start,
+                             lmbd_end):
     gram = gram.astype('float32')
     seqs = np.array(seqs_)
     # pre-processing
@@ -85,7 +86,8 @@ def get_classification_error(gram,
                                                   implementation,
                                                   bidirectional,
                                                   batchnormalization,
-                                                  lmbd,
+                                                  lmbd_start,
+                                                  lmbd_end,
                                                   small_gram, size_groups_small_gram)
 
     if mode == 'train':
@@ -144,7 +146,7 @@ def calc_scores(pred_indices, true_indices, l):
 class Unsupervised_alpha_prediction_network(Rnn):
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization,
-                 lmbd,
+                 lmbd_start, lmbd_end,
                  gram, size_groups):
         """
         :param input_shape: Keras input shape
@@ -170,8 +172,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
                          rnn, dropout, implementation,
                          bidirectional, batchnormalization)
 
-        self.hyperparams = {'lambda_start': lmbd / 10.,
-                            'lambda_end': lmbd,
+        self.hyperparams = {'lambda_start': lmbd_start,
+                            'lambda_end': lmbd_end,
                             'end_epoch': 15}
         
         self.model = self.__create_RNN_unsupervised_alpha_prediction_network(gram, size_groups)
@@ -273,12 +275,14 @@ class Unsupervised_alpha_prediction_network(Rnn):
                     pred_alpha_batch_list.append(pred_alpha_batch)
                     processed_sample_count += seqs_batch.shape[0]
                 alpha_pred = np.concatenate(pred_alpha_batch_list)
-                print("np.mean([np.count_nonzero(ap) for ap in alpha_pred]) :%d" % np.mean([np.count_nonzero(ap) for ap in alpha_pred]))
-                print("alpha_pred.shape                                     :%d" + repr(alpha_pred.shape))
+                #print("np.mean([np.count_nonzero(ap) for ap in alpha_pred]) :%d" % np.mean([np.count_nonzero(ap) for ap in alpha_pred]))
+                #print("alpha_pred.shape                                     :" + repr(alpha_pred.shape))
 
                 alpha_g_norm = calc_group_norm(size_groups_small_gram, alpha_pred)
                 pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
-    
+
+                print("sparcity: %d/%d" % (np.mean(np.count_nonzero(alpha_g_norm)), len(alpha_g_norm)))
+                
                 labels_order = sorted(set(tv_labels), key=tv_labels.index)
                 true_labels = [tv_labels[i] for i in val_indices] # label
                 true_indices = [labels_order.index(l) for l in true_labels]
