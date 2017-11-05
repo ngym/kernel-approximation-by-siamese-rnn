@@ -175,7 +175,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
 
         self.hyperparams = {'lambda_start': lmbd_start,
                             'lambda_end': lmbd_end,
-                            'end_epoch': 15}
+                            'end_epoch': 45}
         
         self.model = self.__create_RNN_unsupervised_alpha_prediction_network(gram, size_groups)
 
@@ -282,7 +282,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 alpha_g_norm = calc_group_norm(size_groups_small_gram, alpha_pred)
                 pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
 
-                print("mean density (anti-sparsity): %d/%d" % (np.mean([np.count_nonzero(a > (np.max(a) * 0.01)) for a in K.get_value(alpha_g_norm).T]),
+                print("mean density (anti-sparsity): %f/%d" % (np.mean([np.count_nonzero(a > (np.max(a) * 0.01)) for a in K.get_value(alpha_g_norm).T]),
                                                                K.get_value(K.shape(alpha_g_norm))[0]))
                 print(K.get_value(alpha_g_norm).T[0])
                 #print(alpha_pred[0][:size_groups_small_gram[0]])
