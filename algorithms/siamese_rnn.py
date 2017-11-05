@@ -173,9 +173,9 @@ class SiameseRnn(Rnn):
 
         def log_current_status(file, action, current_epoch, batch_iteration, average_loss, batch_loss):
             if action == "training":
-                text = "%d, %d, %.10f, %.10f, nan, nan\n"
+                text = "%d, %d, %.20f, %.20f, nan, nan\n"
             else:
-                text = "%d, %d, nan, nan, %.10f, %.10f\n"
+                text = "%d, %d, nan, nan, %.20f, %.20f\n"
             file.write(text %
                        (current_epoch, batch_iteration,
                         average_loss, batch_loss))
@@ -185,7 +185,7 @@ class SiameseRnn(Rnn):
                                  processed_sample_count, total_sample_count,
                                  elapsed_time, eta, average_loss, loss_batch,
                                  end='\n'):
-            print("epoch:[%d/%d] %s:[%d/%d] %ds, ETA:%ds, ave_loss:%.10f, loss_batch:%.10f                       " %
+            print("epoch:[%d/%d] %s:[%d/%d] %ds, ETA:%ds, ave_loss:%.20f, loss_batch:%.20f                       " %
                   (current_epoch, epoch_count,
                    action, processed_sample_count, total_sample_count,
                    elapsed_time, eta,

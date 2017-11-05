@@ -120,9 +120,9 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None,
                     if r == ['', '', '', '', '', '', '', '', '', '', '', '', '']:
                         add_seq(prefix, i, seqs, seq)
                         seq = []
+                        i += 1
                     else:
                         seq.append(r)
-                    i += 1
                 add_seq(prefix, i, seqs, seq)
     else:
         assert False
