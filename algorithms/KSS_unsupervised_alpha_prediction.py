@@ -69,8 +69,10 @@ def get_classification_error(gram,
 
     tv_seqs = seqs[tv_indices]
     test_seqs = seqs[test_indices]
-    
-    tv_labels = [labels[i] for i in tv_indices]
+
+    labels_np = np.array(labels)
+    tv_labels = labels_np[tv_indices]
+    test_labels = labels_np[test_indices]
 
     tmp = [labels[i] for i in small_gram_indices]
     counter = Counter(tmp)
@@ -320,28 +322,29 @@ class Unsupervised_alpha_prediction_network(Rnn):
         wait = 0
         best_roc_auc_ = -np.inf
         best_f1_ = -np.inf
-        best_lmbd = None
         loss_file.write("epoch, batch_iteration, average_training_loss, training_batch_loss, "
                         "validation_roc_auc_, validation_f1_\n")
         for epoch in range(1, epochs + 1):
             permutated_indices = np.random.permutation(np.arange(tv_seqs.shape[0]))
             num_tr = int(tv_seqs.shape[0] * 0.9)
-            
-            permutated_tv_seqs = tv_seqs[permutated_indices]
-            permutated_tv_ks = tv_ks[permutated_indices]
-            
-            tr_seqs = permutated_tv_seqs[:num_tr]
-            val_seqs = permutated_tv_seqs[num_tr:]
-            
-            tr_ks = permutated_tv_ks[:num_tr]
-            val_ks = permutated_tv_ks[num_tr:]
 
+            tr_indices  = permutated_indices[:num_tr]
             val_indices = permutated_indices[num_tr:]
+            
+            tr_seqs  = tv_seqs[tr_indices]
+            val_seqs = tv_seqs[val_indices]
+            
+            tr_ks  = tv_ks[tr_indices]
+            val_ks = tv_ks[val_indices]
+
+            tr_labels  = tv_labels[tr_indices]
+            val_labels = tv_labels[val_indices]
             
             # training
             self.sparse_rate_callback.on_epoch_begin(epoch)
             _ = do_epoch("training", epoch, epochs,
-                         tr_seqs, tr_ks, loss_file, None, None, None)
+                         tr_seqs, tr_ks, loss_file,
+                         None, None, None)
 
             # validation
             roc_auc_, f1_ = do_epoch("validation", epoch, epochs,
@@ -631,7 +634,7 @@ class KSS_Loss:
         #alpha_g_norm = K.sqrt(K.sum(K.square(alpha_g), axis=1) + K.epsilon()) # [group, sample]
         #reg = K.sum(alpha_g_norm, axis=0)
         
-        return K.mean(.5 * K.flatten(quad) - K.flatten(linear) + self.lmbd * reg)
+        return K.mean(.5 * K.flatten(quad) - K.flatten(linear) + self.lmbd * reg) + 10000
         """
         #alpha_pred_permute = K.permute_dimensions(alpha_pred, [len(alpha_pred.shape) - 1] + list(range(len(alpha_pred.shape) - 1)))
         alpha_pred_permute = K.permute_dimensions(alpha_pred, self.alpha_permute_order)
