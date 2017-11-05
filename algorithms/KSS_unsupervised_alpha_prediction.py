@@ -594,6 +594,8 @@ class LambdaRateScheduler(Callback):
         self.best_lmbd = np.nan
 
     def on_epoch_begin(self, epoch, logs={}):
+        if epoch % 3 != 1:
+            return
         if epoch <= self.end_epoch:
             l = np.min([epoch / self.end_epoch, 1.])
             lmbd = (1 - l) * self.start + l * self.end
