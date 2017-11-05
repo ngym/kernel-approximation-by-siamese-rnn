@@ -70,13 +70,12 @@ def get_classification_error(gram,
     tv_seqs = seqs[tv_indices]
     test_seqs = seqs[test_indices]
 
-    labels_np = np.array(labels)
-    tv_labels = labels_np[tv_indices]
-    test_labels = labels_np[test_indices]
+    labels_ar = np.array(labels)
+    small_gram_labels = labels_ar[small_gram_indices]
+    tv_labels = labels_ar[tv_indices]
+    test_labels = labels_ar[test_indices]
 
-    tmp = [labels[i] for i in small_gram_indices]
-    counter = Counter(tmp)
-    size_groups_small_gram = [counter[label] for label in sorted(set(tmp), key=tmp.index)]
+    size_groups_small_gram = np.unique(small_gram_labels, return_counts=True)[1]
 
     K.clear_session()
 
@@ -105,10 +104,10 @@ def get_classification_error(gram,
 
     alpha_g_norm = calc_group_norm(size_groups_small_gram, alpha_pred)
     pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
-    
-    labels_order = sorted(set(labels), key=labels.index)
-    true_labels = [labels[i] for i in test_indices] # label
-    true_indices = [labels_order.index(l) for l in true_labels]
+
+    labels_order = np.unique(tv_labels, return_counts=True)[0]
+    true_labels = test_labels
+    true_indices = np.concatenate([np.where(labels_order == l) for l in true_labels])
 
     roc_auc_, f1_ = calc_scores(pred_indices, true_indices, len(labels_order))
     print("test roc_auc: %f" % roc_auc_)
@@ -288,9 +287,10 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 print(K.get_value(alpha_g_norm).T[0])
                 print(alpha_pred[0][:size_groups_small_gram[0]])
                 
-                labels_order = sorted(set(tv_labels), key=tv_labels.index)
-                true_labels = [tv_labels[i] for i in val_indices] # label
-                true_indices = [labels_order.index(l) for l in true_labels]
+                labels_order = np.unique(tv_labels, return_counts=True)[0]
+                true_labels = tv_labels[val_indices] # label
+                true_indices = np.concatenate([np.where(labels_order == l)
+                                               for l in true_labels])
 
                 roc_auc_, f1_ = calc_scores(pred_indices, true_indices, len(labels_order))
                 return (roc_auc_, f1_)
