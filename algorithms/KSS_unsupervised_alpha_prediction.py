@@ -286,7 +286,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                                                                K.get_value(K.shape(alpha_g_norm))[0]))
                 print(K.get_value(alpha_g_norm).T[0])
                 print(alpha_pred[0][:size_groups_small_gram[0]])
-                print(true_labels[0])
+                print(tv_labels[val_indices[0]])
                 
                 labels_order = np.unique(tv_labels, return_counts=True)[0]
                 true_labels = tv_labels[val_indices] # label
