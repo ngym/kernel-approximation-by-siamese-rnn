@@ -122,7 +122,7 @@ def calc_group_norm(size_groups_small_gram, alpha_pred):
     group_indices = [K.variable(np.arange(s, e), dtype='int32') for (s, e) in group_start_and_end]
     
     alpha_pred_T = K.transpose(K.variable(alpha_pred))
-    alpha_g_norm_ = [K.sqrt(K.sum(K.square(K.gather(alpha_pred_T, g)), axis=0) + K.epsilon()) for g in group_indices]
+    alpha_g_norm_ = [K.sqrt(K.sum(K.square(K.gather(alpha_pred_T, g)), axis=0) + for g in group_indices]
     alpha_g_norm = K.stack(alpha_g_norm_)
     return alpha_g_norm
 
