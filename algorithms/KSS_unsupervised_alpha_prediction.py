@@ -285,7 +285,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 print("mean density (anti-sparsity): %d/%d" % (np.mean([np.count_nonzero(a > (np.max(a) * 0.01)) for a in K.get_value(alpha_g_norm).T]),
                                                                K.get_value(K.shape(alpha_g_norm))[0]))
                 print(K.get_value(alpha_g_norm).T[0])
-                print(alpha_pred[0][:size_groups_small_gram[0]])
+                #print(alpha_pred[0][:size_groups_small_gram[0]])
                 print(tv_labels[val_indices[0]])
                 
                 labels_order = np.unique(tv_labels, return_counts=True)[0]
@@ -595,7 +595,7 @@ class LambdaRateScheduler(Callback):
         self.best_lmbd = np.nan
 
     def on_epoch_begin(self, epoch, logs={}):
-        if epoch % 3 != 1:
+        if epoch % 3 != 0:
             return
         if epoch <= self.end_epoch:
             l = np.min([epoch / self.end_epoch, 1.])
