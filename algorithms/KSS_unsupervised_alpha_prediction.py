@@ -267,31 +267,32 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 return None
             elif action == "validation":
                 pred_alpha_batch_list = []
+                ks_batch_list = []
                 while processed_sample_count < seqs.shape[0]:
                     seqs_batch, ks_batch = next(gen)
                     pred_alpha_batch = self.model.predict_on_batch(seqs_batch)
                     pred_alpha_batch_list.append(pred_alpha_batch)
+                    ks_batch_list.append(ks_batch)
                     processed_sample_count += seqs_batch.shape[0]
+                ks = np.concatenate(ks_batch_list)
                 alpha_pred = np.concatenate(pred_alpha_batch_list)
-                #print("np.mean([np.count_nonzero(ap) for ap in alpha_pred]) :%d" % np.mean([np.count_nonzero(ap) for ap in alpha_pred]))
-                #print("alpha_pred.shape                                     :" + repr(alpha_pred.shape))
 
                 alpha_g_norm = calc_group_norm(size_groups_small_gram, alpha_pred)
                 pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
-
+                
                 print("mean density (anti-sparsity): %f/%d" % (np.mean([np.count_nonzero(a > (np.max(a) * 0.01)) for a in K.get_value(alpha_g_norm).T]),
                                                                K.get_value(K.shape(alpha_g_norm))[0]))
                 print(K.get_value(alpha_g_norm).T[0])
-                #print(alpha_pred[0][:size_groups_small_gram[0]])
                 print(tv_labels[val_indices[0]])
-                
+
                 labels_order = np.unique(tv_labels, return_counts=True)[0]
                 true_labels = tv_labels[val_indices] # label
                 true_indices = np.concatenate([np.where(labels_order == l)
                                                for l in true_labels])
 
                 roc_auc_, f1_ = calc_scores(pred_indices, true_indices, len(labels_order))
-                return (roc_auc_, f1_)
+                loss = self.loss_function(ks, alpha_pred)
+                return loss, roc_auc_, f1_
             else:
                 assert False
 
@@ -318,8 +319,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
 
         loss_file = open(logfile_loss, "w")
         wait = 0
-        best_roc_auc_ = -np.inf
-        best_f1_ = -np.inf
+        best_loss = np.inf
         loss_file.write("epoch, batch_iteration, average_training_loss, training_batch_loss, "
                         "validation_roc_auc_, validation_f1_\n")
         for epoch in range(1, epochs + 1):
@@ -345,16 +345,15 @@ class Unsupervised_alpha_prediction_network(Rnn):
                          None, None, None)
 
             # validation
-            roc_auc_, f1_ = do_epoch("validation", epoch, epochs,
-                                     val_seqs, val_ks, loss_file,
-                                     val_indices, size_groups_small_gram, tv_labels)
+            loss, roc_auc_, f1_ = do_epoch("validation", epoch, epochs,
+                                           val_seqs, val_ks, loss_file,
+                                           val_indices, size_groups_small_gram, tv_labels)
             print("validation roc_auc: %f" % roc_auc_)
             print("validation f1     : %f" % f1_)
+            print("validation loss   : %f" % loss)
 
-            if roc_auc_ > best_roc_auc_ or\
-               (roc_auc_ == best_roc_auc_ and f1_ > best_f1_):
-                best_roc_auc_ = roc_auc_
-                best_f1_ = f1_
+            if loss < best_loss:
+                best_loss = loss
                 self.model.save_weights(logfile_hdf5)
                 best_weights = self.model.get_weights()
                 wait = 0
