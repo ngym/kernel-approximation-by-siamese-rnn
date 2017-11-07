@@ -86,8 +86,7 @@ def get_classification_error(gram,
                                                   implementation,
                                                   bidirectional,
                                                   batchnormalization,
-                                                  lmbd_start,
-                                                  lmbd_end,
+                                                  lmbd,
                                                   small_gram, size_groups_small_gram)
 
     if mode == 'train':
@@ -146,7 +145,7 @@ def calc_scores(pred_indices, true_indices, l):
 class Unsupervised_alpha_prediction_network(Rnn):
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization,
-                 lmbd_start, lmbd_end,
+                 lmbd,
                  gram, size_groups):
         """
         :param input_shape: Keras input shape
@@ -172,8 +171,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
                          rnn, dropout, implementation,
                          bidirectional, batchnormalization)
 
-        self.hyperparams = {'lambda_start': lmbd_start,
-                            'lambda_end': lmbd_end,
+        self.hyperparams = {'lambda_start': 0.0,
+                            'lambda_end': lmbd,
                             'end_epoch': 15}
         
         self.model = self.__create_RNN_unsupervised_alpha_prediction_network(gram, size_groups)
