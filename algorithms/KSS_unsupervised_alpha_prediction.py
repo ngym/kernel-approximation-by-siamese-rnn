@@ -291,7 +291,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                                                for l in true_labels])
 
                 roc_auc_, f1_ = calc_scores(pred_indices, true_indices, len(labels_order))
-                loss = self.loss_function(K.variable(ks), K.variable(alpha_pred))
+                loss = K.get_value(self.loss_function(K.variable(ks), K.variable(alpha_pred)))
                 return loss, roc_auc_, f1_
             else:
                 assert False
