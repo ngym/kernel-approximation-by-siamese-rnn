@@ -47,8 +47,7 @@ def get_classification_error(gram,
                              batchnormalization,
                              mode,
                              labels,
-                             lmbd_start,
-                             lmbd_end):
+                             lmbd):
     gram = gram.astype('float32')
     seqs = np.array(seqs_)
     # pre-processing
@@ -175,7 +174,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
 
         self.hyperparams = {'lambda_start': lmbd_start,
                             'lambda_end': lmbd_end,
-                            'end_epoch': 45}
+                            'end_epoch': 15}
         
         self.model = self.__create_RNN_unsupervised_alpha_prediction_network(gram, size_groups)
 
@@ -208,7 +207,6 @@ class Unsupervised_alpha_prediction_network(Rnn):
 
         self.loss_function = KSS_Loss(self.sparse_rate_callback.var, gram, size_groups)
 
-        #model.compile(loss="mse", optimizer=optimizer)
         model.compile(loss=self.loss_function, optimizer=optimizer)
 
         return model
@@ -358,7 +356,6 @@ class Unsupervised_alpha_prediction_network(Rnn):
                (roc_auc_ == best_roc_auc_ and f1_ > best_f1_):
                 best_roc_auc_ = roc_auc_
                 best_f1_ = f1_
-                self.sparse_rate_callback.save_best_lmbd()
                 self.model.save_weights(logfile_hdf5)
                 best_weights = self.model.get_weights()
                 wait = 0
@@ -592,27 +589,16 @@ class LambdaRateScheduler(Callback):
         self.end = end
         self.end_epoch = end_epoch
         self.dtype = dtype
-        self.best_lmbd = np.nan
 
     def on_epoch_begin(self, epoch, logs={}):
-        if epoch % 3 != 0:
-            return
-        if epoch <= self.end_epoch:
-            l = np.min([epoch / self.end_epoch, 1.])
-            lmbd = (1 - l) * self.start + l * self.end
-            K.set_value(self.var, lmbd.astype(self.dtype))
-        else:
-            K.set_value(self.var, self.best_lmbd)
+        l = np.min([(epoch - 1) / (self.end_epoch - 1), 1.])
+        lmbd = (1 - l) * self.start + l * self.end
+        K.set_value(self.var, lmbd.astype(self.dtype))
         print(("lmbd at epoch beginning:%f" % K.get_value(self.var)))
+        
     def on_train_end(self, logs=None):
-        print(("lmbd at ending         :%f" % K.get_value(self.var)))
-        """
         K.set_value(self.var, self.end)
         print(("lmbd at epoch ending   :%f" % K.get_value(self.var)))
-        """
-    def save_best_lmbd(self):
-        self.best_lmbd = K.get_value(self.var)
-        print(("save lmbd as best      :%f" % K.get_value(self.var)))
 
 class KSS_Loss:
     def __init__(self, lmbd, gram, size_groups):
