@@ -181,7 +181,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
 
         self.hyperparams = {'lambda_start': 0.0,
                             'lambda_end': lmbd,
-                            'end_epoch': 20}
+                            'end_epoch': 30}
         
         self.model = self.__create_RNN_unsupervised_alpha_prediction_network(gram, size_groups)
 
@@ -199,10 +199,12 @@ class Unsupervised_alpha_prediction_network(Rnn):
         base_network = self.create_RNN_base_network()
         input_ = Input(shape=self.input_shape)
         processed = base_network(input_)
-        parent = Dense(units=(gram.shape[0]), use_bias=False
-                       if self.batchnormalization else True)(processed)
+        processed = Activation('relu')(processed)
+        parent = Dense(units=gram.shape[0],
+                       use_bias=False if self.batchnormalization else True)(processed)
         if self.batchnormalization:
             parent = BatchNormalization()(parent)
+        parent = Activation('relu')(parent)
         out = GroupSoftThresholdingLayer(size_groups)(parent)
         #out = Dense(units=gram.shape[0])(parent)
 
