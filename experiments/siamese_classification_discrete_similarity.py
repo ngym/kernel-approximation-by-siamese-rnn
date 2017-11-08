@@ -44,7 +44,7 @@ def rnn():
                   batchnormalization=True,
                   implementation=1,
                   mode="train", # mode="load_pretrained"
-                  loss_function='mse',
+                  loss_function='binary_crossentropy',
                   loss_weight_ratio=10.0,
                   siamese_joint_method="weighted_dot_product",
                   classify_one_by_all=False,

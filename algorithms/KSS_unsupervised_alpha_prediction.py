@@ -621,7 +621,7 @@ class KSS_Loss:
         #alpha_g_norm = K.sqrt(K.sum(K.square(alpha_g), axis=1) + K.epsilon()) # [group, sample]
         #reg = K.sum(alpha_g_norm, axis=0)
         
-        return K.mean(.5 * K.flatten(quad) - K.flatten(linear) + self.lmbd * reg) + 10000
+        return K.mean(.5 * K.flatten(quad) - K.flatten(linear) + self.lmbd * reg)
         """
         #alpha_pred_permute = K.permute_dimensions(alpha_pred, [len(alpha_pred.shape) - 1] + list(range(len(alpha_pred.shape) - 1)))
         alpha_pred_permute = K.permute_dimensions(alpha_pred, self.alpha_permute_order)
