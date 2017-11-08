@@ -181,7 +181,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
 
         self.hyperparams = {'lambda_start': 0.0,
                             'lambda_end': lmbd,
-                            'end_epoch': 15}
+                            'end_epoch': 20}
         
         self.model = self.__create_RNN_unsupervised_alpha_prediction_network(gram, size_groups)
 
