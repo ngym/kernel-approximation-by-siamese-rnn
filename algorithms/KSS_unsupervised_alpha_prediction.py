@@ -98,10 +98,10 @@ def get_classification_error(gram,
                                  logfile_loss,
                                  size_groups_small_gram, tv_labels)
 
-    gen = model.generator_seqs_and_alpha(test_seqs, np.zeros(seqs.shape[0]))
+    gen = model.generator_seqs_and_alpha(test_seqs, np.zeros(test_seqs.shape[0]))
     pred_alpha_batch_list = []
     processed_sample_count = 0
-    while processed_sample_count < seqs.shape[0]:
+    while processed_sample_count < test_seqs.shape[0]:
         seqs_batch, _ = next(gen)
         pred_alpha_batch = model.model.predict_on_batch(seqs_batch)
         pred_alpha_batch_list.append(pred_alpha_batch)
