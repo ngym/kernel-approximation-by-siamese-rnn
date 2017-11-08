@@ -98,7 +98,15 @@ def get_classification_error(gram,
                                  logfile_loss,
                                  size_groups_small_gram, tv_labels)
 
-    alpha_pred, pred_start, pred_end = model.predict(test_seqs)
+    gen = model.generator_seqs_and_alpha(test_seqs, np.zeros(seqs.shape[0]))
+    pred_alpha_batch_list = []
+    processed_sample_count = 0
+    while processed_sample_count < seqs.shape[0]:
+        seqs_batch, _ = next(gen)
+        pred_alpha_batch = model.model.predict_on_batch(seqs_batch)
+        pred_alpha_batch_list.append(pred_alpha_batch)
+        processed_sample_count += seqs_batch.shape[0]
+    alpha_pred = np.concatenate(pred_alpha_batch_list)
 
     alpha_g_norm = calc_group_norm(size_groups_small_gram, alpha_pred)
     pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
@@ -238,7 +246,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                      seqs, ks, log_file, val_indices, size_groups_small_gram, tv_labels):
             processed_sample_count = 0
             average_loss = 0
-            gen = self.__generator_seqs_and_alpha(seqs, ks)
+            gen = self.generator_seqs_and_alpha(seqs, ks)
             start = curr_time = time.time()
             current_batch_iteration = 0
             if action == "training":
@@ -386,7 +394,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
         pred_end = time.time()
 
         return alpha_pred, pred_start, pred_end
-    def __generator_seqs_and_alpha(self, seqs_, ks_):
+    def generator_seqs_and_alpha(self, seqs_, ks_):
         """Siamese RNN data batch generator.
         Yields minibatches of 2 time series and their corresponding output value (Triangular Global Alignment kernel in our case)
 
