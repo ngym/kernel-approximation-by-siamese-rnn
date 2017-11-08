@@ -282,7 +282,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 
                 print("mean density (anti-sparsity): %f/%d" % (np.mean([np.count_nonzero(a > (np.max(a) * 0.01)) for a in K.get_value(alpha_g_norm).T]),
                                                                K.get_value(K.shape(alpha_g_norm))[0]))
-                print(K.get_value(alpha_g_norm).T[0])
+                label_list = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+                print(list(zip(label_list, K.get_value(alpha_g_norm).T[0])))
                 print(tv_labels[val_indices[0]])
 
                 labels_order = np.unique(tv_labels, return_counts=True)[0]
