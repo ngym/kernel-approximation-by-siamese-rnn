@@ -84,6 +84,7 @@ class SiameseRnn(Rnn):
             parent = Dense(units=1)(dot)
             if self.batchnormalization:
                 parent = BatchNormalization()(parent)
+            parent = Activation('sigmoid')(parent)
             out = parent
         else:
             assert False, ("Non-supported siamese_joint_method %s" % siamese_joint_method)
