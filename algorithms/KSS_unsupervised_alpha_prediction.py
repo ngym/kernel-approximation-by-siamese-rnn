@@ -277,6 +277,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
                                      average_loss, batch_loss)
                 return None
             elif action == "validation":
+                sum_loss = 0
+                
                 pred_alpha_batch_list = []
                 ks_batch_list = []
                 while processed_sample_count < seqs.shape[0]:
@@ -285,6 +287,11 @@ class Unsupervised_alpha_prediction_network(Rnn):
                     pred_alpha_batch_list.append(pred_alpha_batch)
                     ks_batch_list.append(ks_batch)
                     processed_sample_count += seqs_batch.shape[0]
+
+                    loss_ = self.model.test_on_batch(seqs_batch, ks_batch)
+                    sum_loss += loss_ * seqs_batch.shape[0]
+                loss = sum_loss / seqs.shape[0]
+                    
                 ks = np.concatenate(ks_batch_list)
                 alpha_pred = np.concatenate(pred_alpha_batch_list)
 
@@ -303,7 +310,6 @@ class Unsupervised_alpha_prediction_network(Rnn):
                                                for l in true_labels])
 
                 roc_auc_, f1_ = calc_scores(pred_indices, true_indices, len(labels_order))
-                loss = K.get_value(self.loss_function(K.variable(ks), K.variable(alpha_pred)))
                 return loss, roc_auc_, f1_
             else:
                 assert False
