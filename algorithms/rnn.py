@@ -85,7 +85,8 @@ class Rnn:
             if i < len(self.dense_units) - 1:
                 seq.add(Activation('relu'))
             else:
-                seq.add(Activation('linear', name='base_output'))
+                pass
+                #seq.add(Activation('linear', name='base_output'))
         return seq
 
     def load_weights(self, logfile_hdf5):
