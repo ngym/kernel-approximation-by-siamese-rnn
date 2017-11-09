@@ -202,7 +202,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
         processed = Activation('relu')(processed) 
         #parent = Dense(units=gram.shape[0],
         #               use_bias=False if self.batchnormalization else True)(processed)
-        parent = Dense(units=gram.shape[0])(processed)
+        parent = Dense(units=gram.shape[0], use_bias=False)(processed)
         if self.batchnormalization:
             parent = BatchNormalization()(parent)
         parent = Activation('relu')(parent)
