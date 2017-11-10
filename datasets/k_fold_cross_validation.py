@@ -13,10 +13,18 @@ def kfolds(list, fold_count):
     return folds
 
 def kfolds_UCIarabicdigits(sample_names, fold_count):
-    folds = []
-    folds.append([sn for sn in sample_names if sn[:5] == "train"])
-    folds.append([sn for sn in sample_names if sn[:4] == "test"])
-    return folds
+    train = []
+    test = []
+    i = 0
+    for sn in sample_names:
+        if sn[:5] == "train":
+            train.append(i)
+        elif sn[:4] == "test":
+            test.append(i)
+        else:
+            assert False
+        i += 1
+    return [train, test]
 
 def kfolds_UCIauslan(sample_names, fold_count):
     """K-fold cross-validation test set generator on UCI AUSLAN data set.
