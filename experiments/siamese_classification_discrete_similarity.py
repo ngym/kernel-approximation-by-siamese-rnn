@@ -20,6 +20,8 @@ from datasets.read_sequences import read_sequences, pick_labels
 from datasets.data_augmentation import augment_data
 from datasets.others import filter_samples
 
+from sklearn.metrics import f1_score, roc_auc_score
+
 ex = Experiment('complete_matrix')
 
 
@@ -156,15 +158,20 @@ def run(dataset_type, dataset_location, fold_count, fold_to_drop,
     
     labels_list = list(key_to_str.values())
     labels = np.array(labels_list)
-    pred_indices_in_gram = np.argmax(gram_completed[test_indices], axis=1)
-    pred_labels = labels[pred_indices_in_gram]
-    true_labels = labels[test_indices]
 
-    labels_order = sorted(set(labels_list), key=labels_list.index)
-    pred_indices = [labels_order.index(l) for l in pred_labels]
-    true_indices = [labels_order.index(l) for l in true_labels]
+    pred_similarities_beteen_tests = gram_completed[test_indices, test_indices].flatten()
+    true_labels = labels[test_indices]
+    true_within_domain = []
+    for i in range(len(true_labels)):
+        for j in range(len(true_labels)):
+            if true_labels[i] == true_labels[j]:
+                true_within_domain.append(1)
+            else:
+                true_within_domain.append(0)
+    true_within_domain = np.array(true_within_domain)
+    roc_auc_ = roc_auc_score(pred_similarities_beteen_tests, true_within_domain)
+    f1_ = f1_score(pred_similarities_beteen_tests, true_within_domain, average='weighted')
     
-    roc_auc_, f1_ = KSS_unsupervised_alpha_prediction.calc_scores(pred_indices, true_indices, len(labels_order))
     print("test roc_auc: %f" % roc_auc_)
     print("test f1     : %f" % f1_)
 
