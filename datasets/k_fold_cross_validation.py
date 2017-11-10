@@ -59,4 +59,7 @@ def get_kfolds(dataset_type, sample_names, fold_count):
         return kfolds_UCIauslan(sample_names, fold_count)
     if dataset_type in {"6DMG", "6DMGupperChar", "upperChar"}:
         return kfold_6DMGupperChar(sample_names, fold_count)
+    if dataset_type == "UCIarabicdigits":
+        return kfolds_UCIarabicdigits(sample_names, fold_count)
     return kfolds(sample_names, fold_count)
+
