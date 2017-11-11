@@ -159,7 +159,7 @@ def run(dataset_type, dataset_location, fold_count, fold_to_drop,
     labels_list = list(key_to_str.values())
     labels = np.array(labels_list)
 
-    pred_similarities_beteen_tests = gram_completed[test_indices, test_indices].flatten()
+    pred_similarities_beteen_tests = gram_completed[test_indices][:, test_indices].flatten()
     true_labels = labels[test_indices]
     true_within_domain = []
     for i in range(len(true_labels)):
