@@ -169,21 +169,13 @@ def run(dataset_type, dataset_location, fold_count, fold_to_drop,
             else:
                 true_within_domain.append(0)
     true_within_domain = np.array(true_within_domain)
-    roc_auc_ = roc_auc_score(pred_similarities_beteen_tests, true_within_domain)
+
+    pred_similarities_beteen_tests_ = pred_similarities_beteen_tests > 0.5
+    roc_auc_ = roc_auc_score(pred_similarities_beteen_tests_, true_within_domain)
     f1_ = f1_score(pred_similarities_beteen_tests, true_within_domain, average='weighted')
 
     print("test roc_auc: %f" % roc_auc_)
     print("test f1     : %f" % f1_)
-
-    pred_similarities_beteen_tests_ = pred_similarities_beteen_tests > 0.5
-    roc_auc__ = roc_auc_score(pred_similarities_beteen_tests_, true_within_domain)
-    
-    print("test roc_auc with digitalized prediction: %f" % roc_auc__)
-
-    
-
-
-
 
 
 
