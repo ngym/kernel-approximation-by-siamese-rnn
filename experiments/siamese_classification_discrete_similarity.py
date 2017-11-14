@@ -180,6 +180,6 @@ def run(dataset_type, dataset_location, fold_count, fold_to_drop,
     output_filename = os.path.join(output_dir, "result.json")
     dict_ = dict(roc_auc=roc_auc_,
                  f1=f1_)
-    save_json(output_filename, dict_)
+    file_utils.save_json(output_filename, dict_)
 
     
