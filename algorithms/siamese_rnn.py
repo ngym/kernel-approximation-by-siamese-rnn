@@ -66,6 +66,8 @@ class SiameseRnn(Rnn):
         input_b = Input(shape=self.input_shape)
         processed_a = base_network(input_a)
         processed_b = base_network(input_b)
+        processed_a = Activation('tanh')(processed_a)
+        processed_b = Activation('tanh')(processed_b)
         print("batchnormalization:" + str(self.batchnormalization))
         if siamese_joint_method == "dense":
             con = Concatenate()([processed_a, processed_b])
