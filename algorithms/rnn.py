@@ -85,7 +85,6 @@ class Rnn:
             if i < len(self.dense_units) - 1:
                 seq.add(Activation('relu'))
             else:
-                pass
                 seq.add(Activation(top_activation, name='base_output'))
         return seq
 
