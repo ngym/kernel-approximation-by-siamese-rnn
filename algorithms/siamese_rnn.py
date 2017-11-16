@@ -28,7 +28,7 @@ def euclidean_distance(vects):
 class SiameseRnn(Rnn):
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization,
-                 loss_function, siamese_joint_method):
+                 loss_function, siamese_joint_method, siamese_arms_activation):
         """
         :param input_shape: Keras input shape
         :param pad_value: Padding value to be skipped among time steps
@@ -51,9 +51,9 @@ class SiameseRnn(Rnn):
         """
         super().__init__(input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization)
-        self.model = self.__create_RNN_siamese_network(loss_function, siamese_joint_method)
+        self.model = self.__create_RNN_siamese_network(loss_function, siamese_joint_method, siamese_arms_activation)
 
-    def __create_RNN_siamese_network(self, loss_function, siamese_joint_method):
+    def __create_RNN_siamese_network(self, loss_function, siamese_joint_method, siamese_arms_activation='linear'):
         """
         :param loss_function: Name of loss function
         :type loss_function: str
@@ -61,13 +61,11 @@ class SiameseRnn(Rnn):
         :return: Keras Deep RNN Siamese network
         :rtype: keras.models.Model
         """
-        base_network = super().create_RNN_base_network()
+        base_network = super().create_RNN_base_network(siamese_arms_activation)
         input_a = Input(shape=self.input_shape)
         input_b = Input(shape=self.input_shape)
         processed_a = base_network(input_a)
         processed_b = base_network(input_b)
-        processed_a = Activation('tanh')(processed_a)
-        processed_b = Activation('tanh')(processed_b)
         print("batchnormalization:" + str(self.batchnormalization))
         if siamese_joint_method == "dense":
             con = Concatenate()([processed_a, processed_b])

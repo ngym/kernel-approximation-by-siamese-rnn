@@ -45,7 +45,7 @@ class Rnn:
 
         self.gpu_count = len(multi_gpu.get_available_gpus())
 
-    def create_RNN_base_network(self):
+    def create_RNN_base_network(self, top_activation):
         """Keras Deep RNN network to be used as Siamese branch.
         Stacks some Recurrent and some Dense layers on top of each other
 
@@ -85,8 +85,7 @@ class Rnn:
             if i < len(self.dense_units) - 1:
                 seq.add(Activation('relu'))
             else:
-                pass
-                #seq.add(Activation('linear', name='base_output'))
+                seq.add(Activation(top_activation, name='base_output'))
         return seq
 
     def load_weights(self, logfile_hdf5):

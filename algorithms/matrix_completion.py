@@ -89,6 +89,7 @@ def rnn_matrix_completion(gram_drop, seqs,
                           loss_weight_ratio,
                           labels,
                           siamese_joint_method,
+                          siamese_arms_activation,
                           classify_one_by_all=False,
                           target_label=None):
     """Fill in Gram matrix with dropped elements with Keras Siamese RNN.
@@ -153,7 +154,8 @@ def rnn_matrix_completion(gram_drop, seqs,
                                    bidirectional,
                                    batchnormalization,
                                    loss_function,
-                                   siamese_joint_method)
+                                   siamese_joint_method,
+                                   siamese_arms_activation)
 
     # training
     # make 90% + 10% training validation random split
