@@ -115,9 +115,12 @@ def run(dataset_location, fold_count, fold_to_drop,
 
         dataset_type = loaded_data['dataset_type']
         sample_names = [s.split('/')[-1].split('.')[0] for s in loaded_data['sample_names']]
+        seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location)
+        seqs = filter_samples(seqs, sample_names)
+        key_to_str = filter_samples(key_to_str, sample_names)
     else:
         seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location)
-        sample_names = seqs.keys()
+        key_to_str = filter_samples(key_to_str, sample_names)
     
     gram = np.zeros([len(seqs), len(seqs)])
     labels = list(key_to_str.values())
