@@ -88,20 +88,36 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 
 
 @ex.automain
-def run(dataset_type, dataset_location, fold_count, fold_to_drop,
+def run(dataset_location, fold_count, fold_to_drop,
         params, output_dir, output_filename_format,
-        labels_to_use, data_augmentation_size):
+        labels_to_use, data_augmentation_size,
+        pickle_or_hdf5_location=None,
+        dataset_type=None):
+    main_start = time.time()
+
+    assert pickle_or_hdf5_location or dataset_type
+    
     os.makedirs(output_dir, exist_ok=True)
     shutil.copy(os.path.abspath(sys.argv[2]), os.path.join(output_dir, os.path.basename(sys.argv[2])))
-
+    
     dataset_location = os.path.abspath(dataset_location)
     output_dir = os.path.abspath(output_dir)
     assert os.path.isdir(output_dir)
 
-    main_start = time.time()
+    if pickle_or_hdf5_location is not None:
+        pickle_or_hdf5_location = os.path.abspath(pickle_or_hdf5_location)
+        hdf5 = pickle_or_hdf5_location[-4:] == "hdf5"
+        if hdf5:
+            loaded_data = file_utils.load_hdf5(pickle_or_hdf5_location)
+        else:
+            loaded_data = file_utils.load_pickle(pickle_or_hdf5_location)
+            check_pickle_format(loaded_data)
 
-    seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location)
-    sample_names = seqs.keys()
+        dataset_type = loaded_data['dataset_type']
+        sample_names = [s.split('/')[-1].split('.')[0] for s in loaded_data['sample_names']]
+    else:
+        seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location)
+        sample_names = seqs.keys()
     
     gram = np.zeros([len(seqs), len(seqs)])
     labels = list(key_to_str.values())
