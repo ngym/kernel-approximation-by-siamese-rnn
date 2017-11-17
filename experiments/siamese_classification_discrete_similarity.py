@@ -168,7 +168,8 @@ def run(dataset_location, fold_count, fold_to_drop,
                                                   params['loss_function'],
                                                   params['loss_weight_ratio'],
                                                   list(key_to_str.values()),
-                                                  params['siamese_joint_method'])
+                                                  params['siamese_joint_method'],
+                                                  params['siamese_arms_activation'])
     action = "SiameseRNN"
 
     test_indices = indices_to_drop
