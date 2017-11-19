@@ -32,7 +32,8 @@ def cfg():
                   batchnormalization=False,
                   implementation=1,
                   mode="train",
-                  lmbd=lmbd)
+                  lmbd=lmbd,
+                  top_activation="linear")
     # mode="load_pretrained"
     # mode="continue_training"
 
@@ -97,7 +98,8 @@ def run(pickle_or_hdf5_location, dataset_location, fold_to_test, fold_to_tv,
         params['batchnormalization'],
         params['mode'],
         list(key_to_str.values()),
-        params['lmbd'])
+        params['lmbd'],
+        params['top_activation'])
 
     print(pickle_or_hdf5_location + " roc_auc_score: " + str(roc_auc_score) + " f1_score: " + str(f1_score))
     dic = dict(roc_auc_score=roc_auc_score,

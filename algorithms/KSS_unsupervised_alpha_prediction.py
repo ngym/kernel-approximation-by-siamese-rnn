@@ -154,7 +154,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization,
                  lmbd,
-                 gram, size_groups):
+                 gram, size_groups,
+                 top_activation):
         """
         :param input_shape: Keras input shape
         :param pad_value: Padding value to be skipped among time steps
@@ -183,9 +184,9 @@ class Unsupervised_alpha_prediction_network(Rnn):
                             'lambda_end': lmbd,
                             'end_epoch': 30}
         
-        self.model = self.__create_RNN_unsupervised_alpha_prediction_network(gram, size_groups)
+        self.model = self.__create_RNN_unsupervised_alpha_prediction_network(gram, size_groups, top_activation)
 
-    def __create_RNN_unsupervised_alpha_prediction_network(self, gram, size_groups):
+    def __create_RNN_unsupervised_alpha_prediction_network(self, gram, size_groups, top_activation):
         """
 
         :return: Keras Deep RNN Siamese network
@@ -196,7 +197,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                                                         end_epoch=self.hyperparams['end_epoch'],
                                                         dtype='float32')
         
-        base_network = self.create_RNN_base_network()
+        base_network = self.create_RNN_base_network(top_activation)
         input_ = Input(shape=self.input_shape)
         processed = base_network(input_)
         processed = Activation('relu')(processed) 
