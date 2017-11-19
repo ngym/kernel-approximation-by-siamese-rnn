@@ -47,7 +47,8 @@ def get_classification_error(gram,
                              batchnormalization,
                              mode,
                              labels,
-                             lmbd):
+                             lmbd,
+                             top_activation):
     gram = gram.astype('float32')
     seqs = np.array(seqs_)
     # pre-processing
@@ -87,7 +88,8 @@ def get_classification_error(gram,
                                                   bidirectional,
                                                   batchnormalization,
                                                   lmbd,
-                                                  small_gram, size_groups_small_gram)
+                                                  small_gram, size_groups_small_gram,
+                                                  top_activation)
 
     if mode == 'train':
         model.train_and_validate(tv_seqs,
