@@ -206,7 +206,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                                                       params['siamese_arms_activation'],
                                                       classify_one_by_all=params['classify_one_by_all'],
                                                       target_label=params['target_label'],
-                                                      trained_modelfile_hdf5=params['trained_modelfile_hdf5=params'])
+                                                      trained_modelfile_hdf5=params['trained_modelfile_hdf5'])
         action = "SiameseRNN"
     else:
         assert False
