@@ -156,7 +156,8 @@ def run(dataset_location, fold_count, fold_to_drop,
                                                   params['epochs'],
                                                   params['patience'],
                                                   params['epoch_start_from'],
-                                                  logfile_loss, modelfile_hdf5,
+                                                  logfile_loss,
+                                                  modelfile_hdf5,
                                                   params['rnn'],
                                                   params['rnn_units'],
                                                   params['dense_units'],
@@ -169,7 +170,8 @@ def run(dataset_location, fold_count, fold_to_drop,
                                                   params['loss_weight_ratio'],
                                                   list(key_to_str.values()),
                                                   params['siamese_joint_method'],
-                                                  params['siamese_arms_activation'])
+                                                  params['siamese_arms_activation'],
+                                                  trained_modelfile_hdf5=params['trained_modelfile_hdf5'])
     action = "SiameseRNN"
 
     test_indices = indices_to_drop
