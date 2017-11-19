@@ -61,7 +61,7 @@ def rnn():
                   loss_weight_ratio=10.0,
                   siamese_joint_method="weighted_dot_product",
                   classify_one_by_all=False,
-                  target_label="I"
+                  target_label="I",
                   trained_modelfile_hdf5=None)
 
 @ex.capture
