@@ -61,7 +61,8 @@ def rnn():
                   loss_weight_ratio=10.0,
                   siamese_joint_method="weighted_dot_product",
                   classify_one_by_all=False,
-                  target_label="I")
+                  target_label="I"
+                  trained_modelfile_hdf5=None)
 
 @ex.capture
 def check_algorithm(algorithm):
@@ -180,7 +181,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
             = matrix_completion.softimpute_matrix_completion(gram_drop)
         action = "Softimpute"
     elif algorithm == "rnn":
-        logfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
+        modelfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
         logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
         gram_completed, train_start, train_end, completion_start, completion_end \
             = matrix_completion.rnn_matrix_completion(gram_drop,
@@ -188,7 +189,8 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                                                       params['epochs'],
                                                       params['patience'],
                                                       params['epoch_start_from'],
-                                                      logfile_loss, logfile_hdf5,
+                                                      logfile_loss,
+                                                      modelfile_hdf5,
                                                       params['rnn'],
                                                       params['rnn_units'],
                                                       params['dense_units'],
@@ -203,7 +205,8 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                                                       params['siamese_joint_method'],
                                                       params['siamese_arms_activation'],
                                                       classify_one_by_all=params['classify_one_by_all'],
-                                                      target_label=params['target_label'])
+                                                      target_label=params['target_label'],
+                                                      trained_modelfile_hdf5=params['trained_modelfile_hdf5=params'])
         action = "SiameseRNN"
     else:
         assert False

@@ -76,7 +76,8 @@ def softimpute_matrix_completion(gram_drop):
 def rnn_matrix_completion(gram_drop, seqs,
                           epochs, patience,
                           epoch_start_from,
-                          logfile_loss, logfile_hdf5,
+                          logfile_loss,
+                          new_modelfile_hdf5,
                           rnn,
                           rnn_units,
                           dense_units,
@@ -91,7 +92,8 @@ def rnn_matrix_completion(gram_drop, seqs,
                           siamese_joint_method,
                           siamese_arms_activation,
                           classify_one_by_all=False,
-                          target_label=None):
+                          target_label=None,
+                          trained_modelfile_hdf5=None):
     """Fill in Gram matrix with dropped elements with Keras Siamese RNN.
     Trains the network on given part of Gram matrix and the corresponding sequences
     Fills in missing elements by network prediction
@@ -101,7 +103,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     :param epochs: Number of passes over data set
     :param patience: Early Stopping parameter
     :param logfile_loss: Log file name for results
-    :param logfile_hdf5: Log file name for network structure and weights in HDF5 format
+    :param modelfile_hdf5: Log file name for network structure and weights in HDF5 format
     :param rnn_units: Recurrent layer sizes
     :param dense_units: Dense layer sizes
     :param rnn: Recurrent Layer type (Vanilla, LSTM or GRU)
@@ -119,7 +121,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     :type epochs: int
     :type patience: int
     :type logfile_loss: str
-    :type logfile_hdf5: str
+    :type modelfile_hdf5: str
     :type rnn: str
     :type rnn_units: list of int
     :type dense_units: list of int
@@ -194,11 +196,11 @@ def rnn_matrix_completion(gram_drop, seqs,
                                  epoch_start_from,
                                  loss_weight_ratio,
                                  logfile_loss,
-                                 logfile_hdf5)
+                                 new_modelfile_hdf5)
     elif mode == 'continue_train':
-        print("load from hdf5 file: %s" % logfile_hdf5)
-        model.load_weights(logfile_hdf5)
-        new_logfile_hdf5 = logfile_hdf5.replace(".hdf5", "_updated.hdf5")
+        assert trained_modelfile_hdf5 != None
+        print("load from hdf5 file: %s" % trained_modelfile_hdf5)
+        model.load_weights(trained_modelfile_hdf5)
         model.train_and_validate(train_indices, validation_indices,
                                  gram_drop,
                                  seqs,
@@ -208,10 +210,24 @@ def rnn_matrix_completion(gram_drop, seqs,
                                  epoch_start_from,
                                  loss_weight_ratio,
                                  logfile_loss,
-                                 new_logfile_hdf5)
+                                 new_modelfile_hdf5)
+    elif mode == 'fine_tuning':
+        assert trained_modelfile_hdf5 != None
+        print("Fine Tuning, load from hdf5 file: %s" % trained_modelfile_hdf5)
+        model.load_weights(trained_modelfile_hdf5)
+        model.train_and_validate(train_indices, validation_indices,
+                                 gram_drop,
+                                 seqs,
+                                 labels,
+                                 epochs,
+                                 patience,
+                                 epoch_start_from,
+                                 loss_weight_ratio,
+                                 logfile_loss,
+                                 new_modelfile_hdf5)
     elif mode == 'load_pretrained':
-        print("load from hdf5 file: %s" % logfile_hdf5)
-        model.load_weights(logfile_hdf5)
+        print("load from hdf5 file: %s" % modelfile_hdf5)
+        model.load_weights(modelfile_hdf5)
     else:
         print('Unsupported mode.')
         exit(-1)

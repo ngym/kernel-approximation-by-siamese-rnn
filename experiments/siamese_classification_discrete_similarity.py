@@ -148,7 +148,7 @@ def run(dataset_location, fold_count, fold_to_drop,
 
     train_start = None
     train_end = None
-    logfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
+    modelfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
     logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
     gram_completed, train_start, train_end, completion_start, completion_end \
         = matrix_completion.rnn_matrix_completion(gram_drop,
@@ -156,7 +156,7 @@ def run(dataset_location, fold_count, fold_to_drop,
                                                   params['epochs'],
                                                   params['patience'],
                                                   params['epoch_start_from'],
-                                                  logfile_loss, logfile_hdf5,
+                                                  logfile_loss, modelfile_hdf5,
                                                   params['rnn'],
                                                   params['rnn_units'],
                                                   params['dense_units'],
