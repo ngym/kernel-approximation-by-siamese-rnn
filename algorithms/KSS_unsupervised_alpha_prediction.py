@@ -208,9 +208,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
         parent = Dense(units=gram.shape[0], use_bias=False)(processed)
         if self.batchnormalization:
             parent = BatchNormalization()(parent)
-        #out = Activation('relu')(parent)
-        out = Activation('linear')(parent)
-        #out = GroupSoftThresholdingLayer(size_groups)(parent)
+        out = GroupSoftThresholdingLayer(size_groups)(parent)
         #out = Dense(units=gram.shape[0])(parent)
 
         model = Model(input_, out)
