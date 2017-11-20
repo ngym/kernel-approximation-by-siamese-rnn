@@ -202,14 +202,10 @@ class Unsupervised_alpha_prediction_network(Rnn):
         base_network = self.create_RNN_base_network(top_activation)
         input_ = Input(shape=self.input_shape)
         processed = base_network(input_)
-        processed = Activation('relu')(processed) 
-        #parent = Dense(units=gram.shape[0],
-        #               use_bias=False if self.batchnormalization else True)(processed)
         parent = Dense(units=gram.shape[0], use_bias=False)(processed)
         if self.batchnormalization:
             parent = BatchNormalization()(parent)
         out = GroupSoftThresholdingLayer(size_groups)(parent)
-        #out = Dense(units=gram.shape[0])(parent)
 
         model = Model(input_, out)
 
