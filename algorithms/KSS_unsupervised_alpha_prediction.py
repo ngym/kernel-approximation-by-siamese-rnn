@@ -297,10 +297,13 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 alpha_g_norm = calc_group_norm(size_groups_small_gram, alpha_pred)
                 pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
                 
-                print("mean density (anti-sparsity): %f/%d" % (np.mean([np.count_nonzero(a > (np.max(a) * 0.01)) for a in K.get_value(alpha_g_norm).T]),
+                print("mean density (anti-sparsity): %f/%d" % (np.mean([np.count_nonzero(a) for a in K.get_value(alpha_g_norm).T]),
                                                                K.get_value(K.shape(alpha_g_norm))[0]))
                 label_list = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
-                [print(i) for i in list(zip(label_list, K.get_value(alpha_g_norm).T[0]))]
+                alpha_example = [i for i in K.get_value(alpha_g_norm).T[0]]
+                density = [np.count_nonzero(a) for a in K.get_value(alpha_g_norm)]
+                
+                [print("(%s, %.9f, %3f)" % (l, a, d)) for l, a, d in list(zip(label_list, alpha_example, density))]
                 print(tv_labels[val_indices[0]])
 
                 labels_order = np.unique(tv_labels, return_counts=True)[0]
