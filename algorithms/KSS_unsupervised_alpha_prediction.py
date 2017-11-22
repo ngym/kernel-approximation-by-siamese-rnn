@@ -301,8 +301,6 @@ class Unsupervised_alpha_prediction_network(Rnn):
 
                 density = np.stack([a > max(a) * 0.01 for a in K.get_value(alpha_g_norm).T])
                 
-                #print("mean density (anti-sparsity): %f/%d" % (np.mean([np.count_nonzero(a > max(a) * 0.01) for a in K.get_value(alpha_g_norm).T]),
-                #                                               K.get_value(K.shape(alpha_g_norm))[0]))
                 print("mean density (anti-sparsity): %f/%d" % (np.mean([np.count_nonzero(d) for d in density]),
                                                                K.get_value(K.shape(alpha_g_norm))[0]))
                 label_list = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
@@ -378,7 +376,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
             print("validation f1     : %f" % f1_)
             print("validation loss   : %f" % loss)
 
-            if loss < best_loss:
+            if loss < best_loss or epoch <= self.hyperparams['end_epoch']:
                 best_loss = loss
                 self.model.save_weights(logfile_hdf5)
                 best_weights = self.model.get_weights()
