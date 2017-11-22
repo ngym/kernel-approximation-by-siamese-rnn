@@ -205,7 +205,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
         if self.batchnormalization:
             parent = BatchNormalization()(parent)
         #out = GroupSoftThresholdingLayer(size_groups)(parent)
-        out = SoftThresholdingLayer()(parent)
+        #out = SoftThresholdingLayer()(parent)
+        out = SoftThresholdingActivation()(parent)
 
         model = Model(input_, out)
 
@@ -589,6 +590,17 @@ class GroupSoftThresholdingLayer(Layer):
         base_config = super(GroupSoftThresholdingLayer, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
+class SoftThresholdingActivation(Layer):
+    def __init__(self, **kwargs):
+        super(SoftThresholdingActivation, self).__init__(**kwargs)
+        self.threshold = 0.5
+    def call(self, inputs):
+        return K.sign(inputs) * K.relu(K.abs(inputs) - self.threshold)
+    def get_config(self):
+        config = {'threshold': self.threshold}
+        base_config = super(SoftThresholdingActivation, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+    
 class LambdaRateScheduler(Callback):
     '''Sparse rate scheduler.
     # Arguments
