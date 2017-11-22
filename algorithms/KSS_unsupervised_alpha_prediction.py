@@ -303,7 +303,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 alpha_example = [i for i in K.get_value(alpha_g_norm).T[0]]
                 density = [np.count_nonzero(a) for a in K.get_value(alpha_g_norm)]
                 
-                [print("(%s, %.9f, %3f)" % (l, a, d)) for l, a, d in list(zip(label_list, alpha_example, density))]
+                [print("(%s, %.9f, %d/%d)" % (l, a, d, seqs.shape[0])) for l, a, d in list(zip(label_list, alpha_example, density))]
                 print(tv_labels[val_indices[0]])
 
                 labels_order = np.unique(tv_labels, return_counts=True)[0]
