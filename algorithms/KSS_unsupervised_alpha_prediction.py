@@ -297,14 +297,19 @@ class Unsupervised_alpha_prediction_network(Rnn):
 
                 alpha_g_norm = calc_group_norm(size_groups_small_gram, alpha_pred)
                 pred_indices = K.get_value(K.argmax(alpha_g_norm, axis=0)) # index
+
+
+                density = np.stack([a > max(a) * 0.01 for a in K.get_value(alpha_g_norm).T])
                 
-                print("mean density (anti-sparsity): %f/%d" % (np.mean([np.count_nonzero(a) for a in K.get_value(alpha_g_norm).T]),
+                #print("mean density (anti-sparsity): %f/%d" % (np.mean([np.count_nonzero(a > max(a) * 0.01) for a in K.get_value(alpha_g_norm).T]),
+                #                                               K.get_value(K.shape(alpha_g_norm))[0]))
+                print("mean density (anti-sparsity): %f/%d" % (np.mean([np.count_nonzero(d) for d in density]),
                                                                K.get_value(K.shape(alpha_g_norm))[0]))
                 label_list = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
                 alpha_example = [i for i in K.get_value(alpha_g_norm).T[0]]
-                density = [np.count_nonzero(a) for a in K.get_value(alpha_g_norm)]
+                density_ = [np.count_nonzero(dt) for dt in density.T]
                 
-                [print("(%s, %.9f, %d/%d)" % (l, a, d, seqs.shape[0])) for l, a, d in list(zip(label_list, alpha_example, density))]
+                [print("(%s, %.9f, %d/%d)" % (l, a, d, seqs.shape[0])) for l, a, d in list(zip(label_list, alpha_example, density_))]
                 print(tv_labels[val_indices[0]])
 
                 labels_order = np.unique(tv_labels, return_counts=True)[0]
