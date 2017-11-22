@@ -205,7 +205,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
         if self.batchnormalization:
             parent = BatchNormalization()(parent)
         #out = GroupSoftThresholdingLayer(size_groups)(parent)
-        out = SoftThresholdingLayer(size_groups)(parent)
+        out = SoftThresholdingLayer()(parent)
 
         model = Model(input_, out)
 
