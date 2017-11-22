@@ -120,7 +120,6 @@ def get_classification_error(gram,
     roc_auc_, f1_ = calc_scores(pred_indices, true_indices, len(labels_order))
     print("test roc_auc: %f" % roc_auc_)
     print("test f1     : %f" % f1_)
-    assert False
     
     return (roc_auc_, f1_)
 
@@ -205,7 +204,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
         parent = Dense(units=gram.shape[0], use_bias=False)(processed)
         if self.batchnormalization:
             parent = BatchNormalization()(parent)
-        out = GroupSoftThresholdingLayer(size_groups)(parent)
+        #out = GroupSoftThresholdingLayer(size_groups)(parent)
+        out = SoftThresholdingLayer(size_groups)(parent)
 
         model = Model(input_, out)
 
