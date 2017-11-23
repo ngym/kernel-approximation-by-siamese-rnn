@@ -142,8 +142,10 @@ def main():
 
     if filename[-4:] == ".pkl":
         dat = file_utils.load_pickle(filename)
+        filename_pdf_ = filename.replace(".pkl", ".pdf")
     elif filename[-5:] == ".hdf5":
         dat = file_utils.load_hdf5(filename)
+        filename_pdf_ = filename.replace(".hdf5", ".pdf")
     else:
         assert False
     dataset_type = dat['dataset_type']
@@ -154,7 +156,7 @@ def main():
 
     matrices = gram_matrices[-1]
     for key in matrices.keys():
-        filename_pdf = filename.replace(".pkl", "_" + key + ".pdf")
+        filename_pdf = filename_pdf_.replace(".pdf", "_" + key + ".pdf")
         plot_title = title + " " + key.replace("_", " ")
         plot_gram_to_pdf(filename_pdf, matrices[key], sample_names,
                          separators, labels,
