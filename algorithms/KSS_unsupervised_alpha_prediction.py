@@ -600,7 +600,7 @@ class GroupSoftThresholdingLayer(Layer):
 class SoftThresholdingActivation(Layer):
     def __init__(self, **kwargs):
         super(SoftThresholdingActivation, self).__init__(**kwargs)
-        self.threshold = 0.01
+        self.threshold = 0.001
     def call(self, inputs):
         return K.sign(inputs) * K.relu(K.abs(inputs) - self.threshold)
     def get_config(self):
