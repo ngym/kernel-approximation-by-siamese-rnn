@@ -140,12 +140,15 @@ def main():
     filename = os.path.abspath(sys.argv[1])
     title = sys.argv[2] if len(sys.argv) > 2 else ""
 
-    assert filename[-4:] == ".pkl"
-
-    pkl = file_utils.load_pickle(filename)
-    dataset_type = pkl['dataset_type']
-    gram_matrices = pkl['gram_matrices']
-    sample_names = pkl['sample_names']
+    if filename[-4:] == ".pkl":
+        dat = file_utils.load_pickle(filename)
+    elif filename[-5:] == ".hdf5":
+        dat = file_utils.load_hdf5(filename)
+    else:
+        assert False
+    dataset_type = dat['dataset_type']
+    gram_matrices = dat['gram_matrices']
+    sample_names = dat['sample_names']
 
     labels, separators, dataset_name, rotate = get_informations(dataset_type, sample_names)
 
