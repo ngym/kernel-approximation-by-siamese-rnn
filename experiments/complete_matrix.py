@@ -139,7 +139,10 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         check_pickle_format(loaded_data)
 
     dataset_type = loaded_data['dataset_type']
-    sample_names = [s.split('/')[-1].split('.')[0] for s in loaded_data['sample_names']]
+    if dataset_type is 'UCIauslan':
+        sample_names = loaded_data['sample_names']
+    else:
+        sample_names = [s.split('/')[-1].split('.')[0] for s in loaded_data['sample_names']]
     gram_matrices = loaded_data['gram_matrices']
     if len(gram_matrices) == 1:
         gram = gram_matrices[0]['original']
