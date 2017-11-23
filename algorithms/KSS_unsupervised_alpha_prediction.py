@@ -12,7 +12,7 @@ from collections import Counter
 import keras.backend as K
 from keras.models import Sequential, Model
 from keras.callbacks import ModelCheckpoint, EarlyStopping, Callback
-from keras.layers import Dense, Dropout, Input, SimpleRNN, LSTM, GRU, Masking, Activation, BatchNormalization
+from keras.layers import Dense, Dropout, Input, SimpleRNN, LSTM, GRU, Masking, Activation, BatchNormalization, Lambda
 from keras.optimizers import Adam, RMSprop
 from keras.layers.wrappers import Bidirectional
 from keras.layers.merge import Concatenate
@@ -204,9 +204,10 @@ class Unsupervised_alpha_prediction_network(Rnn):
         parent = Dense(units=gram.shape[0], use_bias=False)(processed)
         if self.batchnormalization:
             parent = BatchNormalization()(parent)
+        out = Lambda(lambda x: x ** 3)(parent)
         #out = Activation('tanh')(parent)
         #out = GroupSoftThresholdingLayer(size_groups)(parent)
-        out = SoftThresholdingLayer()(parent)
+        #out = SoftThresholdingLayer()(parent)
         #out = SoftThresholdingActivation()(parent)
 
         model = Model(input_, out)
