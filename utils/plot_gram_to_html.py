@@ -4,7 +4,7 @@ from scipy import io
 import plotly.offline as po
 import plotly.graph_objs as pgo
 
-from utils.file_utils import load_pickle
+from utils import file_utils
 
 def plot_gram_to_html(file_name, gram, files):
     """Plot Gram matrix to html with plotly.
@@ -38,16 +38,22 @@ def plot_gram_to_html(file_name, gram, files):
 def main():
     """Read .mat file and plot Gram matrix to html with plotly.
     """
-    
-    filename = sys.argv[1]
-    pkl = load_pickle(filename)
-    dataset_type = pkl['dataset_type']
-    gram_matrices = pkl['gram_matrices']
-    sample_names = pkl['sample_names']
+    filename = sys.argv[1]    
+    if filename[-4:] == ".pkl":
+        dat = file_utils.load_pickle(filename)
+        filename_html_ = filename.replace(".pkl", ".pdf")
+    elif filename[-5:] == ".hdf5":
+        dat = file_utils.load_hdf5(filename)
+        filename_html_ = filename.replace(".hdf5", ".pdf")
+    else:
+        assert False
+    dataset_type = dat['dataset_type']
+    gram_matrices = dat['gram_matrices']
+    sample_names = dat['sample_names']
 
     matrices = gram_matrices[-1]
     for key in matrices.keys():
-        filename_html = filename.replace('.pkl', "_" + key + '.html')
+        filename_html = filename_html_.replace(".pdf", "_" + key + ".pdf")
         plot_gram_to_html(filename_html, matrices[key], sample_names)
 
 if __name__ == "__main__":

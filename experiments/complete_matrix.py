@@ -55,17 +55,19 @@ def rnn():
     labels_to_use = []
     params = dict(epochs=100,
                   patience=2,
+                  epoch_start_from=1,
                   rnn="LSTM",
-                  rnn_units=[10],
+                  rnn_units=[10,10],
                   dense_units=[3],
                   dropout=0.3,
                   bidirectional=False,
-                  batchnormalization=True,
+                  batchnormalization=False,
                   implementation=1,
-                  mode="train", # mode="load_pretrained"
+                  mode="train", # "load_pretrained" "continue_train"
                   loss_function='mse',
                   loss_weight_ratio=10.0,
                   siamese_joint_method="weighted_dot_product",
+                  siamese_arms_activation="linear",
                   trained_modelfile_hdf5=None)
 
 @ex.capture
