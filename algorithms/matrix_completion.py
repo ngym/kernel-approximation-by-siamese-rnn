@@ -58,7 +58,10 @@ def gak_matrix_completion(gram_drop, seqs, indices, sigma=None, triangular=None)
     return gram, start_time, end_time
 
 
-def softimpute_matrix_completion(gram_drop):
+def softimpute_matrix_completion(gram_drop,
+                                 seqs=None, sigma=None, triangular=None,
+                                 num_process=4,
+                                 drop_flag_matrix=None):
     """Fill in Gram matrix with dropped elements with Soft Impute Matrix Completion.
     Optimizes the Matrix Completion objective using Singular Value Thresholding
 
@@ -68,10 +71,21 @@ def softimpute_matrix_completion(gram_drop):
     :rtype: np.ndarray, float, float
     """
     t_start = time.time()
+    gram_partially_completed_by_gak = gak.gram_gak(seqs,
+                                                   sigma=sigma,
+                                                   triangular=triangular,
+                                                   num_process=num_process,
+                                                   drop_flag_matrix=drop_flag_matrix)
+    for i in range(len(gram_drop)):
+        gram_drop[i, i] = 1
+        for j in range(len(gram_drop[0])):
+            if np.isnan(gram_partially_completed_by_gak[i, j]):
+                continue
+            assert np.isnan(gram_drop[i, j])
+            gram_drop[i, j] = gram_partially_completed_by_gak[i, j]
     gram_completed = SoftImpute().complete(gram_drop)
     t_end = time.time()
     return gram_completed, t_start, t_end
-
 
 def rnn_matrix_completion(gram_drop, seqs,
                           epochs, patience,
@@ -91,8 +105,6 @@ def rnn_matrix_completion(gram_drop, seqs,
                           labels,
                           siamese_joint_method,
                           siamese_arms_activation,
-                          classify_one_by_all=False,
-                          target_label=None,
                           trained_modelfile_hdf5=None):
     """Fill in Gram matrix with dropped elements with Keras Siamese RNN.
     Trains the network on given part of Gram matrix and the corresponding sequences
@@ -161,27 +173,10 @@ def rnn_matrix_completion(gram_drop, seqs,
 
     # training
     # make 90% + 10% training validation random split
-    if classify_one_by_all:
-        target_class_indexes = [i for i, l in enumerate(labels) if l == target_label]
-        nontarget_class_indexes = [i for i, l in enumerate(labels) if l != target_label]
-
-        target_class_indices = [(i, j)
-                                for i in range(len(target_class_indexes))
-                                for j in range(i, len(target_class_indexes))
-                                if not np.isnan(gram_drop[i][j])]
-        nontarget_class_indices = [(i, j)
-                                   for i in range(len(nontarget_class_indexes))
-                                   for j in range(i, len(nontarget_class_indexes))
-                                   if not np.isnan(gram_drop[i][j])]
-        
-        train_and_validation_indices = np.random.permutation(
-            target_class_indices +\
-            np.random.permutation(nontarget_class_indices[:len(target_class_indices)]))
-    else:
-        train_and_validation_indices = np.random.permutation([(i, j)
-                                           for i in range(num_seqs)
-                                           for j in range(i, num_seqs)
-                                           if not np.isnan(gram_drop[i][j])])
+    train_and_validation_indices = np.random.permutation([(i, j)
+                                            for i in range(num_seqs)
+                                            for j in range(i, num_seqs)
+                                            if not np.isnan(gram_drop[i][j])])
     train_indices = train_and_validation_indices[:int(len(train_and_validation_indices) * 0.9)]
     validation_indices = train_and_validation_indices[int(len(train_and_validation_indices) * 0.9):]
     train_start = time.time()
@@ -226,8 +221,8 @@ def rnn_matrix_completion(gram_drop, seqs,
                                  logfile_loss,
                                  new_modelfile_hdf5)
     elif mode == 'load_pretrained':
-        print("load from hdf5 file: %s" % modelfile_hdf5)
-        model.load_weights(modelfile_hdf5)
+        print("load from hdf5 file: %s" % trained_modelfile_hdf5)
+        model.load_weights(trained_modelfile_hdf5)
     else:
         print('Unsupported mode.')
         exit(-1)

@@ -9,45 +9,28 @@ from scipy import io
 from datasets import others
 
 
-def read_sequences(dataset_type, list_glob_arg=None, direc=None,
+def read_sequences(dataset_type, 
+                   dataset_location,
                    feature_normalization=False,
                    data_attribute_type=None):
     """Time series loader.
     Parse time series from files.
-    UCIauslan is assumed that the contents of subdirectories tctodd1-tctodd9
-    is merged in a directory and tctodd1/hers-1.tsd, tctodd1/hers-2.tsd and
-    tctodd1/hers-3.tsd are fixed to his_hers-[1-3].tsd.
 
     :param dataset_type: 6DMGupperChar or UCIauslan or UCIcharacter
-    :param list_glob_arg: List of, argument to pass to glob.glob which holds sequence data.
-    :param direc: Directory which holds dataset
+    :param dataset_location: Directory which holds dataset
+    :data_attribute_type: Attribute to use. For 6DMG.
+
     :type dataset_type: str
-    :type glob_arg: str
+    :type dataset_location: str
+    :type data_attribute_type: str
     :returns: dict of list of time series
     :rtype: dict of np.ndarrays
     """
-
-    if list_glob_arg is None and direc is None\
-       or list_glob_arg is not None and direc is not None:
-        print("Either list_glob_arg or direc is required.")
-        return -1
-
-    sample_files = []
-    if list_glob_arg is not None:
-        for glob_arg in list_glob_arg:
-            sample_files += glob.glob(glob_arg)
-    elif direc is not None:
-        if dataset_type in {"UCIauslan", "UCItctodd"}:
-            extension = "*.tsd"
-        elif dataset_type in {"6DMG", "6DMGupperChar", "upperChar"}:
-            extension = "upper_*.mat"
-        else:
-            extension = "*.mat"
-        sample_files = glob.glob(path.join(direc, extension))
-    sample_files.sort(key=lambda fn: fn.split('/')[-1])
     
     seqs = OrderedDict()
     if dataset_type in {"6DMG", "6DMGupperChar", "upperChar"}:
+        sample_files = glob.glob(path.join(dataset_location, "upper_*.mat"))
+        sample_files.sort(key=lambda fn: fn.split('/')[-1])
         for sample_file in sample_files:
             m = io.loadmat(sample_file)
             if data_attribute_type is None or data_attribute_type == "all":
@@ -58,7 +41,7 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None,
                     = m['gest'].T[:, 1:4]
             elif data_attribute_type == "velocity":
                 seqs[others.get_sample_name(dataset_type, sample_file)]\
-                    = (m['gest'].T[1:, 1:4] - m['gest'].T[:-1, 1:4]) / 1000
+                    = (m['gest'].T[1:, 1:4] - m['gest'].T[:-1, 1:4])
             elif data_attribute_type == "orientation":
                 seqs[others.get_sample_name(dataset_type, sample_file)]\
                     = m['gest'].T[:, 4:8]
@@ -72,11 +55,7 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None,
                 print("attribute type error.")
                 assert False
     elif dataset_type == "UCIcharacter":
-        if isinstance(list_glob_arg, str):
-            mat_file_path = list_glob_arg
-        else:
-            mat_file_path = sample_files[0]
-        data = io.loadmat(mat_file_path)
+        data = io.loadmat(dataset_location)
         displayname = [k[0] for k in data['consts']['key'][0][0][0]]
         classes = data['consts'][0][0][4][0]
         labels = []
@@ -90,6 +69,8 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None,
         for k, v in sorted(seqs_):
             seqs[others.get_sample_name(dataset_type, k)] = v
     elif dataset_type == "UCIauslan":
+        sample_files = glob.glob(path.join(dataset_location, "*/*.tsd"))
+        sample_files.sort(key=lambda fn: fn.split('/')[-1])
         for sample_file in sample_files:
             reader = csv.reader(open(sample_file, "r"),
                                 delimiter='\t')
@@ -108,8 +89,8 @@ def read_sequences(dataset_type, list_glob_arg=None, direc=None,
             name = prefix + "_" + str(label) + "_" + str(num)
             seqs[name] = np.array(seq).astype(np.float32)
         # space separated, blank line separated
-        filenames = {("test", os.path.join(direc, "Test_Arabic_Digit.txt")),
-                     ("train", os.path.join(direc, "Train_Arabic_Digit.txt"))}
+        filenames = {("test", os.path.join(dataset_location, "Test_Arabic_Digit.txt")),
+                     ("train", os.path.join(dataset_location, "Train_Arabic_Digit.txt"))}
         for prefix, filename in filenames:
             with open(filename, "r") as fd:
                 reader = csv.reader(fd, delimiter=' ')

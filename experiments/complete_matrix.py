@@ -17,7 +17,7 @@ from utils import make_matrix_incomplete
 from algorithms import KSS_unsupervised_alpha_prediction
 
 from datasets.read_sequences import read_sequences, pick_labels
-from datasets.data_augmentation import augment_data
+from datasets.data_augmentation import augment_data, create_drop_flag_matrix
 from datasets.others import filter_samples
 
 ex = Experiment('complete_matrix')
@@ -27,6 +27,12 @@ ex = Experiment('complete_matrix')
 def cfg():
     output_dir = "results/"
     params = None
+    # The ratio of the size of the number of sequences
+    # after data augmentation.
+    # 1 means 1 times, hence no augmentation is applied.
+    data_augmentation_size = 1
+    # Split the data by fold_count
+    # and treat fold_to_drop-th fold as test
     fold_count = 5
     fold_to_drop = 1
 
@@ -60,8 +66,6 @@ def rnn():
                   loss_function='mse',
                   loss_weight_ratio=10.0,
                   siamese_joint_method="weighted_dot_product",
-                  classify_one_by_all=False,
-                  target_label="I",
                   trained_modelfile_hdf5=None)
 
 @ex.capture
@@ -115,7 +119,7 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 @ex.automain
 def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         algorithm, params, output_dir, output_filename_format,
-        labels_to_use, data_augmentation_size):
+        data_augmentation_size):
     os.makedirs(output_dir, exist_ok=True)
     shutil.copy(os.path.abspath(sys.argv[2]), os.path.join(output_dir, os.path.basename(sys.argv[2])))
     hdf5 = pickle_or_hdf5_location[-4:] == "hdf5"
@@ -157,13 +161,11 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         indices_to_drop = folds[fold_to_drop - 1]
         gram_drop, dropped_elements = make_matrix_incomplete.gram_drop_samples(gram, indices_to_drop)
 
-    seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location)
+    seqs, key_to_str, _ = read_sequences(dataset_type, dataset_location)
     seqs = filter_samples(seqs, sample_names)
     key_to_str = filter_samples(key_to_str, sample_names)
     
     if data_augmentation_size > 1:
-        if labels_to_use != []:
-            seqs = pick_labels(dataset_type, seqs, labels_to_use)
         augmentation_magnification = 1.2
         seqs, key_to_str, flag_augmented = augment_data(seqs, key_to_str,
                                                         augmentation_magnification,
@@ -180,8 +182,27 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         output_filename_format = output_filename_format.replace("${sigma}", str(params['sigma']))\
                                                        .replace("${triangular}", str(params['triangular']))
     elif algorithm == "softimpute":
+        print('running SoftImpute')
+        flag_test = np.zeros(len(seqs))
+        flag_test[indices_to_drop] = 1
+        drop_flag_matrix = create_drop_flag_matrix(1 - params['gak_rate'],
+                                                   flag_test, condition_or=True)
+        for i in range(len(seqs)):
+            drop_flag_matrix[i, i] = 1
+            for j in range(i + 1):
+                if i not in indices_to_drop and j not in indices_to_drop:
+                    drop_flag_matrix[i, j] = 1
+                    drop_flag_matrix[j, i] = 1
+
+        print(len(seqs)**2)
+        print(np.count_nonzero(drop_flag_matrix))
         gram_completed, completion_start, completion_end \
-            = matrix_completion.softimpute_matrix_completion(gram_drop)
+            = matrix_completion.softimpute_matrix_completion(gram_drop,
+                                    list(seqs.values()),
+                                    sigma=params['sigma'],
+                                    triangular=params['triangular'],
+                                    num_process=params['num_process'],
+                                    drop_flag_matrix=drop_flag_matrix)
         action = "Softimpute"
     elif algorithm == "rnn":
         modelfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
@@ -207,8 +228,6 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                                                       list(key_to_str.values()),
                                                       params['siamese_joint_method'],
                                                       params['siamese_arms_activation'],
-                                                      classify_one_by_all=params['classify_one_by_all'],
-                                                      target_label=params['target_label'],
                                                       trained_modelfile_hdf5=params['trained_modelfile_hdf5'])
         action = "SiameseRNN"
     else:

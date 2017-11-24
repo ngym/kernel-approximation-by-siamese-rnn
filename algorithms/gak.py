@@ -65,8 +65,7 @@ def calculate_gak_triangular(seqs):
 
 def gram_gak(seqs, sigma=None, triangular=None,
              num_process=4,
-             drop_flag_matrix=None,
-             num_distribution=1, node_id=0):
+             drop_flag_matrix=None):
     """TGA Gram matrix computation for a list of time series.
 
     :param seqs: List of time series to be processed
@@ -90,13 +89,6 @@ def gram_gak(seqs, sigma=None, triangular=None,
     num_gak_per_job = 10000
     num_finished_gak = 0
 
-    num_per_dist_float = num_seq / num_distribution
-    i_per_dist = [[seq_index for i, seq_index
-                   in enumerate([i for i in range(num_seq//2)] + \
-                                [i for i in range(num_seq//2, num_seq)[::-1]])
-                   if i % num_distribution == d]
-                  for d in range(num_distribution)]
-    
     start_time = time.time()
     """
     current_time = time.time()
@@ -104,16 +96,12 @@ def gram_gak(seqs, sigma=None, triangular=None,
     num_eta_calculation_resource = 5
     """
 
-    print("node_id:%d" % node_id)
-    print(i_per_dist[node_id])
-    job_gen = job_generator(i_per_dist[node_id], num_gak_per_job, 
+    job_gen = job_generator(num_seq, num_gak_per_job, 
                             drop_flag_matrix=drop_flag_matrix)
     num_gak = (num_seq + 1) * num_seq / 2
     if drop_flag_matrix is not None:
         num_gak = num_seq ** 2 - np.count_nonzero(drop_flag_matrix)
     print(num_gak)
-    print(sum(i_per_dist[node_id]))
-    i_per_dist = None
 
     print("using %d multi processes." % num_process)
 
@@ -168,10 +156,10 @@ def gram_gak(seqs, sigma=None, triangular=None,
     
     return gram
 
-def job_generator(i_per_dist, num_gak_per_job, 
+def job_generator(num_seq, num_gak_per_job, 
                   drop_flag_matrix=None):
     job = []
-    for i in i_per_dist:
+    for i in range(num_seq):
         for j in range(i + 1):
             if drop_flag_matrix is not None:
                 if drop_flag_matrix[i, j]:

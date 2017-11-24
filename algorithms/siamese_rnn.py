@@ -28,7 +28,7 @@ def euclidean_distance(vects):
 class SiameseRnn(Rnn):
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization,
-                 loss_function, siamese_joint_method, siamese_arms_activation):
+                 loss_function, siamese_joint_method, siamese_arms_activation='linear'):
         """
         :param input_shape: Keras input shape
         :param pad_value: Padding value to be skipped among time steps
@@ -39,6 +39,10 @@ class SiameseRnn(Rnn):
         :param implementation: RNN implementation (0: CPU, 2: GPU, 1: any)
         :param bidirectional: Flag to switch between Forward and Bidirectional RNN
         :param batchnormalization: Flag to switch Batch Normalization on/off
+        :param loss_function: Loss function of the deep network
+        :param siamese_joint_method: (dense, dot_product, weighted_dot_product)
+        :param siamese_arms_activation: activation of the top of each branch of the Siemese network
+
         :type input_shape: tuple
         :type pad_value: float
         :type rnn_units: list of ints
@@ -48,12 +52,15 @@ class SiameseRnn(Rnn):
         :type implementation: int
         :type bidirectional: bool
         :type batchnormalization: bool
+        :type loss_function: str
+        :type siamese_joint_method: str
+        :type siamese_arms_activation: str
         """
-        super().__init__(input_shape, pad_value, rnn_units, dense_units,
+        super().__init__(input_shape, pad_value, rnn_units, dense_units, siamese_arms_activation,
                  rnn, dropout, implementation, bidirectional, batchnormalization)
-        self.model = self.__create_RNN_siamese_network(loss_function, siamese_joint_method, siamese_arms_activation)
+        self.model = self.__create_RNN_siamese_network(loss_function, siamese_joint_method)
 
-    def __create_RNN_siamese_network(self, loss_function, siamese_joint_method, siamese_arms_activation='linear'):
+    def __create_RNN_siamese_network(self, loss_function, siamese_joint_method):
         """
         :param loss_function: Name of loss function
         :type loss_function: str
@@ -61,7 +68,7 @@ class SiameseRnn(Rnn):
         :return: Keras Deep RNN Siamese network
         :rtype: keras.models.Model
         """
-        base_network = super().create_RNN_base_network(siamese_arms_activation)
+        base_network = super().create_RNN_base_network()
         input_a = Input(shape=self.input_shape)
         input_b = Input(shape=self.input_shape)
         processed_a = base_network(input_a)
@@ -121,14 +128,19 @@ class SiameseRnn(Rnn):
         :param seqs: List of time series
         :param epochs: Number of passes over data set
         :param patience: Early Stopping parameter
+        :param epoch_start_from: Used in continued training
+        :param loss_weight_ratio: The weight of in-domain kernel approximation in loss function
         :param logfile_loss: Log file name for results
         :param logfile_hdf5: Log file name for network structure and weights in HDF5 format
+
         :type tr_indices: list of tuples
         :type val_indices: list of tuples
         :type gram_drop: list of lists
         :type seqs: list of np.ndarrays
         :type epochs: int
         :type patience: int
+        :param epoch_start_from: int
+        :param loss_weight_ratio: float
         :type logfile_loss: str
         :type logfile_hdf5: str
         """

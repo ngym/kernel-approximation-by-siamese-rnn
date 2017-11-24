@@ -11,13 +11,14 @@ from keras.layers.merge import Concatenate
 from utils import multi_gpu
 
 class Rnn:
-    def __init__(self, input_shape, pad_value, rnn_units, dense_units,
+    def __init__(self, input_shape, pad_value, rnn_units, dense_units, top_activation,
                  rnn, dropout, implementation, bidirectional, batchnormalization):
         """
         :param input_shape: Keras input shape
         :param pad_value: Padding value to be skipped among time steps
         :param rnn_units: Recurrent layer sizes
         :param dense_units: Dense layer sizes
+        :param top_activation: Activation of the top of this network
         :param rnn: Recurrent Layer type (Vanilla, LSTM or GRU)
         :param dropout: Dropout probability
         :param implementation: RNN implementation (0: CPU, 2: GPU, 1: any)
@@ -27,6 +28,7 @@ class Rnn:
         :type pad_value: float
         :type rnn_units: list of ints
         :type dense_units: list of ints
+        :type top_activation: str
         :type rnn: str
         :type dropout: float
         :type implementation: int
@@ -37,6 +39,7 @@ class Rnn:
         self.pad_value = pad_value
         self.rnn_units = rnn_units
         self.dense_units = dense_units
+        self.top_activation = top_activation
         self.rnn = rnn
         self.dropout = dropout
         self.implementation = implementation
@@ -45,7 +48,7 @@ class Rnn:
 
         self.gpu_count = len(multi_gpu.get_available_gpus())
 
-    def create_RNN_base_network(self, top_activation):
+    def create_RNN_base_network(self):
         """Keras Deep RNN network to be used as Siamese branch.
         Stacks some Recurrent and some Dense layers on top of each other
 
@@ -85,7 +88,7 @@ class Rnn:
             if i < len(self.dense_units) - 1:
                 seq.add(Activation('relu'))
             else:
-                seq.add(Activation(top_activation, name='base_output'))
+                seq.add(Activation(self.top_activation, name='base_output'))
         return seq
 
     def load_weights(self, logfile_hdf5):
