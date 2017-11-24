@@ -4,6 +4,7 @@ from scipy import io
 import plotly.offline as po
 import plotly.graph_objs as pgo
 
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from utils import file_utils
 
 def plot_gram_to_html(file_name, gram, files):
