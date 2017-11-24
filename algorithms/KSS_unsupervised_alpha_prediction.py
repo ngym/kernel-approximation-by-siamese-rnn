@@ -361,14 +361,17 @@ class Unsupervised_alpha_prediction_network(Rnn):
             tr_indices  = permutated_indices[:num_tr]
             val_indices = permutated_indices[num_tr:]
             
-            tr_seqs  = tv_seqs[tr_indices]
+            tr_seqs_ = tv_seqs[tr_indices]
             val_seqs = tv_seqs[val_indices]
             
-            tr_ks  = tv_ks[tr_indices]
+            tr_ks_ = tv_ks[tr_indices]
             val_ks = tv_ks[val_indices]
 
-            tr_labels  = tv_labels[tr_indices]
-            val_labels = tv_labels[val_indices]
+            tr_seqs = np.concatenate([tr_seqs_, tr_seqs_, tr_seqs_, tr_seqs_])
+            tr_ks = np.concatenate([tr_ks_, tr_ks_, tr_ks_, tr_ks_])
+
+            #tr_labels  = tv_labels[tr_indices]
+            #val_labels = tv_labels[val_indices]
             
             # training
             self.sparse_rate_callback.on_epoch_begin(epoch)
@@ -388,6 +391,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 best_loss = loss
                 self.model.save_weights(logfile_hdf5)
                 best_weights = self.model.get_weights()
+                print("The variable best_weights is updated.")
                 wait = 0
             else:
                 if wait >= patience:
