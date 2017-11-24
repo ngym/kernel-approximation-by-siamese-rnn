@@ -42,10 +42,10 @@ def main():
     filename = sys.argv[1]    
     if filename[-4:] == ".pkl":
         dat = file_utils.load_pickle(filename)
-        filename_html_ = filename.replace(".pkl", ".pdf")
+        filename_html_ = filename.replace(".pkl", ".html")
     elif filename[-5:] == ".hdf5":
         dat = file_utils.load_hdf5(filename)
-        filename_html_ = filename.replace(".hdf5", ".pdf")
+        filename_html_ = filename.replace(".hdf5", ".html")
     else:
         assert False
     dataset_type = dat['dataset_type']
@@ -54,7 +54,7 @@ def main():
 
     matrices = gram_matrices[-1]
     for key in matrices.keys():
-        filename_html = filename_html_.replace(".pdf", "_" + key + ".pdf")
+        filename_html = filename_html_.replace(".html", "_" + key + ".html")
         plot_gram_to_html(filename_html, matrices[key], sample_names)
 
 if __name__ == "__main__":
