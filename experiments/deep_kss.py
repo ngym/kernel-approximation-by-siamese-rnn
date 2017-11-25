@@ -64,7 +64,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_to_test, fold_to_tv,
     fold_for_gram = np.delete(np.arange(fold_count), fold_to_test + fold_to_tv)
     gram_indices = np.concatenate(folds[fold_for_gram]).astype(int)
     
-    seqs, key_to_str, _ = read_sequences(dataset_type, direc=dataset_location)
+    seqs, key_to_str, _ = read_sequences(dataset_type, dataset_location)
     augmentation_magnification = 1.2
     seqs, key_to_str, flag_augmented = augment_data(seqs, key_to_str,
                                                     augmentation_magnification,
