@@ -177,7 +177,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
         :type bidirectional: bool
         :type batchnormalization: bool
         """
-        super().__init__(input_shape, pad_value, rnn_units, dense_units,
+        super().__init__(input_shape, pad_value, rnn_units, dense_units, top_activation,
                          rnn, dropout, implementation,
                          bidirectional, batchnormalization)
 
@@ -185,9 +185,9 @@ class Unsupervised_alpha_prediction_network(Rnn):
                             'lambda_end': lmbd,
                             'end_epoch': 15}
         
-        self.model = self.__create_RNN_unsupervised_alpha_prediction_network(gram, size_groups, top_activation)
+        self.model = self.__create_RNN_unsupervised_alpha_prediction_network(gram, size_groups)
 
-    def __create_RNN_unsupervised_alpha_prediction_network(self, gram, size_groups, top_activation):
+    def __create_RNN_unsupervised_alpha_prediction_network(self, gram, size_groups):
         """
 
         :return: Keras Deep RNN Siamese network
@@ -198,7 +198,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                                                         end_epoch=self.hyperparams['end_epoch'],
                                                         dtype='float32')
         
-        base_network = self.create_RNN_base_network(top_activation)
+        base_network = self.create_RNN_base_network()
         input_ = Input(shape=self.input_shape)
         processed = base_network(input_)
         parent = Dense(units=gram.shape[0], use_bias=False)(processed)
