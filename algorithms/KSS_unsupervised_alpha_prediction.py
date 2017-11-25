@@ -361,14 +361,14 @@ class Unsupervised_alpha_prediction_network(Rnn):
             tr_indices  = permutated_indices[:num_tr]
             val_indices = permutated_indices[num_tr:]
             
-            tr_seqs_ = tv_seqs[tr_indices]
+            tr_seqs = tv_seqs[tr_indices]
             val_seqs = tv_seqs[val_indices]
             
-            tr_ks_ = tv_ks[tr_indices]
+            tr_ks = tv_ks[tr_indices]
             val_ks = tv_ks[val_indices]
 
-            tr_seqs = np.concatenate([tr_seqs_, tr_seqs_, tr_seqs_, tr_seqs_])
-            tr_ks = np.concatenate([tr_ks_, tr_ks_, tr_ks_, tr_ks_])
+            #tr_seqs = np.concatenate([tr_seqs, tr_seqs, tr_seqs, tr_seqs])
+            #tr_ks = np.concatenate([tr_ks, tr_ks, tr_ks, tr_ks])
 
             #tr_labels  = tv_labels[tr_indices]
             #val_labels = tv_labels[val_indices]

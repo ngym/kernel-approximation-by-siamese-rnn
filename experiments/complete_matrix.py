@@ -52,23 +52,39 @@ def softimpute():
 @ex.named_config
 def rnn():
     algorithm = "rnn"
-    labels_to_use = []
-    params = dict(epochs=100,
-                  patience=2,
-                  epoch_start_from=1,
-                  rnn="LSTM",
-                  rnn_units=[10,10],
-                  dense_units=[3],
-                  dropout=0.3,
-                  bidirectional=False,
-                  batchnormalization=False,
-                  implementation=1,
-                  mode="train", # "load_pretrained" "continue_train"
-                  loss_function='mse',
-                  loss_weight_ratio=10.0,
-                  siamese_joint_method="weighted_dot_product",
-                  siamese_arms_activation="linear",
-                  trained_modelfile_hdf5=None)
+    params = dict(
+        # Number of passes over data set
+        epochs=100,
+        # Early Stopping parameter
+        patience=2,
+        # Used in continued training
+        epoch_start_from=1,
+        # Recurrent Layer type (Vanilla, LSTM or GRU)
+        rnn="LSTM",
+        # Recurrent layer sizes
+        rnn_units=[10,10],
+        # Dense layer sizes
+        dense_units=[3],
+        # Dropout probability
+        dropout=0.3,
+        # Flag to switch between Forward and Bidirectional RNN
+        bidirectional=False,
+        # Flag to switch Batch Normalization on/off
+        batchnormalization=False,
+        # RNN implementation (0: CPU, 2: GPU, 1: any)
+        implementation=1,
+        # Mode to run (train, load_pretrained, continue_train)
+        mode="train", 
+        loss_function='mse',
+        # The weight of in-domain kernel approximation in loss function
+        loss_weight_ratio=10.0,
+        # Implementation of the head of the Siamese network
+        # (dense, dot_product, weighted_dot_product)
+        siamese_joint_method="weighted_dot_product",
+        # Activation of the top of each branch of the Siemese network
+        siamese_arms_activation="linear",
+        # Already trained model file
+        trained_modelfile_hdf5=None)
 
 @ex.capture
 def check_algorithm(algorithm):
