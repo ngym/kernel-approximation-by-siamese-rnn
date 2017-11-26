@@ -367,7 +367,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
             tr_ks = tv_ks[tr_indices]
             val_ks = tv_ks[val_indices]
 
-            #tr_seqs = np.concatenate([tr_seqs, tr_seqs, tr_seqs, tr_seqs])
+            if best_loss == np.inf:
+                tr_seqs = np.concatenate([tr_seqs] * 100)
             #tr_ks = np.concatenate([tr_ks, tr_ks, tr_ks, tr_ks])
 
             #tr_labels  = tv_labels[tr_indices]
