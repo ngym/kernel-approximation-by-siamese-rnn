@@ -204,10 +204,10 @@ class Unsupervised_alpha_prediction_network(Rnn):
         parent = Dense(units=gram.shape[0], use_bias=False)(processed)
         if self.batchnormalization:
             parent = BatchNormalization()(parent)
-        out = Lambda(lambda x: K.sign(x) * x ** 2)(parent)
+        #out = Lambda(lambda x: K.sign(x) * x ** 2)(parent)
         #out = Lambda(lambda x: x ** 3)(parent)
         #out = Activation('tanh')(parent)
-        #out = GroupSoftThresholdingLayer(size_groups)(parent)
+        out = GroupSoftThresholdingLayer(size_groups)(parent)
         #out = SoftThresholdingLayer()(parent)
         #out = SoftThresholdingActivation()(parent)
 
@@ -304,7 +304,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 density_01 = np.stack([a > max(a) * 0.1 for a in K.get_value(alpha_g_norm).T])
                 density_001 = np.stack([a > max(a) * 0.01 for a in K.get_value(alpha_g_norm).T])
                 
-                print("mean density_001 (anti-sparsity): %f/%d, %f%d" % (np.mean([np.count_nonzero(d) for d in density_01]),
+                print("mean density_001 (anti-sparsity): %f/%d, %f/%d" % (np.mean([np.count_nonzero(d) for d in density_01]),
                                                                          K.get_value(K.shape(alpha_g_norm))[0],
                                                                          np.mean([np.count_nonzero(d) for d in density_001]),
                                                                          K.get_value(K.shape(alpha_g_norm))[0]))
