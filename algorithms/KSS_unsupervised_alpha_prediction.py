@@ -453,7 +453,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 rest_seqs = rest_seqs[batch_size:]
                 ks      = rest_ks[:batch_size]
                 rest_ks = rest_ks[batch_size:]
-                if sample_num_processed < sample_num and seqs.shape[0] < batch_size:
+                if sample_num_processed + seqs.shape[0] < sample_num and seqs.shape[0] < batch_size:
                     rest_seqs = seqs_.copy()
                     rest_ks = ks_.copy()
                     lacked_len = batch_size - seqs.shape[0]
