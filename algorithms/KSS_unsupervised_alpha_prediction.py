@@ -252,7 +252,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
             processed_sample_count = 0
             average_loss = 0
             if epoch == 1:
-                gen = self.generator_seqs_and_alpha(seqs, ks, 100)
+                gen = self.generator_seqs_and_alpha(seqs, ks, repeat=100)
             else:
                 gen = self.generator_seqs_and_alpha(seqs, ks)
             start = curr_time = time.time()
