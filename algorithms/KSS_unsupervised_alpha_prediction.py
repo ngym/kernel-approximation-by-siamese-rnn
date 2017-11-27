@@ -251,7 +251,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                      seqs, ks, log_file, val_indices, size_groups_small_gram, tv_labels):
             processed_sample_count = 0
             average_loss = 0
-            if current_epoch == 1:
+            if current_epoch == 1 and action == "training":
                 repeat = 2
                 gen = self.generator_seqs_and_alpha(seqs, ks, repeat=repeat)
                 sample_num = seqs.shape[0] * repeat
@@ -271,7 +271,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                     prev_time = curr_time
                     curr_time = time.time()
                     elapsed_time = curr_time - start
-                    eta = ((curr_time - prev_time) * seqs.shape[0] / seqs_batch.shape[0]) - elapsed_time
+                    eta = ((curr_time - prev_time) * sample_num / seqs_batch.shape[0]) - elapsed_time
                     print_current_status(action, current_epoch, epoch_count,
                                          processed_sample_count, sample_num,
                                          elapsed_time, eta,
@@ -289,7 +289,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 
                 pred_alpha_batch_list = []
                 ks_batch_list = []
-                while processed_sample_count < seqs.shape[0]:
+                while processed_sample_count < sample_num:
                     seqs_batch, ks_batch = next(gen)
                     pred_alpha_batch = self.model.predict_on_batch(seqs_batch)
                     pred_alpha_batch_list.append(pred_alpha_batch)
@@ -298,7 +298,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
 
                     loss_ = self.model.test_on_batch(seqs_batch, ks_batch)
                     sum_loss += loss_ * seqs_batch.shape[0]
-                loss = sum_loss / seqs.shape[0]
+                loss = sum_loss / sample_num
                     
                 ks = np.concatenate(ks_batch_list)
                 alpha_pred = np.concatenate(pred_alpha_batch_list)
@@ -320,7 +320,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 density_001_ = [np.count_nonzero(dt) for dt in density_001.T]
 
                 print("label, alpha for an example, density of a dictionary with threshold of 0.1, and 0.01 respectively")
-                [print("(%s, %.9f, %d/%d, %d/%d)" % (l, a, d01, seqs.shape[0], d001, seqs.shape[0])) for l, a, d01, d001
+                [print("(%s, %.9f, %d/%d, %d/%d)" % (l, a, d01, sample_num, d001, sample_num)) for l, a, d01, d001
                  in list(zip(label_list, alpha_example, density_01_, density_001_))]
                 print(tv_labels[val_indices[0]])
 
