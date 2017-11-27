@@ -251,7 +251,10 @@ class Unsupervised_alpha_prediction_network(Rnn):
                      seqs, ks, log_file, val_indices, size_groups_small_gram, tv_labels):
             processed_sample_count = 0
             average_loss = 0
-            gen = self.generator_seqs_and_alpha(seqs, ks)
+            if epoch == 1:
+                gen = self.generator_seqs_and_alpha(seqs, ks, 100)
+            else:
+                gen = self.generator_seqs_and_alpha(seqs, ks)
             start = curr_time = time.time()
             current_batch_iteration = 0
             if action == "training":
@@ -367,10 +370,6 @@ class Unsupervised_alpha_prediction_network(Rnn):
             tr_ks = tv_ks[tr_indices]
             val_ks = tv_ks[val_indices]
 
-            if best_loss == np.inf:
-                tr_seqs = np.concatenate([tr_seqs] * 50)
-                tr_ks = np.concatenate([tr_ks] * 50)
-
             #tr_labels  = tv_labels[tr_indices]
             #val_labels = tv_labels[val_indices]
             
@@ -422,7 +421,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
         pred_end = time.time()
 
         return alpha_pred, pred_start, pred_end
-    def generator_seqs_and_alpha(self, seqs_, ks_):
+    def generator_seqs_and_alpha(self, seqs_, ks_, repeat=1):
         """Siamese RNN data batch generator.
         Yields minibatches of 2 time series and their corresponding output value (Triangular Global Alignment kernel in our case)
 
@@ -443,12 +442,23 @@ class Unsupervised_alpha_prediction_network(Rnn):
 
         rest_seqs = seqs_.copy()
         rest_ks = ks_.copy()
-        while rest_seqs.shape[0] > 0:
-            seqs      = rest_seqs[:batch_size]
-            rest_seqs = rest_seqs[batch_size:]
-            ks      = rest_ks[:batch_size]
-            rest_ks = rest_ks[batch_size:]
-            yield (seqs, ks)
+        count = 0
+        for count < repeat:
+            while rest_seqs.shape[0] > 0:
+                seqs      = rest_seqs[:batch_size]
+                rest_seqs = rest_seqs[batch_size:]
+                ks      = rest_ks[:batch_size]
+                rest_ks = rest_ks[batch_size:]
+                if seqs.shape[0] < batch_size:
+                    rest_seqs = seqs_.copy()
+                    rest_ks = ks_.copy()
+                    lacked_len = batch_size - seqs.shape[0]
+                    seqs = np.concatenate([seqs, rest_seqs[:lacked_len]])
+                    ks = np.concatenate([ks, rest_ks[:lacked_len]])
+                    rest_seqs = rest_seqs[lacked_len:]
+                    rest_ks = rest_ks[lacked_len:]
+                yield (seqs, ks)
+            count += 1
         raise StopIteration
 
 
