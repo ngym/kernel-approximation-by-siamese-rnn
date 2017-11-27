@@ -252,7 +252,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
             processed_sample_count = 0
             average_loss = 0
             if current_epoch == 1 and action == "training":
-                repeat = 100
+                repeat = 2
                 gen = self.generator_seqs_and_alpha(seqs, ks, repeat=repeat)
                 sample_num = seqs.shape[0] * repeat
             else:
@@ -445,14 +445,15 @@ class Unsupervised_alpha_prediction_network(Rnn):
 
         rest_seqs = seqs_.copy()
         rest_ks = ks_.copy()
-        count = 0
-        while count < repeat:
+        sample_num_processed = 0
+        sample_num = repeat * len(seqs_)
+        while sample_num_processed < sample_num:
             while rest_seqs.shape[0] > 0:
                 seqs      = rest_seqs[:batch_size]
                 rest_seqs = rest_seqs[batch_size:]
                 ks      = rest_ks[:batch_size]
                 rest_ks = rest_ks[batch_size:]
-                if seqs.shape[0] < batch_size:
+                if sample_num_processed < sample_num and seqs.shape[0] < batch_size:
                     rest_seqs = seqs_.copy()
                     rest_ks = ks_.copy()
                     lacked_len = batch_size - seqs.shape[0]
@@ -461,7 +462,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
                     rest_seqs = rest_seqs[lacked_len:]
                     rest_ks = rest_ks[lacked_len:]
                 yield (seqs, ks)
-            count += 1
+            sample_num_processed += len(seqs)
         raise StopIteration
 
 
