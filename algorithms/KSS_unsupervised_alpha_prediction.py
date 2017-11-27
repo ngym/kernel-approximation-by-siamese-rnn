@@ -461,8 +461,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
                     ks = np.concatenate([ks, rest_ks[:lacked_len]])
                     rest_seqs = rest_seqs[lacked_len:]
                     rest_ks = rest_ks[lacked_len:]
+                sample_num_processed += len(seqs)
                 yield (seqs, ks)
-            sample_num_processed += len(seqs)
         raise StopIteration
 
 
