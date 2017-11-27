@@ -634,7 +634,7 @@ class LambdaRateScheduler(Callback):
         self.dtype = dtype
 
     def on_epoch_begin(self, epoch, logs={}):
-        l = np.min([(epoch - 1) / (self.end_epoch - 1), 1.])
+        l = np.min([np.abs((epoch - 100) / (self.end_epoch - 1)), 1.])
         lmbd = (1 - l) * self.start + l * self.end
         K.set_value(self.var, lmbd.astype(self.dtype))
         print(("lmbd at epoch beginning:%f" % K.get_value(self.var)))
