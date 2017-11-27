@@ -443,7 +443,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
         rest_seqs = seqs_.copy()
         rest_ks = ks_.copy()
         count = 0
-        for count < repeat:
+        while count < repeat:
             while rest_seqs.shape[0] > 0:
                 seqs      = rest_seqs[:batch_size]
                 rest_seqs = rest_seqs[batch_size:]
