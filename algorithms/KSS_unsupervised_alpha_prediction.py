@@ -251,17 +251,17 @@ class Unsupervised_alpha_prediction_network(Rnn):
                      seqs, ks, log_file, val_indices, size_groups_small_gram, tv_labels):
             processed_sample_count = 0
             average_loss = 0
-            if epoch == 1:
+            if current_epoch == 1:
                 repeat = 2
                 gen = self.generator_seqs_and_alpha(seqs, ks, repeat=repeat)
-                finish = seqs.shape[0] * repeat
+                sample_num = seqs.shape[0] * repeat
             else:
                 gen = self.generator_seqs_and_alpha(seqs, ks)
-                finish = seqs.shape[0]
+                sample_num = seqs.shape[0]
             start = curr_time = time.time()
             current_batch_iteration = 0
             if action == "training":
-                while processed_sample_count < finish:
+                while processed_sample_count < sample_num:
                     # training batch
                     seqs_batch, ks_batch = next(gen)
                     batch_loss = self.model.train_on_batch(seqs_batch, ks_batch)
@@ -273,14 +273,14 @@ class Unsupervised_alpha_prediction_network(Rnn):
                     elapsed_time = curr_time - start
                     eta = ((curr_time - prev_time) * seqs.shape[0] / seqs_batch.shape[0]) - elapsed_time
                     print_current_status(action, current_epoch, epoch_count,
-                                         processed_sample_count, seqs.shape[0],
+                                         processed_sample_count, sample_num,
                                          elapsed_time, eta,
                                          average_loss, batch_loss,
                                          end='\r')
                     log_current_status(log_file, action, current_epoch, current_batch_iteration, average_loss, batch_loss)
                     current_batch_iteration += 1
                 print_current_status(action, current_epoch, epoch_count,
-                                     processed_sample_count, seqs.shape[0],
+                                     processed_sample_count, sample_num,
                                      elapsed_time, eta,
                                      average_loss, batch_loss)
                 return None
