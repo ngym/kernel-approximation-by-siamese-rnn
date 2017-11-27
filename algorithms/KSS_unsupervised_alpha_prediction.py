@@ -627,7 +627,7 @@ class LambdaRateScheduler(Callback):
     '''
     def __init__(self, start, end, end_epoch, dtype=K.floatx()):
         super(LambdaRateScheduler, self).__init__()
-        self.var = K.variable(start, dtype=dtype, name='k', init='zero')
+        self.var = K.variable(start, dtype=dtype, name='k')
         self.start = start
         self.end = end
         self.end_epoch = end_epoch
