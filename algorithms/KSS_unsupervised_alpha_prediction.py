@@ -252,7 +252,7 @@ class Unsupervised_alpha_prediction_network(Rnn):
             processed_sample_count = 0
             average_loss = 0
             if current_epoch == 1 and action == "training":
-                repeat = 2
+                repeat = 100
                 gen = self.generator_seqs_and_alpha(seqs, ks, repeat=repeat)
                 sample_num = seqs.shape[0] * repeat
             else:
