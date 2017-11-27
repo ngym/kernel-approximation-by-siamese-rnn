@@ -252,13 +252,16 @@ class Unsupervised_alpha_prediction_network(Rnn):
             processed_sample_count = 0
             average_loss = 0
             if epoch == 1:
-                gen = self.generator_seqs_and_alpha(seqs, ks, repeat=100)
+                repeat = 2
+                gen = self.generator_seqs_and_alpha(seqs, ks, repeat=repeat)
+                finish = seqs.shape[0] * repeat
             else:
                 gen = self.generator_seqs_and_alpha(seqs, ks)
+                finish = seqs.shape[0]
             start = curr_time = time.time()
             current_batch_iteration = 0
             if action == "training":
-                while processed_sample_count < seqs.shape[0]:
+                while processed_sample_count < finish:
                     # training batch
                     seqs_batch, ks_batch = next(gen)
                     batch_loss = self.model.train_on_batch(seqs_batch, ks_batch)
