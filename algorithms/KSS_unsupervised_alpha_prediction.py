@@ -481,7 +481,7 @@ class SoftThresholdingLayer(Layer):
     """
 
     @interfaces.legacy_prelu_support
-    def __init__(self, theta_initializer='zeros',
+    def __init__(self, theta_initializer='ones',
                  theta_regularizer=None,
                  theta_constraint=None,
                  shared_axes=None,
