@@ -193,11 +193,12 @@ class Unsupervised_alpha_prediction_network(Rnn):
         :return: Keras Deep RNN Siamese network
         :rtype: keras.models.Model
         """
+        self.num_repeat_in_smallest = 100
         self.sparse_rate_callback = LambdaRateScheduler(start=self.hyperparams['lambda_start'],
                                                         end=self.hyperparams['lambda_end'],
                                                         end_epoch=self.hyperparams['end_epoch'],
-                                                        dtype='float32')
-        
+                                                        dtype='float32',
+                                                        num_repeat_in_smallest=self.num_repeat_in_smallest)
         base_network = self.create_RNN_base_network()
         input_ = Input(shape=self.input_shape)
         processed = base_network(input_)
@@ -391,6 +392,8 @@ class Unsupervised_alpha_prediction_network(Rnn):
                 best_weights = self.model.get_weights()
                 print("The variable best_weights is updated.")
                 wait = 0
+            elif epoch < self.num_repeat_in_smallest:
+                pass
             else:
                 if wait >= patience:
                     self.model.set_weights(best_weights)
@@ -625,16 +628,16 @@ class LambdaRateScheduler(Callback):
             (integer, indexed from 0) and returns a new
             learning rate as output (float).
     '''
-    def __init__(self, start, end, end_epoch, dtype=K.floatx()):
+    def __init__(self, start, end, end_epoch, dtype=K.floatx(), num_repeat_in_smallest=1):
         super(LambdaRateScheduler, self).__init__()
         self.var = K.variable(start, dtype=dtype, name='k')
         self.start = start
         self.end = end
         self.end_epoch = end_epoch
         self.dtype = dtype
-
+        self.num_repeat_in_smallest = num_repeat_in_smallest
     def on_epoch_begin(self, epoch, logs={}):
-        l = np.min([np.max([0, (epoch - 100) / (self.end_epoch - 1)]), 1.])
+        l = np.min([np.max([0, (epoch - self.num_repeat_in_smallest) / (self.end_epoch - 1)]), 1.])
         lmbd = (1 - l) * self.start + l * self.end
         K.set_value(self.var, lmbd.astype(self.dtype))
         print(("lmbd at epoch beginning:%f" % K.get_value(self.var)))
