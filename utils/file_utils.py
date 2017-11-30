@@ -85,7 +85,7 @@ def append_and_save_result(filename, prev_results, dropped, completed, completed
 
 def save_json(filename, dic):
     file = open(filename, "w")
-    json.dump(dic, file)
+    json.dump(dic, file, indent=4, sort_keys=True)
     file.close()
 
 
@@ -115,6 +115,7 @@ def save_analysis(filename, drop_count, calculated_count,
     analysis_json['mean_absolute_error_of_dropped_elements'] = mae_dropped
     analysis_json['relative_error'] = re
     analysis_json['relative_error_of_dropped_elements'] = re_dropped
+    analysis_json['calculation_time_per_calculated_element'] = (completion_end - completion_start) / calculated_count
 
     save_json(filename, analysis_json)
 
