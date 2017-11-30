@@ -273,7 +273,7 @@ class SiameseRnn(Rnn):
         :rtype: list of np.ndarrays
         """
         indices_copy = copy.deepcopy(indices)
-        batch_size = 512 * self.gpu_count
+        batch_size = 512 * max(self.gpu_count, 1)
         input_0 = []
         input_1 = []
         y = []
