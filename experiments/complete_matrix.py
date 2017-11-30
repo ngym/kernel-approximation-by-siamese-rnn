@@ -201,6 +201,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                                                        .replace("${triangular}", str(params['triangular']))
     elif algorithm == "softimpute":
         print('running SoftImpute')
+        completion_start = time.time()
         flag_test = np.zeros(len(seqs))
         flag_test[indices_to_drop] = 1
         drop_flag_matrix = create_drop_flag_matrix(1 - params['gak_rate'],
@@ -214,7 +215,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
 
         print(len(seqs)**2)
         print(np.count_nonzero(drop_flag_matrix))
-        gram_completed, completion_start, completion_end \
+        gram_completed, completion_start_softimpute, completion_end \
             = matrix_completion.softimpute_matrix_completion(gram_drop,
                                     list(seqs.values()),
                                     sigma=params['sigma'],
