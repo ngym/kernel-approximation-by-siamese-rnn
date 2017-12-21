@@ -199,7 +199,19 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         action = "GAK sigma: " + str(params['sigma']) + " triangular: " + str(params['triangular'])
         output_filename_format = output_filename_format.replace("${sigma}", str(params['sigma']))\
                                                        .replace("${triangular}", str(params['triangular']))
-    elif algorithm == "softimpute":
+    elif algorithm in {"softimpute", "knn", "iterativesvd"}:
+        if algorithm == "softimpute":
+            func = matrix_completion.softimpute_matrix_completion
+            action = "Softimpute"
+        elif algorithm == "knn":
+            func = matrix_completion.knn_matrix_completion
+            action = "KNN"
+        elif algorithm == "iterativesvd":
+            func = matrix_completion.iterativesvd_matrix_completion
+            action = "IterativeSVD"
+        else:
+            print("unsupported fancyimpute algorithm")
+            exit(-1)
         print('running SoftImpute')
         completion_start = time.time()
         flag_test = np.zeros(len(seqs))
@@ -216,13 +228,12 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         print(len(seqs)**2)
         print(np.count_nonzero(drop_flag_matrix))
         gram_completed, completion_start_softimpute, completion_end \
-            = matrix_completion.softimpute_matrix_completion(gram_drop,
-                                    list(seqs.values()),
-                                    sigma=params['sigma'],
-                                    triangular=params['triangular'],
-                                    num_process=params['num_process'],
-                                    drop_flag_matrix=drop_flag_matrix)
-        action = "Softimpute"
+            = func(gram_drop,
+                   list(seqs.values()),
+                   sigma=params['sigma'],
+                   triangular=params['triangular'],
+                   num_process=params['num_process'],
+                   drop_flag_matrix=drop_flag_matrix)
     elif algorithm == "rnn":
         modelfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
         logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")

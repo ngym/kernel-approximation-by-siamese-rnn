@@ -70,10 +70,14 @@ def softimpute_matrix_completion(gram_drop,
     :returns: Filled in Gram matrix, optimization start and end times
     :rtype: np.ndarray, float, float
     """
-    fancyimpute_matrix_completion("SoftImpute", gram_drop,
-                                  seqs=seqs, sigma=sigma, triangular=triangular,
-                                  num_process=num_process,
-                                  drop_flag_matrix=drop_flag_matrix)
+    gram_completed, t_start, t_end = fancyimpute_matrix_completion("SoftImpute",
+                                                                   gram_drop,
+                                                                   seqs=seqs,
+                                                                   sigma=sigma,
+                                                                   triangular=triangular,
+                                                                   num_process=num_process,
+                                                                   drop_flag_matrix=drop_flag_matrix)
+    return gram_completed, t_start, t_end
 
 def knn_matrix_completion(gram_drop,
                                  seqs=None, sigma=None, triangular=None,
@@ -100,7 +104,7 @@ def knn_matrix_completion(gram_drop,
     gram_completed_ = (gram_completed * std) + mean
     return gram_completed_, t_start, t_end
 
-def IterativeSVD_matrix_completion(gram_drop,
+def iterativesvd_matrix_completion(gram_drop,
                                    seqs=None, sigma=None, triangular=None,
                                    num_process=4,
                                    drop_flag_matrix=None):
@@ -147,7 +151,7 @@ def fancyimpute_matrix_completion(function, gram_drop,
     elif function == "KNN":
         gram_completed = KNN().complete(gram_drop)
     elif function == "IterativeSVD":
-        gram_completed = KNN().complete(gram_drop)
+        gram_completed = IterativeSVD().complete(gram_drop)
     else:
         print("unsupported fancyimpute functin")
         exit(-1)
