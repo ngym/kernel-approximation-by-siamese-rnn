@@ -94,7 +94,7 @@ def knn_matrix_completion(gram_drop,
     #mean = np.mean(gram_drop, axis=1, keepdims=True)
     #std = np.std(gram_drop, axis=1, keepdims=True)
     #gram_drop_ = (gram_drop - mean) / (std + 1e-8)
-    gram_completed, t_start, t_end = fancyimpute_matrix_completion("KNN",
+    gram_completed_, t_start, t_end = fancyimpute_matrix_completion("KNN",
                                                                    gram_drop_,
                                                                    seqs=seqs,
                                                                    sigma=sigma,
