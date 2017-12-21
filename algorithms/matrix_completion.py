@@ -1,7 +1,7 @@
 import copy
 import time
 
-from fancyimpute import SoftImpute
+from fancyimpute import SoftImpute, KNN, IterativeSVD
 from keras import backend as K
 from keras.preprocessing.sequence import pad_sequences
 import numpy as np
@@ -70,6 +70,49 @@ def softimpute_matrix_completion(gram_drop,
     :returns: Filled in Gram matrix, optimization start and end times
     :rtype: np.ndarray, float, float
     """
+    fancyimpute_matrix_completion("SoftImpute", gram_drop,
+                                  seqs=None, sigma=None, triangular=None,
+                                  num_process=4,
+                                  drop_flag_matrix=None)
+
+def knn_matrix_completion(gram_drop,
+                                 seqs=None, sigma=None, triangular=None,
+                                 num_process=4,
+                                 drop_flag_matrix=None):
+    """Fill in Gram matrix with dropped elements with knn Matrix Completion.
+    Optimizes the Matrix Completion objective using Singular Value Thresholding
+
+    :param gram_drop: Gram matrix with dropped elements
+    :type gram_drop: list of lists
+    :returns: Filled in Gram matrix, optimization start and end times
+    :rtype: np.ndarray, float, float
+    """
+    fancyimpute_matrix_completion("KNN", gram_drop,
+                                  seqs=None, sigma=None, triangular=None,
+                                  num_process=4,
+                                  drop_flag_matrix=None)
+
+def IterativeSVD_matrix_completion(gram_drop,
+                                   seqs=None, sigma=None, triangular=None,
+                                   num_process=4,
+                                   drop_flag_matrix=None):
+    """Fill in Gram matrix with dropped elements with IterativeSVD Matrix Completion.
+    Optimizes the Matrix Completion objective using Singular Value Thresholding
+
+    :param gram_drop: Gram matrix with dropped elements
+    :type gram_drop: list of lists
+    :returns: Filled in Gram matrix, optimization start and end times
+    :rtype: np.ndarray, float, float
+    """
+    fancyimpute_matrix_completion("IterativeSVD", gram_drop,
+                                  seqs=None, sigma=None, triangular=None,
+                                  num_process=4,
+                                  drop_flag_matrix=None)
+
+def fancyimpute_matrix_completion(function, gram_drop,
+                                  seqs=None, sigma=None, triangular=None,
+                                  num_process=4,
+                                  drop_flag_matrix=None):
     t_start = time.time()
     gram_partially_completed_by_gak = gak.gram_gak(seqs,
                                                    sigma=sigma,
@@ -83,7 +126,15 @@ def softimpute_matrix_completion(gram_drop,
                 continue
             assert np.isnan(gram_drop[i, j])
             gram_drop[i, j] = gram_partially_completed_by_gak[i, j]
-    gram_completed = SoftImpute().complete(gram_drop)
+    if function == "SoftImpute":
+        gram_completed = SoftImpute().complete(gram_drop)
+    elif function == "KNN":
+        gram_completed = KNN().complete(gram_drop)
+    elif function == "IterativeSVD":
+        gram_completed = KNN().complete(gram_drop)
+    else:
+        print("unsupported fancyimpute functin")
+        exit(-1)
     t_end = time.time()
     return gram_completed, t_start, t_end
 
