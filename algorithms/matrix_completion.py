@@ -91,9 +91,9 @@ def knn_matrix_completion(gram_drop,
     :returns: Filled in Gram matrix, optimization start and end times
     :rtype: np.ndarray, float, float
     """
-    mean = np.mean(gram_drop)
-    std = np.std(gram_drop)
-    gram_drop_ = (gram_drop - mean) /std
+    mean = np.mean(gram_drop, axis=1, keepdims=True)
+    std = np.std(gram_drop, axis=1, keepdims=True)
+    gram_drop_ = (gram_drop - mean) / (std + 1e-8)
     gram_completed, t_start, t_end = fancyimpute_matrix_completion("KNN",
                                                                    gram_drop_,
                                                                    seqs=seqs,
@@ -101,7 +101,7 @@ def knn_matrix_completion(gram_drop,
                                                                    triangular=triangular,
                                                                    num_process=num_process,
                                                                    drop_flag_matrix=drop_flag_matrix)
-    gram_completed_ = (gram_completed * std) + mean
+    gram_completed_ = (gram_completed * (std + 1e-8)) + mean
     return gram_completed_, t_start, t_end
 
 def iterativesvd_matrix_completion(gram_drop,
