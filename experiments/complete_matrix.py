@@ -88,7 +88,7 @@ def rnn():
 
 @ex.capture
 def check_algorithm(algorithm):
-    assert algorithm in {"gak", "softimpute", "rnn"}
+    assert algorithm in {"gak", "softimpute", "knn", "iterativesvd", "rnn"}
 
 
 @ex.capture
