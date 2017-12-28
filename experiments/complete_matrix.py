@@ -203,16 +203,18 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         if algorithm == "softimpute":
             func = matrix_completion.softimpute_matrix_completion
             action = "Softimpute"
+            print('running SoftImpute')
         elif algorithm == "knn":
             func = matrix_completion.knn_matrix_completion
             action = "KNN"
+            print('running KNN')
         elif algorithm == "iterativesvd":
             func = matrix_completion.iterativesvd_matrix_completion
             action = "IterativeSVD"
+            print('running IterativeSVD')
         else:
             print("unsupported fancyimpute algorithm")
             exit(-1)
-        print('running SoftImpute')
         completion_start = time.time()
         flag_test = np.zeros(len(seqs))
         flag_test[indices_to_drop] = 1
