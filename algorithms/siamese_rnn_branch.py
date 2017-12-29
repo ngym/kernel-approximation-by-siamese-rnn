@@ -6,7 +6,7 @@ class SiameseRNNBranch():
                  loss_function, siamese_joint_method, siamese_arms_activation='linear'):
         siamese_model = SiameseRNN(input_shape, pad_value, rnn_units, dense_units,
                                    rnn, dropout, implementation, bidirectional, batchnormalization,
-                                   loss_function, siamese_joint_method, siamese_arms_activation='linear'):
+                                   loss_function, siamese_joint_method, siamese_arms_activation='linear')
         
         """
         print(K.get_value(model.layers[2].layers[1].weights[0])[0])
