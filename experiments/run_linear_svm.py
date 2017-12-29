@@ -1,7 +1,7 @@
-import os, sys, shutil
+import os, sys, shutil, json
 import os.path
-from ..utils.file_utils import save_json
-import json
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from utils.file_utils import save_json
 
 model_dirs =[
  "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/10/10,10/0.3/mse/10.0/dot_product/",
