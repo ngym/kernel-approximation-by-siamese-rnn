@@ -35,10 +35,10 @@ def main():
         fp.close()
         loaded_data['params']['implementation'] = 1
         save_json(rnn_conf_path, loaded_data)
-        command_rnn = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiment/complete_matrix.py with ' + rnn_conf_path
+        command_rnn = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiments/complete_matrix.py with ' + rnn_conf_path
 
         svm_conf_path = os.path.join(model_dir, "compute_classification_errors.json")
-        command_svm = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiment/compute_classification_errors.py with ' + svm_conf_path
+        command_svm = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiments/compute_classification_errors.py with ' + svm_conf_path
                                                                                     
         os.system(command_rnn)
         os.system(command_svm)
@@ -52,7 +52,7 @@ def main():
         loaded_data['params']['implementation'] = 1
         lsvm_conf_path = os.path.join(model_dir, lsvm_config_file)
         save_json(lsvm_conf_path, loaded_data)
-        command_lsvm = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiment/linear_svm.py with ' + lsvm_conf_path
+        command_lsvm = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiments/linear_svm.py with ' + lsvm_conf_path
         
         os.system(command_lsvm)
 
