@@ -1,6 +1,7 @@
 import keras.backend as K
 from keras.models import Sequential, Model
 from keras.layers import Dense, Dropout, Input, SimpleRNN, LSTM, GRU, Masking, Activation, BatchNormalization, Lambda
+from keras.optimizers import Adam, RMSprop
 
 from algorithms.siamese_rnn import SiameseRnn
 
@@ -21,9 +22,9 @@ class SiameseRnnBranch():
         model = Model(input_a, processed_a)
         print(K.get_value(model.layers[1].layers[1].weights[0])[0])
         """
-        print(K.get_value(siamese_model.layers[2].layers[1].weights[0])[0])
+        print(K.get_value(siamese_model.model.layers[2].layers[1].weights[0])[0])
         siamese_model.load_weights(trained_modelfile_hdf5)
-        print(K.get_value(siamese_model.layers[2].layers[1].weights[0])[0])
+        print(K.get_value(siamese_model.model.layers[2].layers[1].weights[0])[0])
         model = Model(siamese_model.input_a, siamese_model.processed_a)
         print(K.get_value(model.layers[1].layers[1].weights[0])[0])
         
