@@ -26,6 +26,11 @@ def main():
 
         # RNN and SVM
         rnn_conf_path = os.path.join(model_dir, rnn_config_file)
+        fp = open(rnn_conf_path)
+        loaded_data = json.load(fp)
+        fp.close()
+        loaded_data['params']['implementation'] = 1
+        save_json(rnn_conf_path, loaded_data)
         command_rnn = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiment/complete_matrix.py with ' + rnn_conf_path
 
         svm_conf_path = os.path.join(model_dir, "compute_classification_errors.json")
@@ -36,7 +41,9 @@ def main():
 
         # Linear SVM
         rnn_conf_path = os.path.join(model_dir, rnn_config_file)
-        loaded_data = json.load(rnn_conf_path)
+        fp = open(rnn_conf_path)
+        loaded_data = json.load(fp)
+        fp.close()
         loaded_data.pop("algorithm")
         loaded_data['params']['implementation'] = 1
         lsvm_conf_path = os.path.join(model_dir, lsvm_config_file)
