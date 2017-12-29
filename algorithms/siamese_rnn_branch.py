@@ -10,9 +10,9 @@ class SiameseRnnBranch():
                  loss_function, siamese_joint_method,
                  trained_modelfile_hdf5,
                  siamese_arms_activation='linear'):
-        siamese_model = SiameseRNN(input_shape, pad_value, rnn_units, dense_units,
+        siamese_model = SiameseRnn(input_shape, pad_value, rnn_units, dense_units,
                                    rnn, dropout, implementation, bidirectional, batchnormalization,
-                                   loss_function, siamese_joint_method, siamese_arms_activation='linear')
+                                   loss_function, siamese_joint_method, siamese_arms_activation=siamese_arms_activation)
         
         """
         print(K.get_value(model.layers[2].layers[1].weights[0])[0])
@@ -26,7 +26,9 @@ class SiameseRnnBranch():
         print(K.get_value(siamese_model.layers[2].layers[1].weights[0])[0])
         model = Model(siamese_model.input_a, siamese_model.processed_a)
         print(K.get_value(model.layers[1].layers[1].weights[0])[0])
-        model.compile(loss=loss_function, loss_weights=loss_weights, optimizer=optimizer)
+        
+        optimizer = RMSprop(clipnorm=1.)
+        model.compile(loss=loss_function, loss_weights=None, optimizer=optimizer)
          
         self.model = model
     def predict(self, seqs):
