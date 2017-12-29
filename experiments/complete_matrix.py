@@ -153,7 +153,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     assert os.path.isdir(output_dir)
     assert os.path.exists(pickle_or_hdf5_location)
 
-    time_main_start = os.timess()
+    time_main_start = os.times()
 
     hdf5 = pickle_or_hdf5_location[-4:] == "hdf5"
     if hdf5:
@@ -268,9 +268,9 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         assert False
 
     # eigenvalue check
-    time_npsd_start = os.timess()
+    time_npsd_start = os.times()
     gram_completed_npsd = nearest_positive_semidefinite.nearest_positive_semidefinite(gram_completed)
-    time_npsd_end = os.timess()
+    time_npsd_end = os.times()
 
     # save results
     if hdf5:
@@ -284,7 +284,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     # claculate errors
     mse, mse_dropped, mae, mae_dropped, re, re_dropped = calculate_errors(gram, gram_completed_npsd, dropped_elements)
 
-    time_main_end = os.timess()
+    time_main_end = os.times()
 
     # save run times and errors
     if hdf5:
@@ -299,7 +299,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                              mse, mse_dropped, mae, mae_dropped, re, re_dropped,
                              train_start=time_train_start, train_end=time_train_end)
 
-    print(os.timess())
+    print(os.times())
 
 
 
