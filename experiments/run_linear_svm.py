@@ -4,25 +4,29 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from utils.file_utils import save_json
 
 model_dirs =[
- "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/10/10,10/0.3/mse/10.0/dot_product/",
- "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/5/5,5/0.3/mse/10.0/dot_product/",
- "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/5,5/5,5/0.3/mse/10.0/dot_product/",
- "results/linear_on_branch/tanh_in_Vanilla/6DMG/20/t1-t3/100,100/100,100/0.3/mse/10.0/dot_product",
- "results/linear_on_branch/tanh_in_Vanilla/6DMG/20/t1-t3/100/100,100/0.3/mse/10.0/dot_product",
- "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/20/20,20/0.3/mse/10.0/dot_product/",
- "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/10/10,10/0.3/mse/10.0/dot_product/",
- "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/5/5,5/0.3/mse/10.0/dot_product/",
- "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/100/100,100/0.3/mse/10.0/dot_product/",
- "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/10/10,10/0.3/mse/10.0/dot_product/",
- "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/5/5,5/0.3/mse/10.0/dot_product/",
- "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/30/30,30/0.3/mse/10.0/dot_product/"]
+    ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/10/10,10/0.3/mse/10.0/dot_product/"),
+    ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/5/5,5/0.3/mse/10.0/dot_product/"),
+    ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/5,5/5,5/0.3/mse/10.0/dot_product/"),
+    ("6DMG", "results/linear_on_branch/tanh_in_Vanilla/6DMG/20/t1-t3/100,100/100,100/0.3/mse/10.0/dot_product"),
+    ("6DMG", "results/linear_on_branch/tanh_in_Vanilla/6DMG/20/t1-t3/100/100,100/0.3/mse/10.0/dot_product"),
+    ("UCIcharacter", "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/20/20,20/0.3/mse/10.0/dot_product/"),
+    ("UCIcharacter", "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/10/10,10/0.3/mse/10.0/dot_product/"),
+    ("UCIcharacter", "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/5/5,5/0.3/mse/10.0/dot_product/"),
+    ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/100/100,100/0.3/mse/10.0/dot_product/"),
+    ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/10/10,10/0.3/mse/10.0/dot_product/"),
+    ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/5/5,5/0.3/mse/10.0/dot_product/"),
+    ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/30/30,30/0.3/mse/10.0/dot_product/")]
 
 
-rnn_config_file = "complete_matrix_rnn.json"
+rnn_config_file_ = {}
+rnn_config_file_["6DMG"] = "complete_matrix_rnn.json"
+rnn_config_file_["UCIcharacter"] = "complete_matrix_rnn_UCIcharacter.json"
+rnn_config_file_["UCIauslan"] = "complete_matrix_rnn_UCIauslan.json"
 lsvm_config_file = "linear_svm.json"
 
 def main():
-    for model_dir in model_dirs:
+    for dataset, model_dir in model_dirs:
+        rnn_config_file = rnn_config_file_[dataset]
 
         # RNN and SVM
         rnn_conf_path = os.path.join(model_dir, rnn_config_file)
