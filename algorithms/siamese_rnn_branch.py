@@ -2,9 +2,9 @@ import keras.backend as K
 from keras.models import Sequential, Model
 from keras.layers import Dense, Dropout, Input, SimpleRNN, LSTM, GRU, Masking, Activation, BatchNormalization, Lambda
 
-from .siamese_rnn import SiameseRNN
+from algorithms.siamese_rnn import SiameseRnn
 
-class SiameseRNNBranch():
+class SiameseRnnBranch():
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization,
                  loss_function, siamese_joint_method,

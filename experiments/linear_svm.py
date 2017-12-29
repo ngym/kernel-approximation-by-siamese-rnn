@@ -155,7 +155,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
 
     modelfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
     logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
-    model = siamese_rnn_branch.SiameseRNNBranch(gram_drop,
+    model = siamese_rnn_branch.SiameseRnnBranch(gram_drop,
                                 list(seqs.values()),
                                 params['epochs'],
                                 params['patience'],
