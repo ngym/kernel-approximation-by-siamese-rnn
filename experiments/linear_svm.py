@@ -16,6 +16,9 @@ from utils import nearest_positive_semidefinite
 from utils import make_matrix_incomplete
 from algorithms import linear_svm
 
+import keras.backend as K
+from keras.preprocessing.sequence import pad_sequences
+
 from datasets.read_sequences import read_sequences, pick_labels
 from datasets.data_augmentation import augment_data, create_drop_flag_matrix
 from datasets.others import filter_samples
@@ -155,27 +158,33 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
 
     modelfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
     logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
-    model = siamese_rnn_branch.SiameseRnnBranch(gram_drop,
-                                list(seqs.values()),
-                                params['epochs'],
-                                params['patience'],
-                                params['epoch_start_from'],
-                                logfile_loss,
-                                modelfile_hdf5,
-                                params['rnn'],
-                                params['rnn_units'],
-                                params['dense_units'],
-                                params['dropout'],
-                                params['implementation'],
-                                params['bidirectional'],
-                                params['batchnormalization'],
-                                params['mode'],
-                                params['loss_function'],
-                                params['loss_weight_ratio'],
-                                list(key_to_str.values()),
-                                params['siamese_joint_method'],
-                                params['trained_modelfile_hdf5'],
-                                params['siamese_arms_activation'])
+
+
+    # pre-processing
+    seqs = seqs.values()
+    num_seqs = len(seqs)
+    time_dim = max([seq.shape[0] for seq in seqs])
+    pad_value = -4444
+    seqs = pad_sequences([seq.tolist() for seq in seqs],
+                         maxlen=time_dim, dtype='float32',
+                         padding='post', value=pad_value)
+    feat_dim = seqs[0].shape[1]
+    input_shape = (time_dim, feat_dim)
+
+    K.clear_session()
+
+    # build network
+    model = siamese_rnn_branch.SiameseRnnBranch(input_shape, pad_value,
+                                                params['rnn_units'],
+                                                params['dense_units'],
+                                                params['rnn'],
+                                                params['dropout'],
+                                                params['implementation'],
+                                                params['bidirectional'],
+                                                params['batchnormalization'],
+                                                params['loss_function'],
+                                                params['siamese_joint_method'],
+                                                params['siamese_arms_activation'])
     
     test_indices = indices_to_drop
     train_validation_indices = np.delete(np.arange(len(seqs)), test_indices)
