@@ -141,7 +141,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     os.makedirs(output_dir, exist_ok=True)
     try:
         shutil.copy(os.path.abspath(sys.argv[2]), os.path.join(output_dir, os.path.basename(sys.argv[2])))
-    except SameFileError:
+    except shutil.SameFileError:
         pass
     hdf5 = pickle_or_hdf5_location[-4:] == "hdf5"
     check_fold(fold_count, fold_to_drop, hdf5)
@@ -298,7 +298,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                              mse, mse_dropped, mae, mae_dropped, re, re_dropped,
                              train_start=train_start, train_end=train_end)
 
-
+    print(os.times())
 
 
 
