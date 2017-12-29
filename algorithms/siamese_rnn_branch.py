@@ -1,9 +1,15 @@
-from siamese_rnn import SiameseRNN
+import keras.backend as K
+from keras.models import Sequential, Model
+from keras.layers import Dense, Dropout, Input, SimpleRNN, LSTM, GRU, Masking, Activation, BatchNormalization, Lambda
+
+from .siamese_rnn import SiameseRNN
 
 class SiameseRNNBranch():
     def __init__(self, input_shape, pad_value, rnn_units, dense_units,
                  rnn, dropout, implementation, bidirectional, batchnormalization,
-                 loss_function, siamese_joint_method, siamese_arms_activation='linear'):
+                 loss_function, siamese_joint_method,
+                 trained_modelfile_hdf5,
+                 siamese_arms_activation='linear'):
         siamese_model = SiameseRNN(input_shape, pad_value, rnn_units, dense_units,
                                    rnn, dropout, implementation, bidirectional, batchnormalization,
                                    loss_function, siamese_joint_method, siamese_arms_activation='linear')
