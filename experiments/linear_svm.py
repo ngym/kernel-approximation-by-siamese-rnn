@@ -184,7 +184,8 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                                                 params['batchnormalization'],
                                                 params['loss_function'],
                                                 params['siamese_joint_method'],
-                                                params['siamese_arms_activation'])
+                                                params['trained_modelfile_hdf5']
+                                                siamese_arms_activation=params['siamese_arms_activation'])
     
     test_indices = indices_to_drop
     train_validation_indices = np.delete(np.arange(len(seqs)), test_indices)
