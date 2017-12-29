@@ -115,7 +115,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     assert os.path.isdir(output_dir)
     assert os.path.exists(pickle_or_hdf5_location)
 
-    main_start = time.time()
+    main_start = os.times()
 
     hdf5 = pickle_or_hdf5_location[-4:] == "hdf5"
     if hdf5:
@@ -200,20 +200,36 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     train_validation_labels = labels[train_validation_indices]
     test_labels = labels[test_indices]
 
-    pred_end = time.time()
+    pred_end = os.times()
     
     auc, f1 = linear_svm.compute_classification_errors(train_validation_features,
                                                        train_validation_labels,
                                                        test_features,
                                                        test_labels)
     
-    main_end = time.time()
+    main_end = os.times()
 
-    print("roc_auc:%f" % auc)
-    print("f1:%f" % f1)
+    time_pred = {}
+    time_pred['user']            = pred_end[0] - main_start[0]
+    time_pred['sys']             = pred_end[1] - main_start[1]
+    time_pred['children_user']   = pred_end[2] - main_start[2]
+    time_pred['children_system'] = pred_end[3] - main_start[3]
+    time_pred['elapsed']         = pred_end[4] - main_start[4]
 
+    time_lsvm = {}
+    time_lsvm['user']            = main_end[0] - pred_end[0]
+    time_lsvm['sys']             = main_end[1] - pred_end[1]
+    time_lsvm['children_user']   = main_end[2] - pred_end[2]
+    time_lsvm['children_system'] = main_end[3] - pred_end[3]
+    time_lsvm['elapsed']         = main_end[4] - pred_end[4]
 
+    dic = dict(time_pred=time_pred,
+               time_lsvm=time_lsvm,
+               roc_auc=auc,
+               f1=f1)
+        
+    print(dic)
 
-
+    
 
     
