@@ -296,6 +296,7 @@ def rnn_matrix_completion(gram_drop, seqs,
     elif mode == 'load_pretrained':
         print("load from hdf5 file: %s" % trained_modelfile_hdf5)
         model.load_weights(trained_modelfile_hdf5)
+
     else:
         print('Unsupported mode.')
         exit(-1)

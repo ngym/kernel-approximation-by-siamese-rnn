@@ -106,8 +106,11 @@ class SiameseRnn(Rnn):
         loss_weights = None
         model.compile(loss=loss_function, loss_weights=loss_weights, optimizer=optimizer)
 
+        # for linear_svm
+        self.processed_a = processed_a
+        self.input_a = input_a
+        
         return model
-
     def train_and_validate(self, tr_indices, val_indices,
                            gram_drop,
                            seqs,
