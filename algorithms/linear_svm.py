@@ -66,7 +66,7 @@ def linear_svm(cost, train_features, train_labels,
     
     lb = LabelBinarizer()
     lb.fit(train_labels)
-    y_true = lb.transform(test_labels)
+    y_true = lb.transform(validation_test_labels)
     predicted_probabilities = clf.predict_proba(validation_test_features)
     auc = roc_auc_score(y_true=y_true, y_score=predicted_probabilities)
 
