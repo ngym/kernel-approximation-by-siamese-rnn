@@ -196,8 +196,9 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     train_validation_features = model.predict(train_validation_seqs)
     test_features = model.predict(test_seqs)
 
-    train_validation_labels = key_to_str[train_validation_indices]
-    test_labels = key_to_str[test_indices]
+    labels = np.array(list(key_to_str.values()))
+    train_validation_labels = labels[train_validation_indices]
+    test_labels = labels[test_indices]
 
     pred_end = time.time()
     
