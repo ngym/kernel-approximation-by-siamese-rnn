@@ -39,8 +39,13 @@ def main():
         command_rnn = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiments/complete_matrix.py with ' + rnn_conf_path
 
         svm_conf_path = os.path.join(model_dir, "compute_classification_errors.json")
+        pohl = os.path.join(model_dir, loaded_data['output_filename_format'] + ".hdf5")
+        of   = os.path.join(model_dir, "SVM_out.json")
+        dic = dict(pickle_or_hdf5_locations=[pohl],
+                   output_file=of)
+        save_json(svm_conf_path, dic)
         command_svm = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiments/compute_classification_errors.py with ' + svm_conf_path
-                                                                                    
+        
         os.system(command_rnn)
         os.system(command_svm)
 
