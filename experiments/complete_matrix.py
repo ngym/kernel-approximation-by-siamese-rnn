@@ -11,7 +11,6 @@ from datasets.read_sequences import read_sequences
 from datasets import k_fold_cross_validation
 from utils import errors
 from utils import file_utils
-from utils import time
 from utils import nearest_positive_semidefinite
 from utils import make_matrix_incomplete
 from algorithms import KSS_unsupervised_alpha_prediction
