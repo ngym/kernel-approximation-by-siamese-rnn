@@ -223,8 +223,16 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     time_lsvm['children_system'] = main_end[3] - pred_end[3]
     time_lsvm['elapsed']         = main_end[4] - pred_end[4]
 
+    all_ = {}
+    all_['user']            = main_end[0] - main_end[0]
+    all_['sys']             = main_end[1] - main_end[1]
+    all_['children_user']   = main_end[2] - main_end[2]
+    all_['children_system'] = main_end[3] - main_end[3]
+    all_['elapsed']         = main_end[4] - main_end[4]
+    
     dic = dict(time_pred=time_pred,
                time_lsvm=time_lsvm,
+               all=all_,
                roc_auc=auc,
                f1=f1)
         
