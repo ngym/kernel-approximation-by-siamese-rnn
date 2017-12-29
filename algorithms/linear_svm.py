@@ -30,7 +30,7 @@ def select_good_cost(regularization_costs,
     tmp = skf.split(np.zeros_like(train_validation_labels), train_validation_labels)
     validation_indices = []
     for t in next(tmp)[1]:
-        validation_indices.append(train_validation_indices[t])
+        validation_indices.append(t)
 
     train_indices = np.delete(np.arange(len(train_validation_features)), validation_indices)
 
