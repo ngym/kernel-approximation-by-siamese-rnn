@@ -210,33 +210,33 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     main_end = os.times()
 
     time_pred = {}
-    time_pred['user']            = pred_end[0] - main_start[0]
-    time_pred['sys']             = pred_end[1] - main_start[1]
-    time_pred['children_user']   = pred_end[2] - main_start[2]
-    time_pred['children_system'] = pred_end[3] - main_start[3]
-    time_pred['elapsed']         = pred_end[4] - main_start[4]
+    time_pred['user']            = pred_end.user - main_start.user
+    time_pred['sys']             = pred_end.system - main_start.system
+    time_pred['children_user']   = pred_end.children_user - main_start.children_user
+    time_pred['children_system'] = pred_end.children_system - main_start.children_system
+    time_pred['elapsed']         = pred_end.elapsed - main_start.elapsed
 
     time_lsvm = {}
-    time_lsvm['user']            = main_end[0] - pred_end[0]
-    time_lsvm['sys']             = main_end[1] - pred_end[1]
-    time_lsvm['children_user']   = main_end[2] - pred_end[2]
-    time_lsvm['children_system'] = main_end[3] - pred_end[3]
-    time_lsvm['elapsed']         = main_end[4] - pred_end[4]
+    time_lsvm['user']            = main_end.user - pred_end.user
+    time_lsvm['sys']             = main_end.system - pred_end.system
+    time_lsvm['children_user']   = main_end.children_user - pred_end.children_user
+    time_lsvm['children_system'] = main_end.children_system - pred_end.children_system
+    time_lsvm['elapsed']         = main_end.elapsed - pred_end.elapsed
 
     all_ = {}
-    all_['user']            = main_end[0] - main_start[0]
-    all_['sys']             = main_end[1] - main_start[1]
-    all_['children_user']   = main_end[2] - main_start[2]
-    all_['children_system'] = main_end[3] - main_start[3]
-    all_['elapsed']         = main_end[4] - main_start[4]
+    all_['user']            = main_end.user - main_start.user
+    all_['sys']             = main_end.system - main_start.system
+    all_['children_user']   = main_end.children_user - main_start.children_user
+    all_['children_system'] = main_end.children_system - main_start.children_system
+    all_['elapsed']         = main_end.elapsed - main_start.elapsed
     
     dic = dict(time_pred=time_pred,
                time_lsvm=time_lsvm,
                all=all_,
                roc_auc=auc,
                f1=f1)
-        
-    print(dic)
+    lsvm_out_path = os.path.join(output_dir, "SiameseRnnBranch_LinearSVM_out.json")
+    file_utils.save_json(lsvm_out_path, dic)
 
     
 
