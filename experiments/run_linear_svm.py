@@ -1,7 +1,6 @@
 import os, sys, shutil
 import os.path
-import utils
-from utils.file_utils import save_json
+from ..utils.file_utils import save_json
 import json
 
 model_dirs =[
