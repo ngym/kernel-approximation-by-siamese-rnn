@@ -44,7 +44,8 @@ def select_good_cost(regularization_costs,
     best_f1 = 0
     best_cost = regularization_costs[0]
     for cost in regularization_costs:
-        auc, f1 = linear_svm(train_features, train_labels,
+        auc, f1 = linear_svm(cost,
+                             train_features, train_labels,
                              validation_features, validation_labels)
         if auc > best_auc or (auc == best_auc and f1 > best_f1):
             best_auc = auc
@@ -52,7 +53,7 @@ def select_good_cost(regularization_costs,
             best_cost = cost
     return cost
     
-def linear_svm(train_features, train_labels,
+def linear_svm(cost, train_features, train_labels,
                validation_test_features,
                validation_test_labels):
     #clf = LinearSVC()
