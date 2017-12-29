@@ -1,5 +1,4 @@
 import sys, os, shutil
-import time
 from collections import OrderedDict
 
 import numpy as np
@@ -12,6 +11,7 @@ from datasets.read_sequences import read_sequences
 from datasets import k_fold_cross_validation
 from utils import errors
 from utils import file_utils
+from utils import time
 from utils import nearest_positive_semidefinite
 from utils import make_matrix_incomplete
 from algorithms import KSS_unsupervised_alpha_prediction
@@ -154,7 +154,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     assert os.path.isdir(output_dir)
     assert os.path.exists(pickle_or_hdf5_location)
 
-    main_start = time.time()
+    time_main_start = time.times()
 
     hdf5 = pickle_or_hdf5_location[-4:] == "hdf5"
     if hdf5:
@@ -232,7 +232,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
 
         print(len(seqs)**2)
         print(np.count_nonzero(drop_flag_matrix))
-        gram_completed, completion_start_softimpute, completion_end \
+        gram_completed, time_completion_start, time_completion_end \
             = func(gram_drop,
                    list(seqs.values()),
                    sigma=params['sigma'],
@@ -242,7 +242,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     elif algorithm == "rnn":
         modelfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
         logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
-        gram_completed, train_start, train_end, completion_start, completion_end \
+        gram_completed, time_train_start, time_train_end, time_completion_start, time_completion_end \
             = matrix_completion.rnn_matrix_completion(gram_drop,
                                                       list(seqs.values()),
                                                       params['epochs'],
@@ -269,9 +269,9 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         assert False
 
     # eigenvalue check
-    npsd_start = time.time()
+    time_npsd_start = time.times()
     gram_completed_npsd = nearest_positive_semidefinite.nearest_positive_semidefinite(gram_completed)
-    npsd_end = time.time()
+    time_npsd_end = time.times()
 
     # save results
     if hdf5:
@@ -285,7 +285,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     # claculate errors
     mse, mse_dropped, mae, mae_dropped, re, re_dropped = calculate_errors(gram, gram_completed_npsd, dropped_elements)
 
-    main_end = time.time()
+    time_main_end = time.times()
 
     # save run times and errors
     if hdf5:
@@ -294,11 +294,13 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         analysis_file = log_file.replace(".pkl", ".json")
     num_calculated_elements = len(dropped_elements) - len(indices_to_drop) // 2
     file_utils.save_analysis(analysis_file, len(dropped_elements), num_calculated_elements,
-                             completion_start, completion_end, npsd_start, npsd_end, main_start, main_end,
+                             time_completion_start, time_completion_end,
+                             time_npsd_start, time_npsd_end,
+                             time_main_start, time_main_end,
                              mse, mse_dropped, mae, mae_dropped, re, re_dropped,
-                             train_start=train_start, train_end=train_end)
+                             train_start=time_train_start, train_end=time_train_end)
 
-    print(os.times())
+    print(time.times())
 
 
 

@@ -88,35 +88,51 @@ def save_json(filename, dic):
     json.dump(dic, file, indent=4, sort_keys=True)
     file.close()
 
-
 def save_analysis(filename, drop_count, calculated_count,
-                  completion_start, completion_end, npsd_start, npsd_end, main_start, main_end,
+                  time_completion_start, time_completion_end,
+                  time_npsd_start, time_npsd_end,
+                  time_main_start, time_main_end,
                   mse, mse_dropped, mae, mae_dropped, re, re_dropped,
-                  train_start=None, train_end=None):
+                  time_train_start=None, time_train_end=None):
+
+    virtual_completion_duration = (time_completion_end.user + time_completion_end.system) - \
+                                  (time_completion_start.user + time_completion_start.system)
+    elapsed_completion_duration = time_completion_end.elapsed - time_completion_start.elapsed
+    
+    virtual_npsd_duration = (time_npsd_end.user + time_npsd_end.system) - (time_npsd_start.user + time_npsd_start.system)
+    elapsed_npsd_duration = time_npsd_end.elapsed - time_npsd_start.elapsed
+
+    virtual_main_duration = (time_main_end.user + time_main_end.system) - (time_main_start.user + time_main_start.system)
+    elapsed_main_duration = time_main_end.elapsed - time_main_start.elapsed
+
     analysis_json = {}
     analysis_json['number_of_dropped_elements'] = drop_count
     analysis_json['number_of_calculated_elements'] = calculated_count
-    if train_start is not None and train_end is not None:
-        analysis_json['train_start'] = train_start
-        analysis_json['train_end'] = train_end
-        analysis_json['train_duration'] = train_end - train_start
-    analysis_json['completion_start'] = completion_start
-    analysis_json['completion_end'] = completion_end
-    analysis_json['completion_duration'] = completion_end - completion_start
-    analysis_json['npsd_start'] = npsd_start
-    analysis_json['npsd_end'] = npsd_end
-    analysis_json['npsd_duration'] = npsd_end - npsd_start
-    analysis_json['main_start'] = main_start
-    analysis_json['main_end'] = main_end
-    analysis_json['main_duration'] = main_end - main_start
+    if time_train_start is not None and time_train_end is not None:
+        analysis_json['train_duration'] = time_train_end.elapsed - time_train_start.elapsed
     analysis_json['mean_squared_error'] = mse
     analysis_json['mean_squared_error_of_dropped_elements'] = mse_dropped
     analysis_json['mean_absolute_error'] = mae
     analysis_json['mean_absolute_error_of_dropped_elements'] = mae_dropped
     analysis_json['relative_error'] = re
     analysis_json['relative_error_of_dropped_elements'] = re_dropped
-    analysis_json['calculation_time_per_calculated_element'] = (completion_end - completion_start) / calculated_count
 
+    
+    analysis_json['virtual_completion_duration'] = virtual_completion_duration
+    analysis_json['elapsed_completion_duration'] = elapsed_completion_duration
+    analysis_json['virtual_npsd_duration'] = virtual_npsd_duration
+    analysis_json['elapsed_npsd_duration'] = elapsed_npsd_duration
+    analysis_json['virtual_main_duration'] = virtual_main_duration
+    analysis_json['elapsed_main_duration'] = elapsed_main_duration
+    
+    analysis_json['virtual_completion_duration_per_calculated_element'] = virtual_completion_duration / calculated_count
+    analysis_json['elapsed_completion_duration_per_calculated_element'] = elapsed_completion_duration / calculated_count
+    analysis_json['virtual_npsd_duration_per_calculated_element'] = virtual_npsd_duration / calculated_count
+    analysis_json['elapsed_npsd_duration_per_calculated_element'] = elapsed_npsd_duration / calculated_count
+    analysis_json['virtual_main_duration_per_calculated_element'] = virtual_main_duration / calculated_count
+    analysis_json['elapsed_main_duration_per_calculated_element'] = elapsed_main_duration / calculated_count
+
+    
     save_json(filename, analysis_json)
 
 

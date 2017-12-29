@@ -1,3 +1,4 @@
+import os
 import copy
 import time
 
@@ -40,7 +41,7 @@ def gak_matrix_completion(gram_drop, seqs, indices, sigma=None, triangular=None)
     num_seqs = len(seqs)
     num_job = len(indices) * (num_seqs - len(indices)) + (len(indices) ** 2 - len(indices)) / 2
     num_finished_job = 0
-    start_time = time.time()
+    time_gak_start = os.times()
     not_indices = list(set(range(num_seqs)) - set(indices))
     for index in reversed(sorted(indices)):
         to_fill = [i for i in indices if i < index] + not_indices
@@ -48,14 +49,14 @@ def gak_matrix_completion(gram_drop, seqs, indices, sigma=None, triangular=None)
         gram[index, index] = 1.
         gram[to_fill, index] = gram[index, to_fill].T
         num_finished_job += len(to_fill)
-        current_time = time.time()
-        duration_time = current_time - start_time
+        time_current = os.times()
+        duration_time = time_current[4] - time_gak_start[4]
         eta = duration_time * num_job / num_finished_job - duration_time
         print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, duration_time, eta), end='\r')
-    end_time = time.time()
+    time_gak_end = os.times()
     print("[%d/%d], %ds, ETA:%ds" % (num_finished_job, num_job, duration_time, eta))
     pool.close()
-    return gram, start_time, end_time
+    return gram, time_gak_start, time_gak_end
 
 
 def softimpute_matrix_completion(gram_drop,
@@ -70,6 +71,7 @@ def softimpute_matrix_completion(gram_drop,
     :returns: Filled in Gram matrix, optimization start and end times
     :rtype: np.ndarray, float, float
     """
+    time_completion_start = os.times()
     gram_completed, t_start, t_end = fancyimpute_matrix_completion("SoftImpute",
                                                                    gram_drop,
                                                                    seqs=seqs,
@@ -77,7 +79,8 @@ def softimpute_matrix_completion(gram_drop,
                                                                    triangular=triangular,
                                                                    num_process=num_process,
                                                                    drop_flag_matrix=drop_flag_matrix)
-    return gram_completed, t_start, t_end
+    time_completion_end = os.times()
+    return gram_completed, time_completion_start, time_completion_end
 
 def knn_matrix_completion(gram_drop,
                                  seqs=None, sigma=None, triangular=None,
@@ -91,6 +94,7 @@ def knn_matrix_completion(gram_drop,
     :returns: Filled in Gram matrix, optimization start and end times
     :rtype: np.ndarray, float, float
     """
+    time_completion_start = os.times()
     #mean = np.mean(gram_drop, axis=1, keepdims=True)
     #std = np.std(gram_drop, axis=1, keepdims=True)
     #gram_drop_ = (gram_drop - mean) / (std + 1e-8)
@@ -104,7 +108,8 @@ def knn_matrix_completion(gram_drop,
                                                                    drop_flag_matrix=drop_flag_matrix)
     gram_completed_ = (gram_completed + gram_completed.T) / 2
     #gram_completed_ = (gram_completed * (std + 1e-8)) + mean
-    return gram_completed_, t_start, t_end
+    time_completion_end = os.times()
+    return gram_completed_, time_completion_start, time_completion_end
 
 def iterativesvd_matrix_completion(gram_drop,
                                    seqs=None, sigma=None, triangular=None,
@@ -118,24 +123,25 @@ def iterativesvd_matrix_completion(gram_drop,
     :returns: Filled in Gram matrix, optimization start and end times
     :rtype: np.ndarray, float, float
     """
+    time_completion_start = os.times()
     mean = np.mean(gram_drop)
     std = np.std(gram_drop)
     gram_drop_ = (gram_drop - mean) /std
-    gram_completed, t_start, t_end = fancyimpute_matrix_completion("IterativeSVD",
-                                                                   gram_drop_,
-                                                                   seqs=seqs,
-                                                                   sigma=sigma,
-                                                                   triangular=triangular,
-                                                                   num_process=num_process,
-                                                                   drop_flag_matrix=drop_flag_matrix)
+    gram_completed  = fancyimpute_matrix_completion("IterativeSVD",
+                                                    gram_drop_,
+                                                    seqs=seqs,
+                                                    sigma=sigma,
+                                                    triangular=triangular,
+                                                    num_process=num_process,
+                                                    drop_flag_matrix=drop_flag_matrix)
     gram_completed_ = (gram_completed * std) + mean
-    return gram_completed_, t_start, t_end
+    time_completion_end = os.times()
+    return gram_completed_, time_completion_start, time_completion_end
 
 def fancyimpute_matrix_completion(function, gram_drop,
                                   seqs=None, sigma=None, triangular=None,
                                   num_process=4,
                                   drop_flag_matrix=None):
-    t_start = time.time()
     gram_partially_completed_by_gak = gak.gram_gak(seqs,
                                                    sigma=sigma,
                                                    triangular=triangular,
@@ -157,8 +163,7 @@ def fancyimpute_matrix_completion(function, gram_drop,
     else:
         print("unsupported fancyimpute functin")
         exit(-1)
-    t_end = time.time()
-    return gram_completed, t_start, t_end
+    return gram_completed
 
 def rnn_matrix_completion(gram_drop, seqs,
                           epochs, patience,
@@ -252,7 +257,7 @@ def rnn_matrix_completion(gram_drop, seqs,
                                             if not np.isnan(gram_drop[i][j])])
     train_indices = train_and_validation_indices[:int(len(train_and_validation_indices) * 0.9)]
     validation_indices = train_and_validation_indices[int(len(train_and_validation_indices) * 0.9):]
-    train_start = time.time()
+    time_train_start = os.times()
     if mode == 'train':
         assert epoch_start_from == 1
         model.train_and_validate(train_indices, validation_indices,
@@ -300,16 +305,16 @@ def rnn_matrix_completion(gram_drop, seqs,
     else:
         print('Unsupported mode.')
         exit(-1)
-    train_end = time.time()
+    time_train_end = os.times()
 
     # prediction
     test_indices = [(i, j)
                   for i in range(num_seqs)
                   for j in range(i, num_seqs)
                   if np.isnan(gram_drop[i][j])]
-    prediction_start = time.time()
+    time_pred_start = os.times()
     predictions = model.predict(test_indices, gram_drop, seqs)
-    prediction_end = time.time()
+    time_pred_end = os.times()
 
     # fill in
     gram_completed = copy.deepcopy(gram_drop)
@@ -323,4 +328,6 @@ def rnn_matrix_completion(gram_drop, seqs,
     assert not np.any(np.isnan(np.array(gram_completed)))
     assert not np.any(np.isinf(np.array(gram_completed)))
 
-    return gram_completed, train_start, train_end, prediction_start, prediction_end
+    return gram_completed, time_train_start, time_train_end,\
+           time_pred_start, time_pred_end
+
