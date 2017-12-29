@@ -34,6 +34,7 @@ def main():
         loaded_data = json.load(fp)
         fp.close()
         loaded_data['params']['implementation'] = 1
+        loaded_data['params']['mode'] = 'load_pretrained'
         save_json(rnn_conf_path, loaded_data)
         command_rnn = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiments/complete_matrix.py with ' + rnn_conf_path
 
@@ -50,6 +51,7 @@ def main():
         fp.close()
         loaded_data.pop("algorithm")
         loaded_data['params']['implementation'] = 1
+        loaded_data['params']['mode'] = 'load_pretrained'
         lsvm_conf_path = os.path.join(model_dir, lsvm_config_file)
         save_json(lsvm_conf_path, loaded_data)
         command_lsvm = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiments/linear_svm.py with ' + lsvm_conf_path
