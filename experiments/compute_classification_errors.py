@@ -66,6 +66,7 @@ def run(pickle_or_hdf5_locations, regularization_costs, output_file):
     classification['each_seq']['virtual_classification_duration_per_calculated_sequence'] = virtual_classification_duration / num_tests
     classification['each_seq']['elapsed_classification_duration_per_calculated_sequence'] = elapsed_classification_duration / num_tests
 
+    dic['classification'] = classification
     
     file_utils.save_json(output_file, dic)
 
