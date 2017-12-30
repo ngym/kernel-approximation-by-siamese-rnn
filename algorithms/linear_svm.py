@@ -1,4 +1,4 @@
-import sys, json
+import sys, json, os
 from sklearn.svm import SVC, LinearSVC
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.preprocessing import LabelBinarizer 
