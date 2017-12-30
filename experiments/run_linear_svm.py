@@ -48,13 +48,9 @@ def main():
         command_svm = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiments/compute_classification_errors.py with ' + svm_conf_path
         
         os.system(command_rnn)
-        print("
-
-        ")
+        print("\n\n")
         os.system(command_svm)
-        print("
-
-        ")
+        print("\n\n")
 
         # Linear SVM
         rnn_conf_path = os.path.join(model_dir, rnn_config_file)
@@ -69,9 +65,7 @@ def main():
         command_lsvm = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiments/linear_svm.py with ' + lsvm_conf_path
         
         os.system(command_lsvm)
-        print("
-
-        ")
+        print("\n\n")
 
 
 
