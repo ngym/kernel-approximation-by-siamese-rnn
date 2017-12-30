@@ -14,12 +14,11 @@ ex = Experiment('compute_classification_errors')
 def cfg():
     pickle_or_hdf5_locations = "results/*.pkl"
     regularization_costs = [0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64]
-    output_file = "results/classification_costs.json"
+    output_location = "results/classification_costs.json"
 
 
 @ex.automain
 def run(pickle_or_hdf5_locations, regularization_costs, output_location):
-    output_file = os.path.abspath(output_file)
 
     dic = {}
     for pickle_or_hdf5_location in pickle_or_hdf5_locations:
@@ -49,8 +48,9 @@ def run(pickle_or_hdf5_locations, regularization_costs, output_location):
     virtual_classification_duration = time_classification_end.user - time_classification_start.user + time_classification_end.system - time_classification_start.system
     elapsed_classification_duration = time_classification_end.elapsed - time_classification_start.elapsed
     
-    fp = open(output_file)
+    fp = open(output_location)
     dic = json.load(fp)
+    fp.close()
 
     classification = {}
 
