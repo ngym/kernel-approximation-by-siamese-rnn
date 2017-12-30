@@ -102,7 +102,7 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 
 @ex.automain
 def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
-        params, output_dir, output_filename_format,
+        params, output_dir, output_filename_format, output_file,
         data_augmentation_size):
     os.makedirs(output_dir, exist_ok=True)
     try:
@@ -257,7 +257,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                classification=classification)
     
     ###
-    lsvm_out_path = os.path.join(output_dir, "SiameseRnnBranch_LinearSVM_out.json")
+    lsvm_out_path = os.path.join(output_dir, output_file)
     file_utils.save_json(lsvm_out_path, dic)
 
     

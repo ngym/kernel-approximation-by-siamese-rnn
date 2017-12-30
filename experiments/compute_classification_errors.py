@@ -18,7 +18,7 @@ def cfg():
 
 
 @ex.automain
-def run(pickle_or_hdf5_locations, regularization_costs, output_file):
+def run(pickle_or_hdf5_locations, regularization_costs, output_location):
     output_file = os.path.abspath(output_file)
 
     dic = {}
@@ -68,7 +68,7 @@ def run(pickle_or_hdf5_locations, regularization_costs, output_file):
 
     dic['classification'] = classification
     
-    file_utils.save_json(output_file, dic)
+    file_utils.save_json(output_location, dic)
 
 
     

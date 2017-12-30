@@ -45,7 +45,7 @@ def main():
         pohl = os.path.join(model_dir, loaded_data['output_filename_format'] + ".hdf5")
         of   = os.path.join(model_dir, rnn_svm_output_file)
         dic = dict(pickle_or_hdf5_locations=[pohl],
-                   output_file=of)
+                   output_location=of)
         save_json(svm_conf_path, dic)
         command_svm = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiments/compute_classification_errors.py with ' + svm_conf_path
         
