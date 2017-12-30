@@ -17,13 +17,13 @@ def compute_classification_errors(train_validation_features,
     best_cost = select_good_cost(regularization_costs,
                             train_validation_features,
                             train_validation_labels)
-
-    auc, f1 = linear_svm(best_cost, train_validation_features,
-                         train_validation_labels,
-                         test_features,
-                         test_labels)
+    
+    auc, f1, time_classification_start, time_completion_end = linear_svm(best_cost, train_validation_features,
+                                                                         train_validation_labels,
+                                                                         test_features,
+                                                                         test_labels)
     print("best_cost:%f" % best_cost)
-    return auc, f1
+    return auc, f1, time_completion_start, time_completion_end
 
 def select_good_cost(regularization_costs,
                      train_validation_features, train_validation_labels):
@@ -45,7 +45,7 @@ def select_good_cost(regularization_costs,
     best_f1 = 0
     best_cost = regularization_costs[0]
     for cost in regularization_costs:
-        auc, f1 = linear_svm(cost,
+        auc, f1, _, _ = linear_svm(cost,
                              train_features, train_labels,
                              validation_features, validation_labels)
         if auc > best_auc or (auc == best_auc and f1 > best_f1):
@@ -62,7 +62,11 @@ def linear_svm(cost, train_features, train_labels,
 
     clf.fit(train_features, train_labels)
 
+    time_classification_start = os.times()
     predicted_labels = clf.predict(validation_test_features)
+    time_classification_end = os.times()
+
+    
     f1 = f1_score(validation_test_labels, predicted_labels, average='weighted')
     
     lb = LabelBinarizer()
@@ -71,7 +75,7 @@ def linear_svm(cost, train_features, train_labels,
     predicted_probabilities = clf.predict_proba(validation_test_features)
     auc = roc_auc_score(y_true=y_true, y_score=predicted_probabilities)
 
-    return auc, f1
+    return auc, f1, time_classification_start, time_classification_end
 
 
 

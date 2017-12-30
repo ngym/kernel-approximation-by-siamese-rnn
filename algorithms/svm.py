@@ -1,4 +1,4 @@
-import functools
+import functools, os
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -72,7 +72,7 @@ def optimize_hyperparameter(costs,
         error_to_hyperparameters[tryout_hyperparameter(cost, train_matrix,
                                                        train_labels,
                                                        validation_matrix,
-                                                       validation_labels)] = (cost)
+                                                       validation_labels)[:2]] = (cost)
     #/* indices in the gram matrix is passed to the function to indicate the split. */
     best_cost = error_to_hyperparameters[max(list(error_to_hyperparameters.keys()))]
     print("test")
@@ -154,7 +154,11 @@ def tryout_hyperparameter(cost, train, train_labels, validation_or_test, validat
     clf = SVC(C=cost, kernel='precomputed', probability=True)
     clf.fit(train, train_labels)
 
+    time_classification_start = os.times()
     predicted_labels = clf.predict(validation_or_test)
+    time_classification_end = os.times()
+
+    
     f1_ = f1_score(validation_or_test_labels, predicted_labels, average='weighted')
 
     lb = LabelBinarizer()
@@ -173,4 +177,4 @@ def tryout_hyperparameter(cost, train, train_labels, validation_or_test, validat
                                   for z in zip(list(predicted_labels), validation_or_test_labels)]))
     print("---")
 
-    return (auc_, f1_)
+    return (auc_, f1_, time_classification_start, time_classification_end)

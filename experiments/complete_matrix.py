@@ -288,8 +288,11 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
 
     # save run times and errors
     num_calculated_elements = len(dropped_elements) - len(indices_to_drop) // 2
+    num_dropped_sequences = len(indices_to_drop)
     out_path = os.path.join(output_dir, "SiameseRnn_SVM_out.json")
-    file_utils.save_analysis(out_path, len(dropped_elements), num_calculated_elements,
+    file_utils.save_analysis(out_path, len(dropped_elements),
+                             num_dropped_sequences,
+                             num_calculated_elements,
                              time_completion_start, time_completion_end,
                              time_npsd_start, time_npsd_end,
                              time_main_start, time_main_end,

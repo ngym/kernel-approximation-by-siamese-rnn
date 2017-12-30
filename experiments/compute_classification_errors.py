@@ -1,5 +1,5 @@
 import sys, os
-import glob
+import glob, json
 
 from sacred import Experiment
 
@@ -37,16 +37,38 @@ def run(pickle_or_hdf5_locations, regularization_costs, output_file):
         sample_names = loaded_data['sample_names']
         test_indices = loaded_data['dropped_indices'][-1]
 
-        (roc_auc_score, f1_score) = svm.get_classification_error(dataset_type,
+        (roc_auc_score, f1_score, time_classification_start, time_classification_end) =\
+                                svm.get_classification_error(dataset_type,
                                                              gram,
                                                              sample_names,
                                                              test_indices,
                                                              regularization_costs)
         print(pickle_or_hdf5_location + " roc_auc_score: " + str(roc_auc_score) + " f1_score: " + str(f1_score))
-        dic[pickle_or_hdf5_location] = dict(roc_auc_score=roc_auc_score,
-                                            f1_score=f1_score)
 
+    num_tests = len(test_indices)
+    virtual_classification_duration = time_classification_end.user - time_classification_start.user + time_classification_end.system - time_classification_start.system
+    elapsed_classification_duration = time_classification_end.elapsed - time_classification_start.elapsed
+    
+    fp = open(output_file)
+    dic = json.load(fp)
+
+    classification = {}
+
+    classification['basics'] = {}
+    classification['basics']['roc_auc'] = roc_auc_score
+    classification['basics']['f1'] = f1_score
+    
+    classification['all'] = {}
+    classification['all']['virtual_classification_duration'] = virtual_classification_duration
+    classification['all']['elapsed_classification_duration'] = elapsed_classification_duration
+    
+    classification['each_seq'] = {}
+    classification['each_seq']['virtual_classification_duration_per_calculated_sequence'] = virtual_classification_duration / num_tests
+    classification['each_seq']['elapsed_classification_duration_per_calculated_sequence'] = elapsed_classification_duration / num_tests
+
+    
     file_utils.save_json(output_file, dic)
 
 
+    
     

@@ -40,7 +40,7 @@ def main():
 
         svm_conf_path = os.path.join(model_dir, "compute_classification_errors.json")
         pohl = os.path.join(model_dir, loaded_data['output_filename_format'] + ".hdf5")
-        of   = os.path.join(model_dir, "SVM_out.json")
+        of   = os.path.join(model_dir, loaded_data["output_filename_format"] + ".json")
         dic = dict(pickle_or_hdf5_locations=[pohl],
                    output_file=of)
         save_json(svm_conf_path, dic)

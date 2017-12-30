@@ -88,7 +88,9 @@ def save_json(filename, dic):
     json.dump(dic, file, indent=4, sort_keys=True)
     file.close()
 
-def save_analysis(filename, drop_count, calculated_count,
+def save_analysis(filename, drop_count,
+                  num_calculated_sequences,
+                  num_calculated_elements,
                   time_completion_start, time_completion_end,
                   time_npsd_start, time_npsd_end,
                   time_main_start, time_main_end,
@@ -106,9 +108,11 @@ def save_analysis(filename, drop_count, calculated_count,
     elapsed_main_duration = time_main_end.elapsed - time_main_start.elapsed
 
     analysis_json = {}
+    
     analysis_json['basics'] = {}
+    analysis_json['basics']['number_of_calculated_sequences'] = num_calculated_sequences
     analysis_json['basics']['number_of_dropped_elements'] = drop_count
-    analysis_json['basics']['number_of_calculated_elements'] = calculated_count
+    analysis_json['basics']['number_of_calculated_elements'] = num_calculated_elements
     if time_train_start is not None and time_train_end is not None:
         analysis_json['basics']['train_duration'] = time_train_end.elapsed - time_train_start.elapsed
     analysis_json['basics']['mean_squared_error'] = mse
@@ -118,28 +122,39 @@ def save_analysis(filename, drop_count, calculated_count,
     analysis_json['basics']['relative_error'] = re
     analysis_json['basics']['relative_error_of_dropped_elements'] = re_dropped
     
-    analysis_json['all_elems'] = {}
-    analysis_json['all_elems']['virtual_completion_duration'] = virtual_completion_duration
-    analysis_json['all_elems']['elapsed_completion_duration'] = elapsed_completion_duration
-    analysis_json['all_elems']['virtual_npsd_duration'] = virtual_npsd_duration
-    analysis_json['all_elems']['elapsed_npsd_duration'] = elapsed_npsd_duration
-    analysis_json['all_elems']['virtual_completion_npsd_duration'] = virtual_completion_duration + virtual_npsd_duration
-    analysis_json['all_elems']['elapsed_completion_npsd_duration'] = elapsed_completion_duration + elapsed_npsd_duration
-    analysis_json['all_elems']['virtual_main_duration'] = virtual_main_duration
-    analysis_json['all_elems']['elapsed_main_duration'] = elapsed_main_duration
+    analysis_json['all'] = {}
+    analysis_json['all']['virtual_completion_duration'] = virtual_completion_duration
+    analysis_json['all']['elapsed_completion_duration'] = elapsed_completion_duration
+    analysis_json['all']['virtual_npsd_duration'] = virtual_npsd_duration
+    analysis_json['all']['elapsed_npsd_duration'] = elapsed_npsd_duration
+    analysis_json['all']['virtual_completion_npsd_duration'] = virtual_completion_duration + virtual_npsd_duration
+    analysis_json['all']['elapsed_completion_npsd_duration'] = elapsed_completion_duration + elapsed_npsd_duration
+    #analysis_json['all']['virtual_main_duration'] = virtual_main_duration
+    #analysis_json['all']['elapsed_main_duration'] = elapsed_main_duration
     
     analysis_json['each_elem'] = {}
-    analysis_json['each_elem']['virtual_completion_duration_per_calculated_element'] = virtual_completion_duration / calculated_count
-    analysis_json['each_elem']['elapsed_completion_duration_per_calculated_element'] = elapsed_completion_duration / calculated_count
-    analysis_json['each_elem']['virtual_npsd_duration_per_calculated_element'] = virtual_npsd_duration / calculated_count
-    analysis_json['each_elem']['elapsed_npsd_duration_per_calculated_element'] = elapsed_npsd_duration / calculated_count
-    analysis_json['each_elem']['virtual_completion_npsd_duration_per_calculated_element'] = (virtual_completion_duration + virtual_npsd_duration) / calculated_count
-    analysis_json['each_elem']['elapsed_completion_npsd_duration_per_calculated_element'] = (elapsed_completion_duration + elapsed_npsd_duration) / calculated_count
-    analysis_json['each_elem']['virtual_main_duration_per_calculated_element'] = virtual_main_duration / calculated_count
-    analysis_json['each_elem']['elapsed_main_duration_per_calculated_element'] = elapsed_main_duration / calculated_count
+    analysis_json['each_elem']['virtual_completion_duration_per_calculated_element'] = virtual_completion_duration / num_calculated_elements
+    analysis_json['each_elem']['elapsed_completion_duration_per_calculated_element'] = elapsed_completion_duration / num_calculated_elements
+    analysis_json['each_elem']['virtual_npsd_duration_per_calculated_element'] = virtual_npsd_duration / num_calculated_elements
+    analysis_json['each_elem']['elapsed_npsd_duration_per_calculated_element'] = elapsed_npsd_duration / num_calculated_elements
+    analysis_json['each_elem']['virtual_completion_npsd_duration_per_calculated_element'] = (virtual_completion_duration + virtual_npsd_duration) / num_calculated_elements
+    analysis_json['each_elem']['elapsed_completion_npsd_duration_per_calculated_element'] = (elapsed_completion_duration + elapsed_npsd_duration) / num_calculated_elements
+    #analysis_json['each_elem']['virtual_main_duration_per_calculated_element'] = virtual_main_duration / num_calculated_elements
+    #analysis_json['each_elem']['elapsed_main_duration_per_calculated_element'] = elapsed_main_duration / num_calculated_elements
 
-    
-    save_json(filename, analysis_json)
+    analysis_json['each_seq'] = {}
+    analysis_json['each_seq']['virtual_completion_duration_per_calculated_sequence'] = virtual_completion_duration / num_calculated_sequences
+    analysis_json['each_seq']['elapsed_completion_duration_per_calculated_sequence'] = elapsed_completion_duration / num_calculated_sequences
+    analysis_json['each_seq']['virtual_npsd_duration_per_calculated_sequence'] = virtual_npsd_duration / num_calculated_sequences
+    analysis_json['each_seq']['elapsed_npsd_duration_per_calculated_sequence'] = elapsed_npsd_duration / num_calculated_sequences
+    analysis_json['each_seq']['virtual_completion_npsd_duration_per_calculated_sequence'] = (virtual_completion_duration + virtual_npsd_duration) / num_calculated_sequences
+    analysis_json['each_seq']['elapsed_completion_npsd_duration_per_calculated_sequence'] = (elapsed_completion_duration + elapsed_npsd_duration) / num_calculated_sequences
+    #analysis_json['each_seq']['virtual_main_duration_per_calculated_sequence'] = virtual_main_duration / num_calculated_sequences
+    #analysis_json['each_seq']['elapsed_main_duration_per_calculated_sequence'] = elapsed_main_duration / num_calculated_sequences
+
+    dic=dict(prediction=analysis_json,
+             classification=None)
+    save_json(filename, dic)
 
 
 

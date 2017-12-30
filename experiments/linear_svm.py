@@ -197,47 +197,66 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     test_seqs = seqs[test_indices]
     
     train_validation_features = model.predict(train_validation_seqs)
+
+    time_pred_start = os.times()
     test_features = model.predict(test_seqs)
+    time_pred_end = os.times()
 
     labels = np.array(list(key_to_str.values()))
     train_validation_labels = labels[train_validation_indices]
     test_labels = labels[test_indices]
 
-    pred_end = os.times()
     
-    auc, f1 = linear_svm.compute_classification_errors(train_validation_features,
-                                                       train_validation_labels,
-                                                       test_features,
-                                                       test_labels)
+    auc, f1, time_classification_start, time_classification_end = \
+                    linear_svm.compute_classification_errors(train_validation_features,
+                                                             train_validation_labels,
+                                                             test_features,
+                                                             test_labels)
     
     main_end = os.times()
 
-    time_pred = {}
-    time_pred['user']            = pred_end.user - main_start.user
-    time_pred['sys']             = pred_end.system - main_start.system
-    time_pred['children_user']   = pred_end.children_user - main_start.children_user
-    time_pred['children_system'] = pred_end.children_system - main_start.children_system
-    time_pred['elapsed']         = pred_end.elapsed - main_start.elapsed
 
-    time_lsvm = {}
-    time_lsvm['user']            = main_end.user - pred_end.user
-    time_lsvm['sys']             = main_end.system - pred_end.system
-    time_lsvm['children_user']   = main_end.children_user - pred_end.children_user
-    time_lsvm['children_system'] = main_end.children_system - pred_end.children_system
-    time_lsvm['elapsed']         = main_end.elapsed - pred_end.elapsed
 
-    all_ = {}
-    all_['user']            = main_end.user - main_start.user
-    all_['sys']             = main_end.system - main_start.system
-    all_['children_user']   = main_end.children_user - main_start.children_user
-    all_['children_system'] = main_end.children_system - main_start.children_system
-    all_['elapsed']         = main_end.elapsed - main_start.elapsed
     
-    dic = dict(time_pred=time_pred,
-               time_lsvm=time_lsvm,
-               all=all_,
-               roc_auc=auc,
-               f1=f1)
+    num_calculated_sequences = len(test_seqs)
+    
+    virtual_prediction_duration = time_pred_end.user - time_pred_start.user + time_pred_end.system - time_pred_start.system
+    elapsed_prediction_duration = time_pred_end.elapsed - time_pred_start.elapsed
+
+    virtual_classification_duration = time_classification_end.user - time_classification_start.user + time_classification_end.system - time_classification_start.system
+    elapsed_classification_duration = time_classification_end.elapsed - time_classification_start.elapsed
+    
+    prediction = {}
+    
+    prediction['basics'] = {}
+    prediction['basics']['number_of_calculated_sequences'] = len(test_seqs)
+    
+    prediction['all'] = {}
+    prediction['all']['virtual_prediction_duration'] = virtual_prediction_duration
+    prediction['all']['elapsed_prediction_duration'] = elapsed_prediction_duration
+    
+    prediction['each_seq'] = {}
+    prediction['each_seq']['virtual_prediction_duration_per_calculated_sequence'] = virtual_prediction_duration / num_calculated_sequences
+    prediction['each_seq']['elapsed_prediction_duration_per_calculated_sequence'] = elapsed_prediction_duration / num_calculated_sequences
+
+    classification = {}
+
+    classification['basics'] = {}
+    classification['basics']['roc_auc'] = auc
+    classification['basics']['f1'] = f1
+    
+    classification['all'] = {}
+    classification['all']['virtual_classification_duration'] = virtual_classification_duration
+    classification['all']['elapsed_classification_duration'] = elapsed_classification_duration
+    
+    classification['each_seq'] = {}
+    classification['each_seq']['virtual_classification_duration_per_calculated_sequence'] = virtual_classification_duration / num_calculated_sequences
+    classification['each_seq']['elapsed_classification_duration_per_calculated_sequence'] = elapsed_classification_duration / num_calculated_sequences
+    
+    dic = dict(prediction=prediction,
+               classification=classification)
+    
+    ###
     lsvm_out_path = os.path.join(output_dir, "SiameseRnnBranch_LinearSVM_out.json")
     file_utils.save_json(lsvm_out_path, dic)
 
