@@ -18,12 +18,12 @@ def compute_classification_errors(train_validation_features,
                             train_validation_features,
                             train_validation_labels)
     
-    auc, f1, time_classification_start, time_completion_end = linear_svm(best_cost, train_validation_features,
+    auc, f1, time_classification_start, time_classification_end = linear_svm(best_cost, train_validation_features,
                                                                          train_validation_labels,
                                                                          test_features,
                                                                          test_labels)
     print("best_cost:%f" % best_cost)
-    return auc, f1, time_completion_start, time_completion_end
+    return auc, f1, time_classification_start, time_classification_end
 
 def select_good_cost(regularization_costs,
                      train_validation_features, train_validation_labels):
