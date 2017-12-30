@@ -20,6 +20,7 @@ model_dirs =[
 """
 
 rnn_svm_output_file = 'SiameseRnn_SVM_out.json'
+lsvm_output_file = 'RnnBranch_SVM_out.json'
 rnn_config_file_ = {}
 rnn_config_file_["6DMG"] = "complete_matrix_rnn.json"
 rnn_config_file_["UCIcharacter"] = "complete_matrix_rnn_UCIcharacter.json"
@@ -57,6 +58,7 @@ def main():
         loaded_data.pop("algorithm")
         loaded_data['params']['implementation'] = 1
         loaded_data['params']['mode'] = 'load_pretrained'
+        loaded_data['output_file'] = lsvm_output_file
         lsvm_conf_path = os.path.join(model_dir, lsvm_config_file)
         save_json(lsvm_conf_path, loaded_data)
         command_lsvm = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiments/linear_svm.py with ' + lsvm_conf_path
