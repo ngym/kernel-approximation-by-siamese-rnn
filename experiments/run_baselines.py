@@ -4,8 +4,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from utils.file_utils import save_json
 
 model_dirs =[
-    ("UCIcharacter", "gak", "results/UCIcharacter/20/gak/"),
     ("UCIcharacter", "si", "results/UCIcharacter/20/noaugmentation_softimpute/0.1/"),
+    ("UCIcharacter", "gak", "results/UCIcharacter/20/gak/"),
     ("UCIcharacter", "si", "results/UCIcharacter/20/noaugmentation_softimpute/0.01/"),
     ("UCIcharacter", "knn", "results/UCIcharacter/20/noaugmentation_knn/0.1/"),
     ("UCIcharacter", "knn", "results/UCIcharacter/20/noaugmentation_knn/0.01/"),
@@ -63,8 +63,8 @@ def main():
         
         svm_conf_path = os.path.join(model_dir, "compute_classification_errors.json")
         pohl = os.path.join(model_dir, loaded_data['output_filename_format'].replace(
-            "${sigma}", str(loaded_data['params']['sigma']).replace(
-                "${triangular}", "None")) + ".hdf5")
+            '${sigma}', str(loaded_data['params']['sigma'])).replace(
+                '${triangular}', 'None') + ".hdf5")
         of   = os.path.join(model_dir, output_file)
         dic = dict(pickle_or_hdf5_locations=[pohl],
                    output_location=of)

@@ -295,8 +295,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                              time_completion_start, time_completion_end,
                              time_npsd_start, time_npsd_end,
                              time_main_start, time_main_end,
-                             mse, mse_dropped, mae, mae_dropped, re, re_dropped,
-                             time_train_start=time_train_start, time_train_end=time_train_end)
+                             mse, mse_dropped, mae, mae_dropped, re, re_dropped)
 
 
 
