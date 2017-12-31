@@ -34,7 +34,7 @@ def main():
         lsvm = json.load(fp)
         fp.close()
 
-        display = (model_dir,
+        display = (model_dir.replace(',','\,'),
                    # Siamese RNN and SVM
                    # as classification tool
                    rnn_svm['classification']['basics']['roc_auc'],
