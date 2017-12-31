@@ -36,8 +36,8 @@ knn_config_file_["UCIcharacter"] = "complete_matrix_knn_UCIcharacter.json"
 knn_config_file_["UCIauslan"] = "complete_matrix_knn_UCIauslan.json"
 gak_config_file_ = {}
 gak_config_file_["6DMG"] = "complete_matrix_gak.json"
-gak_config_file_["UCIcharacter"] = "complete_matrix_gak_UCIcharacter.json"
-gak_config_file_["UCIauslan"] = "complete_matrix_gak_UCIauslan.json"
+gak_config_file_["UCIcharacter"] = "complete_matrix_gak.json"
+gak_config_file_["UCIauslan"] = "complete_matrix_gak.json"
 
 alg_={}
 alg_['gak'] = gak_config_file_
