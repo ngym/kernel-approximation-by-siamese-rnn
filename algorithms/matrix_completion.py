@@ -72,13 +72,13 @@ def softimpute_matrix_completion(gram_drop,
     :rtype: np.ndarray, float, float
     """
     time_completion_start = os.times()
-    gram_completed, t_start, t_end = fancyimpute_matrix_completion("SoftImpute",
-                                                                   gram_drop,
-                                                                   seqs=seqs,
-                                                                   sigma=sigma,
-                                                                   triangular=triangular,
-                                                                   num_process=num_process,
-                                                                   drop_flag_matrix=drop_flag_matrix)
+    gram_completed = fancyimpute_matrix_completion("SoftImpute",
+                                                   gram_drop,
+                                                   seqs=seqs,
+                                                   sigma=sigma,
+                                                   triangular=triangular,
+                                                   num_process=num_process,
+                                                   drop_flag_matrix=drop_flag_matrix)
     time_completion_end = os.times()
     return gram_completed, time_completion_start, time_completion_end
 
@@ -99,13 +99,13 @@ def knn_matrix_completion(gram_drop,
     #std = np.std(gram_drop, axis=1, keepdims=True)
     #gram_drop_ = (gram_drop - mean) / (std + 1e-8)
     gram_drop_ = gram_drop
-    gram_completed, t_start, t_end = fancyimpute_matrix_completion("KNN",
-                                                                   gram_drop_,
-                                                                   seqs=seqs,
-                                                                   sigma=sigma,
-                                                                   triangular=triangular,
-                                                                   num_process=num_process,
-                                                                   drop_flag_matrix=drop_flag_matrix)
+    gram_completed = fancyimpute_matrix_completion("KNN",
+                                                   gram_drop_,
+                                                   seqs=seqs,
+                                                   sigma=sigma,
+                                                   triangular=triangular,
+                                                   num_process=num_process,
+                                                   drop_flag_matrix=drop_flag_matrix)
     gram_completed_ = (gram_completed + gram_completed.T) / 2
     #gram_completed_ = (gram_completed * (std + 1e-8)) + mean
     time_completion_end = os.times()
