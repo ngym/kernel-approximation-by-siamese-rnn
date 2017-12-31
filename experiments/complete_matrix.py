@@ -195,7 +195,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     train_start = None
     train_end = None
     if algorithm == "gak":
-        gram_completed, completion_start, completion_end \
+        gram_completed, time_completion_start, time_completion_end \
             = matrix_completion.gak_matrix_completion(gram_drop, list(seqs.values()), indices_to_drop,
                                                       sigma=params['sigma'], triangular=params['triangular'])
         action = "GAK sigma: " + str(params['sigma']) + " triangular: " + str(params['triangular'])
@@ -217,7 +217,6 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         else:
             print("unsupported fancyimpute algorithm")
             exit(-1)
-        completion_start = os.times()
         flag_test = np.zeros(len(seqs))
         flag_test[indices_to_drop] = 1
         drop_flag_matrix = create_drop_flag_matrix(1 - params['gak_rate'],

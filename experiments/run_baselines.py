@@ -61,7 +61,9 @@ def main():
         command_mc = 'CUDA_VISIBLE_DEVICES="" /usr/bin/python3 experiments/complete_matrix.py with ' + conf_path
         
         svm_conf_path = os.path.join(model_dir, "compute_classification_errors.json")
-        pohl = os.path.join(model_dir, loaded_data['output_filename_format'] + ".hdf5")
+        pohl = os.path.join(model_dir, loaded_data['output_filename_format'].replace(
+            "${sigma}", str(loaded_data['params']['sigma']).replace(
+                "${triangular}", "None")) + ".hdf5")
         of   = os.path.join(model_dir, output_file)
         dic = dict(pickle_or_hdf5_locations=[pohl],
                    output_location=of)
