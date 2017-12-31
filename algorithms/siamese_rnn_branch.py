@@ -33,7 +33,7 @@ class SiameseRnnBranch():
          
         self.model = model
     def predict(self, seqs):
-        train_feature = self.model.predict(seqs)
+        train_feature = self.model.predict_on_batch(seqs)
         return train_feature
 
         
