@@ -4,11 +4,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from utils.file_utils import save_json
 
 model_dirs =[
-    ("UCIcharacter", "gak", "results/UCIcharacter/20/gak/"),
-    ("UCIcharacter", "si", "results/UCIcharacter/20/noaugmentation_softimpute/0.1/"),
-    ("UCIcharacter", "si", "results/UCIcharacter/20/noaugmentation_softimpute/0.01/"),
-    ("UCIcharacter", "knn", "results/UCIcharacter/20/noaugmentation_knn/0.1/"),
-    ("UCIcharacter", "knn", "results/UCIcharacter/20/noaugmentation_knn/0.01/"),
     ("UCIauslan", "gak", "results/UCIauslan/10/gak/"),
     ("UCIauslan", "si", "results/UCIauslan/10/noaugmentation_softimpute/0.1"),
     ("UCIauslan", "si", "results/UCIauslan/10/noaugmentation_softimpute/0.01/"),
@@ -18,7 +13,12 @@ model_dirs =[
     ("6DMG", "si", "results/6DMG/20/t1-t3/noaugmentation_softimpute/0.1/"),
     ("6DMG", "si", "results/6DMG/20/t1-t3/noaugmentation_softimpute/0.01"),
     ("6DMG", "knn", "results/6DMG/20/t1-t3/noaugmentation_knn/0.1/"),
-    ("6DMG", "knn", "results/6DMG/20/t1-t3/noaugmentation_knn/0.01/")
+    ("6DMG", "knn", "results/6DMG/20/t1-t3/noaugmentation_knn/0.01/"),
+    ("UCIcharacter", "gak", "results/UCIcharacter/20/gak/"),
+    ("UCIcharacter", "si", "results/UCIcharacter/20/noaugmentation_softimpute/0.1/"),
+    ("UCIcharacter", "si", "results/UCIcharacter/20/noaugmentation_softimpute/0.01/"),
+    ("UCIcharacter", "knn", "results/UCIcharacter/20/noaugmentation_knn/0.1/"),
+    ("UCIcharacter", "knn", "results/UCIcharacter/20/noaugmentation_knn/0.01/")
 ]
 
 output_file_ = {}
