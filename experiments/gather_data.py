@@ -58,7 +58,7 @@ def main():
                        'prediction']['each_seq']['virtual_prediction_duration_per_calculated_sequence']
         )
 
-        print("%s,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f,%.5f" % display)
+        print("%s,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f" % display)
 
 
 if __name__ == "__main__":
