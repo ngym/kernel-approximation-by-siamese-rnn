@@ -159,7 +159,7 @@ def run(dataset_type, dataset_location, fold_count, fold_to_drop,
     input_ = Input(shape=input_shape)
     base_network = rnn_.create_RNN_base_network()
     hidden = base_network(input_)
-    output_ = hidden.add(Dense(len(set(list(key_to_str.values()))), activation='softmax'))
+    output_ = Dense(len(set(list(key_to_str.values()))), activation='softmax')(hidden)
     model = Model(input_, output_)
     optimizer = RMSprop(clipnorm=1.)
     model.compile(loss='categirical_crossentropy', optimizer=optimizer)
