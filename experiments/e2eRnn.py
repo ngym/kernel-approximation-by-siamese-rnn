@@ -100,14 +100,6 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 
     return mse, msede, mae, maede, re, rede
 
-@ex.automain
-def run(dataset_type, dataset_location, fold_count, fold_to_drop,
-        params, output_dir, output_filename_format, output_file,
-        data_augmentation_size):
-    main(dataset_type, dataset_location, fold_count, fold_to_drop,
-         params, output_dir, output_filename_format, output_file,
-         data_augmentation_size)
-    
 def main(dataset_type, dataset_location, fold_count, fold_to_drop,
         params, output_dir, output_filename_format, output_file,
         data_augmentation_size):
@@ -239,6 +231,14 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
     out_path = os.path.join(output_dir, output_file)
     file_utils.save_json(out_path, dic)
 
+    
+@ex.automain
+def run(dataset_type, dataset_location, fold_count, fold_to_drop,
+        params, output_dir, output_filename_format, output_file,
+        data_augmentation_size):
+    main(dataset_type, dataset_location, fold_count, fold_to_drop,
+         params, output_dir, output_filename_format, output_file,
+         data_augmentation_size)
     
 
     
