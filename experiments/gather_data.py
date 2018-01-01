@@ -84,25 +84,25 @@ def main():
 
         print("'%s' %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f" % display)
 
-    for dataset, baseline_dir in baseline_dirs:
-        output_file = output_file_[dataset]
+    for dataset, alg, baseline_dir in baseline_dirs:
+        output_file = output_file_[alg]
         fp = open(os.path.join(baseline_dir, output_file))
         baseline = json.load(fp)
         fp.close()
 
         display = (baseline_dir,
-                   # Siamese RNN and SVM
+                   # Completion and SVM
                    # as classification tool
-                   rnn_svm['classification']['basics']['roc_auc'],
-                   rnn_svm['classification']['basics']['f1'],
-                   rnn_svm['classification']['each_seq']['virtual_classification_duration_per_calculated_sequence'],
-                   rnn_svm['prediction']['each_seq']['virtual_completion_npsd_duration_per_calculated_sequence'],
-                   rnn_svm['classification']['each_seq']['virtual_classification_duration_per_calculated_sequence'] + rnn_svm[
+                   baseline['classification']['basics']['roc_auc'],
+                   baseline['classification']['basics']['f1'],
+                   baseline['classification']['each_seq']['virtual_classification_duration_per_calculated_sequence'],
+                   baseline['prediction']['each_seq']['virtual_completion_npsd_duration_per_calculated_sequence'],
+                   baseline['classification']['each_seq']['virtual_classification_duration_per_calculated_sequence'] + baseline[
                        'prediction']['each_seq']['virtual_completion_npsd_duration_per_calculated_sequence'],
                    # as matrix completion tool
-                   rnn_svm['prediction']['basics']['mean_absolute_error'],
-                   rnn_svm['prediction']['each_elem']['virtual_completion_npsd_duration_per_calculated_element'],
-                   rnn_svm['prediction']['each_elem']['elapsed_completion_npsd_duration_per_calculated_element']
+                   baseline['prediction']['basics']['mean_absolute_error'],
+                   baseline['prediction']['each_elem']['virtual_completion_npsd_duration_per_calculated_element'],
+                   baseline['prediction']['each_elem']['elapsed_completion_npsd_duration_per_calculated_element']
         )
 
         print("'%s' %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f" % display)
