@@ -163,7 +163,9 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
     optimizer = RMSprop(clipnorm=1.)
     model.compile(loss='categorical_crossentropy', optimizer=optimizer)
 
-    Y = np_utils.to_categorical(list(key_to_str.values()))
+    lb = LabelBinarizer()
+    lb.fit(list(key_to_str.values()))
+    Y = lb.transform(list(key_to_str.values()))
 
     test_indices = indices_to_drop
     train_validation_indices = np.delete(np.arange(len(seqs)), test_indices)
