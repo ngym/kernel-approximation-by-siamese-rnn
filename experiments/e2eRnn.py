@@ -178,7 +178,7 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
 
     callbacks = [
         ModelCheckpoint(modelfile_hdf5, verbose=1, save_best_only=True),
-        EarlyStopping(monitor='val_acc', min_delta=0, patience=params['patience'],
+        EarlyStopping(monitor='val_loss', min_delta=0, patience=params['patience'],
                       verbose=0, mode='auto')
     ]
     model.fit(train_validation_seqs, Y_tr_val,
