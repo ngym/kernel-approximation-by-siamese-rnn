@@ -187,7 +187,7 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
               verbose=1, callbacks=callbacks)
 
     time_pred_start = os.times()
-    test_preds = model.predict(test_seqs)
+    test_preds = model.predict_on_batch(test_seqs)
     time_pred_end = os.times()
 
     main_end = os.times()
