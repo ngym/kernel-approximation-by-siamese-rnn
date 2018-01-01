@@ -181,7 +181,10 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
         EarlyStopping(monitor='val_acc', min_delta=0, patience=params['patience'],
                       verbose=0, mode='auto')
     ]
-    model.fit(train_validation_seqs, Y_tr_val, nb_epoch=params['epochs'], batch_size=512, verbose=1, callbacks=callbacks)
+    model.fit(train_validation_seqs, Y_tr_val,
+              validation_split=0.1, shuffle=True,
+              nb_epoch=params['epochs'], batch_size=512,
+              verbose=1, callbacks=callbacks)
 
     time_pred_start = os.times()
     test_preds = model.predict(test_seqs)
