@@ -82,7 +82,7 @@ def main():
                        'prediction']['each_seq']['virtual_prediction_duration_per_calculated_sequence']
         )
 
-        print("'%s' %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f" % display)
+        print("%s %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f" % display)
 
     for dataset, alg, baseline_dir in baseline_dirs:
         output_file = output_file_[alg]
@@ -105,7 +105,7 @@ def main():
                    baseline['prediction']['each_elem']['elapsed_completion_npsd_duration_per_calculated_element']
         )
 
-        print("'%s' %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f" % display)
+        print("%s %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f" % display)
 
 
         
