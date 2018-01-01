@@ -162,7 +162,7 @@ def run(dataset_type, dataset_location, fold_count, fold_to_drop,
     output_ = Dense(len(set(list(key_to_str.values()))), activation='softmax')(hidden)
     model = Model(input_, output_)
     optimizer = RMSprop(clipnorm=1.)
-    model.compile(loss='categirical_crossentropy', optimizer=optimizer)
+    model.compile(loss='categorical_crossentropy', optimizer=optimizer)
 
     Y = np_utils.to_categorical(key_to_str.values())
 
