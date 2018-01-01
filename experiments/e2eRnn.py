@@ -193,7 +193,8 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
     main_end = os.times()
 
     roc_auc = roc_auc_score(y_true=Y_test, y_score=test_preds)
-    f1 = f1_score(Y_test, test_preds, average='weighted')
+    test_preds_ = [[1 if prob == max(probs) else 0 for prob in probs] for probs in test_preds]
+    f1 = f1_score(Y_test, test_preds_, average='weighted')
     
     num_calculated_sequences = len(test_seqs)
     
