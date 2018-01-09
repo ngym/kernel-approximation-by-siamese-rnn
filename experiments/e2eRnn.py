@@ -120,16 +120,48 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
     print("%d samples." % len(seqs))
     
     if data_augmentation_size != 1:
-        augmentation_magnification = 1.2
-        seqs, key_to_str, flag_augmented = augment_data(seqs, key_to_str,
-                                                        augmentation_magnification,
-                                                        rand_uniform=True,
-                                                        num_normaldist_ave=data_augmentation_size - 2)
-    
-    sample_names = list(seqs.keys())
-    folds = k_fold_cross_validation.get_kfolds(dataset_type, sample_names, fold_count)
-    indices_to_drop = folds[fold_to_drop - 1]
+        sample_names = list(seqs.keys())
+        folds = k_fold_cross_validation.get_kfolds(dataset_type, sample_names, fold_count)
+        indices_to_drop = folds[fold_to_drop - 1]
 
+        lb = LabelBinarizer()
+        lb.fit(list(key_to_str.values()))
+        Y = lb.transform(list(key_to_str.values()))
+
+        test_indices = indices_to_drop
+        train_validation_indices = np.delete(np.arange(len(seqs)), test_indices)
+        
+        train_validation_seqs = seqs[train_validation_indices]
+        test_seqs = seqs[test_indices]
+
+        Y_test = Y[test_indices]
+        
+        augmentation_magnification = 1.2
+        train_validation_seqs, key_to_str_tr_val_augmented, flag_augmented = augment_data(
+            train_validation_seqs,
+            list(key_to_str.values())[train_validation_indices],
+            augmentation_magnification,
+            rand_uniform=True,
+            num_normaldist_ave=data_augmentation_size - 2)
+        Y_tr_val = lb.transform(key_to_str_tr_val_augmented)
+    else:
+        sample_names = list(seqs.keys())
+        folds = k_fold_cross_validation.get_kfolds(dataset_type, sample_names, fold_count)
+        indices_to_drop = folds[fold_to_drop - 1]
+
+        lb = LabelBinarizer()
+        lb.fit(list(key_to_str.values()))
+        Y = lb.transform(list(key_to_str.values()))
+
+        test_indices = indices_to_drop
+        train_validation_indices = np.delete(np.arange(len(seqs)), test_indices)
+        
+        train_validation_seqs = seqs[train_validation_indices]
+        test_seqs = seqs[test_indices]
+
+        Y_tr_val = Y[train_validation_indices]
+        Y_test = Y[test_indices]
+    
     modelfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
 
     # pre-processing
@@ -162,19 +194,6 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
     model = Model(input_, output_)
     optimizer = RMSprop(clipnorm=1.)
     model.compile(loss='categorical_crossentropy', optimizer=optimizer)
-
-    lb = LabelBinarizer()
-    lb.fit(list(key_to_str.values()))
-    Y = lb.transform(list(key_to_str.values()))
-
-    test_indices = indices_to_drop
-    train_validation_indices = np.delete(np.arange(len(seqs)), test_indices)
-    
-    train_validation_seqs = seqs[train_validation_indices]
-    test_seqs = seqs[test_indices]
-
-    Y_tr_val = Y[train_validation_indices]
-    Y_test = Y[test_indices]
 
     callbacks = [
         ModelCheckpoint(modelfile_hdf5, verbose=1, save_best_only=True),
