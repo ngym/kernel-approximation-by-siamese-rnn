@@ -124,9 +124,9 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
         folds = k_fold_cross_validation.get_kfolds(dataset_type, sample_names, fold_count)
         indices_to_drop = folds[fold_to_drop - 1]
 
+        seqs = seqs.values()
         time_dim = max([seq.shape[0] for seq in seqs])
         pad_value = -4444
-        seqs = seqs.values()
         seqs = pad_sequences([seq.tolist() for seq in seqs],
                              maxlen=time_dim, dtype='float32',
                              padding='post', value=pad_value)
