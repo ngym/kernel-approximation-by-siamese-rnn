@@ -124,12 +124,20 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
         folds = k_fold_cross_validation.get_kfolds(dataset_type, sample_names, fold_count)
         indices_to_drop = folds[fold_to_drop - 1]
 
-        lb = LabelBinarizer()
-        lb.fit(list(key_to_str.values()))
-        Y = lb.transform(list(key_to_str.values()))
-
+        time_dim = max([seq.shape[0] for seq in seqs])
+        pad_value = -4444
+        seqs = seqs.values()
+        seqs = pad_sequences([seq.tolist() for seq in seqs],
+                             maxlen=time_dim, dtype='float32',
+                             padding='post', value=pad_value)
+        
         test_indices = indices_to_drop
         train_validation_indices = np.delete(np.arange(len(seqs)), test_indices)
+        
+        lb = LabelBinarizer()
+        lb.fit(list(key_to_str.values()))
+        
+        Y = lb.transform(list(key_to_str.values()))
         
         train_validation_seqs = seqs[train_validation_indices]
         test_seqs = seqs[test_indices]
@@ -149,29 +157,30 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
         folds = k_fold_cross_validation.get_kfolds(dataset_type, sample_names, fold_count)
         indices_to_drop = folds[fold_to_drop - 1]
 
-        lb = LabelBinarizer()
-        lb.fit(list(key_to_str.values()))
-        Y = lb.transform(list(key_to_str.values()))
-
+        time_dim = max([seq.shape[0] for seq in seqs])
+        pad_value = -4444
+        seqs = seqs.values()
+        seqs = pad_sequences([seq.tolist() for seq in seqs],
+                             maxlen=time_dim, dtype='float32',
+                             padding='post', value=pad_value)
+        
         test_indices = indices_to_drop
         train_validation_indices = np.delete(np.arange(len(seqs)), test_indices)
         
         train_validation_seqs = seqs[train_validation_indices]
         test_seqs = seqs[test_indices]
 
+        lb = LabelBinarizer()
+        lb.fit(list(key_to_str.values()))
+        Y = lb.transform(list(key_to_str.values()))
+        
         Y_tr_val = Y[train_validation_indices]
         Y_test = Y[test_indices]
     
     modelfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
 
     # pre-processing
-    seqs = seqs.values()
-    num_seqs = len(seqs)
-    time_dim = max([seq.shape[0] for seq in seqs])
-    pad_value = -4444
-    seqs = pad_sequences([seq.tolist() for seq in seqs],
-                         maxlen=time_dim, dtype='float32',
-                         padding='post', value=pad_value)
+
     feat_dim = seqs[0].shape[1]
     input_shape = (time_dim, feat_dim)
 
