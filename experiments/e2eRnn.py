@@ -145,9 +145,10 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
         Y_test = Y[test_indices]
         
         augmentation_magnification = 1.2
+        key_to_str_ = list(key_to_str.values())
         train_validation_seqs, key_to_str_tr_val_augmented, flag_augmented = augment_data(
             train_validation_seqs,
-            list(key_to_str.values())[train_validation_indices],
+            [key_to_str_[i] for i in train_validation_indices],
             augmentation_magnification,
             rand_uniform=True,
             num_normaldist_ave=data_augmentation_size - 2)
