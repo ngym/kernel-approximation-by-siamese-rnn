@@ -138,8 +138,10 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
         lb.fit(list(key_to_str.values()))
         
         Y = lb.transform(list(key_to_str.values()))
-        
-        train_validation_seqs = seqs[train_validation_indices]
+
+        train_validation_seqs = OrderedDict()
+        for i in train_validation_indices:
+            train_validation_seqs[key_to_str[i]] = seqs[i]
         test_seqs = seqs[test_indices]
 
         Y_test = Y[test_indices]
