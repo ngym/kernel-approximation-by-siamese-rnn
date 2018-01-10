@@ -141,7 +141,7 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
 
         train_validation_seqs = OrderedDict()
         for i in train_validation_indices:
-            train_validation_seqs[key_to_str.keys()[i]] = seqs[i]
+            train_validation_seqs[list(key_to_str.keys())[i]] = seqs[i]
         test_seqs = seqs[test_indices]
 
         Y_test = Y[test_indices]
