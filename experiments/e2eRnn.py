@@ -140,12 +140,12 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
             num_normaldist_ave=data_augmentation_size - 2)
         
         test_seqs = [seqs[i] for i in test_indices]
+        test_labels_str = [labels_str[i] for i in test_indices]
         
         lb = LabelBinarizer()
         lb.fit(labels_str)
         
-        Y = lb.transform(labels_str)
-        Y_test = Y[test_indices]
+        Y_test = lb.transform(test_labels_str)
         Y_tr_val = lb.transform(labels_str_tr_val_augmented)
         
         time_dim = max([seq.shape[0] for seq in train_validation_seqs + test_seqs])
@@ -168,12 +168,12 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
         train_validation_labels_str = [labels_str[i] for i in train_validation_indices]
 
         test_seqs = [seqs[i] for i in test_indices]
+        test_labels_str = [labels_str[i] for i in test_indices]
         
         lb = LabelBinarizer()
         lb.fit(labels_str)
         
-        Y = lb.transform(labels_str)
-        Y_test = Y[test_indices]
+        Y_test = lb.transform(test_labels_str)
         Y_tr_val = lb.transform(train_validation_labels_str)
         
         time_dim = max([seq.shape[0] for seq in train_validation_seqs + test_seqs])
