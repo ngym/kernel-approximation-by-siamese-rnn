@@ -11,18 +11,25 @@ from datasets import others
 from datasets.read_sequences import read_sequences
 from utils import file_utils
 
-def augment_data(seqs, key_to_str, augmentation_magnification,
+def augment_data(seqs, sample_names, labels_str,
+                 augmentation_magnification,
                  rand_uniform=True, num_normaldist_ave=3):
     np.random.seed(1)
     flag_augmented = []
     
-    new_seqs = OrderedDict()
-    new_key_to_str = OrderedDict()
-    for sample_name, seq in seqs.items():
-        new_seqs[sample_name] = seq
+    new_seqs = []
+    new_sample_names = []
+    new_labels_str = []
+    for i in range(len(seqs)):
+        seq = seqs[i]
+        sample_name = sample_names[i]
+        label = labels_str[i]
+        
+        new_seqs.append(seq)
+        new_sample_names.append(sample_name)
+        new_labels_str.append(label)
+        
         length = int(seq.shape[0] * augmentation_magnification)
-        label = key_to_str[sample_name]
-        new_key_to_str[sample_name] = label
         flag_augmented.append(False)
         
         # uniform random insertion
@@ -32,8 +39,9 @@ def augment_data(seqs, key_to_str, augmentation_magnification,
             else:
                 augmented_seq = delete_random(seq, length)
             augmented_name = sample_name + "_augrand_uniform"
-            new_seqs[augmented_name] = augmented_seq
-            new_key_to_str[augmented_name] = label
+            new_seqs.append(augmented_seq)
+            new_sample_names.append(augmented_name)
+            new_labels_str.append(label)
             flag_augmented.append(True)
             
         # normal distribution random insertion
@@ -51,10 +59,11 @@ def augment_data(seqs, key_to_str, augmentation_magnification,
                                                            ave, std)
             augmented_name = sample_name + "_augrand_normaldist"\
                              + str(ave_p)
-            new_seqs[augmented_name] = augmented_seq
-            new_key_to_str[augmented_name] = label
+            new_seqs.append(augmented_seq)
+            new_sample_names.append(augmented_name)
+            new_labels_str.append(label)
             flag_augmented.append(True)
-    return new_seqs, new_key_to_str, flag_augmented
+    return new_seqs, new_sample_names, new_labels_str, flag_augmented
 
 #############################
 #         Insert            #

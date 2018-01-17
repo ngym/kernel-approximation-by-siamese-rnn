@@ -27,47 +27,43 @@ def read_sequences(dataset_type,
     :rtype: dict of np.ndarrays
     """
     
-    seqs = OrderedDict()
+    seqs = []
+    names = []
     if dataset_type in {"6DMG", "6DMGupperChar", "upperChar"}:
         sample_files = glob.glob(path.join(dataset_location, "upper_*.mat"))
         sample_files.sort(key=lambda fn: fn.split('/')[-1])
         for sample_file in sample_files:
             m = io.loadmat(sample_file)
             if data_attribute_type is None or data_attribute_type == "all":
-                seqs[others.get_sample_name(dataset_type, sample_file)]\
-                    = m['gest'].T[:, 1:]
+                seqs.append(m['gest'].T[:, 1:])
             elif data_attribute_type == "position":
-                seqs[others.get_sample_name(dataset_type, sample_file)]\
-                    = m['gest'].T[:, 1:4]
+                seqs.append(m['gest'].T[:, 1:4])
             elif data_attribute_type == "velocity":
-                seqs[others.get_sample_name(dataset_type, sample_file)]\
-                    = (m['gest'].T[1:, 1:4] - m['gest'].T[:-1, 1:4])
+                seqs.append((m['gest'].T[1:, 1:4] - m['gest'].T[:-1, 1:4]))
             elif data_attribute_type == "orientation":
-                seqs[others.get_sample_name(dataset_type, sample_file)]\
-                    = m['gest'].T[:, 4:8]
+                seqs.append(m['gest'].T[:, 4:8])
             elif data_attribute_type == "acceleration":
-                seqs[others.get_sample_name(dataset_type, sample_file)]\
-                    = m['gest'].T[:, 8:11]
+                seqs.append(m['gest'].T[:, 8:11])
             elif data_attribute_type == "angularvelocity":
-                seqs[others.get_sample_name(dataset_type, sample_file)]\
-                = m['gest'].T[:, 11:14]
+                seqs.append(m['gest'].T[:, 11:14])
             else:
                 print("attribute type error.")
                 assert False
+            names.append(others.get_sample_name(dataset_type, sample_file))
     elif dataset_type == "UCIcharacter":
         data = io.loadmat(dataset_location)
         displayname = [k[0] for k in data['consts']['key'][0][0][0]]
         classes = data['consts'][0][0][4][0]
-        labels = []
         for c in classes:
-            labels.append(displayname[c-1])
+            names.append(displayname[c-1])
         i = 0
         seqs_ = []
-        for l in labels:
+        for l in names:
             seqs_.append((l + str(i), data['mixout'][0][i].T))
             i += 1
         for k, v in sorted(seqs_):
-            seqs[others.get_sample_name(dataset_type, k)] = v
+            seqs.append(v)
+            names.append(others.get_sample_name(dataset_type, k))
     elif dataset_type == "UCIauslan":
         sample_files = glob.glob(path.join(dataset_location, "*/*.tsd"))
         sample_files.sort(key=lambda fn: fn.split('/')[-1])
@@ -77,7 +73,8 @@ def read_sequences(dataset_type,
             seq = []
             for r in reader:
                 seq.append(r)
-            seqs[others.get_sample_name(dataset_type, sample_file)] = np.array(seq).astype(np.float32)
+            seqs.append(np.array(seq).astype(np.float32))
+            names.append(others.get_sample_name(dataset_type, sample_file))
     elif dataset_type == "UCIarabicdigits":
         def add_seq(prefix, i, seqs, seq):
             if prefix == "test":
@@ -87,7 +84,8 @@ def read_sequences(dataset_type,
                 label = i // 660
                 num = i % 660
             name = prefix + "_" + str(label) + "_" + str(num)
-            seqs[name] = np.array(seq).astype(np.float32)
+            seqs.append(np.array(seq).astype(np.float32))
+            names.append(name)
         # space separated, blank line separated
         filenames = {("test", os.path.join(dataset_location, "Test_Arabic_Digit.txt")),
                      ("train", os.path.join(dataset_location, "Train_Arabic_Digit.txt"))}
@@ -107,57 +105,61 @@ def read_sequences(dataset_type,
                 add_seq(prefix, i, seqs, seq)
     else:
         assert False
-    key_to_str, key_to_int = get_labels(seqs, dataset_type)
+    labels_str, labels_int = get_labels(names, dataset_type)
 
     if feature_normalization:
         seqs = normalization(seqs)
     
-    return seqs, key_to_str, key_to_int
+    return seqs, names, labels_str, labels_int
 
 
-def get_labels(seqs, dataset_type):
+def get_labels(names, dataset_type):
     """Get labels from sequences.
-    :param seqs: A dictionary of list of time series.
+    :param names: A list of names of time series.
     :param dataset_type: 6DMGupperChar or UCIauslan or UCIcharacter.
-    :type seqs: collections.OrderedDict
+    :type names: list
     :type dataset_type: str
-    :return: A dictionary pair which are represents the labels of the given sequences.
-    :rtype: (collections.OrderedDict, collections.OrderedDict)
+    :return: labels of the given sequences.
+    :rtype: (list, list)
     """
     if not others.is_valid_dataset_type(dataset_type):
         assert False
 
-    key_to_str = OrderedDict()
-    key_to_int = OrderedDict()
+    key_to_str = []
+    key_to_int = []
     label_to_int = dict()
     last_index = 0
-    for k, _ in seqs.items():
-        label = others.get_label(dataset_type, k)
+    for name in names:
+        label = others.get_label(dataset_type, name)
         if label not in label_to_int:
             label_to_int[label] = last_index
             last_index += 1
-        key_to_str[k] = label
-        key_to_int[k] = label_to_int[label]
+        key_to_str.append(label)
+        key_to_int.append(label_to_int[label])
 
     return key_to_str, key_to_int
 
 def normalization(seqs):
-    newseqs = OrderedDict()
-    mean = np.mean(np.concatenate(np.array(list(seqs.values())), axis=0),
+    new_seqs = []
+    mean = np.mean(np.concatenate(seqs, axis=0),
                    axis=0, keepdims=True)
-    std = np.std(np.concatenate(np.array(list(seqs.values())), axis=0),
-                   axis=0, keepdims=True)
-    for k, v in seqs.items():
-        newseqs[k] = (v - mean) / (std + 1e-8)
-    return newseqs
+    std = np.std(np.concatenate(seqs, axis=0),
+                 axis=0, keepdims=True)
+    for s in seqs:
+        new_seqs.append((s - mean) / (std + 1e-8))
+    return new_seqs
 
-def pick_labels(dataset_type, seqs, labels_to_use):
-    new_seq = OrderedDict()
-    for k, v in seqs.items():
-        label = others.get_label(dataset_type, k)
+def pick_labels(dataset_type, seqs, names, labels_to_use):
+    new_seqs = []
+    new_names = []
+    for n in range(len(seqs)):
+        s = seqs[n]
+        n = names[n]
+        label = others.get_label(dataset_type, n)
         if label in labels_to_use:
-            new_seq[k] = v
-    return new_seq
+            new_seqs.append(s)
+            new_names.append(n)
+    return new_seq, new_names
 
 
 

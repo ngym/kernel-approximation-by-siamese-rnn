@@ -115,70 +115,76 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
 
     main_start = os.times()
 
-    seqs, key_to_str, _ = read_sequences(dataset_type, dataset_location)
+    seqs, sample_names, labels_str, _ = read_sequences(dataset_type, dataset_location)
 
     print("%d samples." % len(seqs))
     
     if data_augmentation_size != 1:
-        sample_names = list(seqs.keys())
         folds = k_fold_cross_validation.get_kfolds(dataset_type, sample_names, fold_count)
-        indices_to_drop = folds[fold_to_drop - 1]
 
-        seqs = seqs.values()
-        time_dim = max([seq.shape[0] for seq in seqs])
-        pad_value = -4444
-        seqs = pad_sequences([seq.tolist() for seq in seqs],
-                             maxlen=time_dim, dtype='float32',
-                             padding='post', value=pad_value)
-        
-        test_indices = indices_to_drop
+        test_indices = folds[fold_to_drop - 1]
         train_validation_indices = np.delete(np.arange(len(seqs)), test_indices)
-        
-        lb = LabelBinarizer()
-        lb.fit(list(key_to_str.values()))
-        
-        Y = lb.transform(list(key_to_str.values()))
 
-        train_validation_seqs = OrderedDict()
-        for i in train_validation_indices:
-            train_validation_seqs[list(key_to_str.keys())[i]] = seqs[i]
-        test_seqs = seqs[test_indices]
+        train_validation_seqs = [seqs[i] for i in train_validation_indices]
+        train_validation_sample_names = [sample_names[i] for i in train_validation_indices]
+        train_validation_labels_str = [labels_str[i] for i in train_validation_indices]
 
-        Y_test = Y[test_indices]
-        
         augmentation_magnification = 1.2
-        key_to_str_ = list(key_to_str.values())
-        train_validation_seqs, key_to_str_tr_val_augmented, flag_augmented = augment_data(
+        train_validation_seqs, train_validation_sample_names, \
+        labels_str_tr_val_augmented, flag_augmented = augment_data(
             train_validation_seqs,
-            [key_to_str_[i] for i in train_validation_indices],
+            train_validation_sample_names,
+            train_validation_labels_str,
             augmentation_magnification,
             rand_uniform=True,
             num_normaldist_ave=data_augmentation_size - 2)
-        Y_tr_val = lb.transform(key_to_str_tr_val_augmented)
-    else:
-        sample_names = list(seqs.keys())
-        folds = k_fold_cross_validation.get_kfolds(dataset_type, sample_names, fold_count)
-        indices_to_drop = folds[fold_to_drop - 1]
-
-        time_dim = max([seq.shape[0] for seq in seqs])
-        pad_value = -4444
-        seqs = seqs.values()
-        seqs = pad_sequences([seq.tolist() for seq in seqs],
-                             maxlen=time_dim, dtype='float32',
-                             padding='post', value=pad_value)
         
-        test_indices = indices_to_drop
-        train_validation_indices = np.delete(np.arange(len(seqs)), test_indices)
+        test_seqs = [seqs[i] for i in test_indices]
         
-        train_validation_seqs = seqs[train_validation_indices]
-        test_seqs = seqs[test_indices]
-
         lb = LabelBinarizer()
-        lb.fit(list(key_to_str.values()))
-        Y = lb.transform(list(key_to_str.values()))
+        lb.fit(labels_str)
         
-        Y_tr_val = Y[train_validation_indices]
+        Y = lb.transform(labels_str)
         Y_test = Y[test_indices]
+        Y_tr_val = lb.transform(labels_str_tr_val_augmented)
+        
+        time_dim = max([seq.shape[0] for seq in train_validation_seqs + test_seqs])
+        pad_value = -4444
+        
+        train_validation_seqs = pad_sequences([seq.tolist() for seq in train_validation_seqs],
+                                              maxlen=time_dim, dtype='float32',
+                                              padding='post', value=pad_value)
+        test_seqs = pad_sequences([seq.tolist() for seq in test_seqs],
+                                  maxlen=time_dim, dtype='float32',
+                                  padding='post', value=pad_value)
+    else:
+        folds = k_fold_cross_validation.get_kfolds(dataset_type, sample_names, fold_count)
+
+        test_indices = folds[fold_to_drop - 1]
+        train_validation_indices = np.delete(np.arange(len(seqs)), test_indices)
+
+        train_validation_seqs = [seqs[i] for i in train_validation_indices]
+        train_validation_sample_names = [sample_names[i] for i in train_validation_indices]
+        train_validation_labels_str = [labels_str[i] for i in train_validation_indices]
+
+        test_seqs = [seqs[i] for i in test_indices]
+        
+        lb = LabelBinarizer()
+        lb.fit(labels_str)
+        
+        Y = lb.transform(labels_str)
+        Y_test = Y[test_indices]
+        Y_tr_val = lb.transform(train_validation_labels_str)
+        
+        time_dim = max([seq.shape[0] for seq in train_validation_seqs + test_seqs])
+        pad_value = -4444
+        
+        train_validation_seqs = pad_sequences([seq.tolist() for seq in train_validation_seqs],
+                                              maxlen=time_dim, dtype='float32',
+                                              padding='post', value=pad_value)
+        test_seqs = pad_sequences([seq.tolist() for seq in test_seqs],
+                                  maxlen=time_dim, dtype='float32',
+                                  padding='post', value=pad_value)
     
     modelfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
 
@@ -202,7 +208,7 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
     input_ = Input(shape=input_shape)
     base_network = rnn_.create_RNN_base_network()
     hidden = base_network(input_)
-    output_ = Dense(len(set(list(key_to_str.values()))), activation='softmax')(hidden)
+    output_ = Dense(len(set(labels_str)), activation='softmax')(hidden)
     model = Model(input_, output_)
     optimizer = RMSprop(clipnorm=1.)
     model.compile(loss='categorical_crossentropy', optimizer=optimizer)
