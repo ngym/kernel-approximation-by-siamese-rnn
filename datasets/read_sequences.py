@@ -54,11 +54,12 @@ def read_sequences(dataset_type,
         data = io.loadmat(dataset_location)
         displayname = [k[0] for k in data['consts']['key'][0][0][0]]
         classes = data['consts'][0][0][4][0]
+        names_ = []
         for c in classes:
-            names.append(displayname[c-1])
+            names_.append(displayname[c-1])
         i = 0
         seqs_ = []
-        for l in names:
+        for l in names_:
             seqs_.append((l + str(i), data['mixout'][0][i].T))
             i += 1
         for k, v in sorted(seqs_):
