@@ -191,7 +191,7 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
 
     # pre-processing
 
-    feat_dim = seqs[0].shape[1]
+    feat_dim = max([seq.shape[0] for seq in train_validation_seqs + test_seqs])
     input_shape = (time_dim, feat_dim)
 
     K.clear_session()
