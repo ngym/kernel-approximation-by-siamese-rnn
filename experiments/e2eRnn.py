@@ -176,13 +176,12 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
         Y_test = lb.transform(test_labels_str)
         Y_tr_val = lb.transform(train_validation_labels_str)
         
-        time_dim = max([seq.shape[0] for seq in train_validation_seqs])
+        time_dim = max([seq.shape[0] for seq in train_validation_seqs + test_seqs])
         pad_value = -4444
         
         train_validation_seqs = pad_sequences([seq.tolist() for seq in train_validation_seqs],
                                               maxlen=time_dim, dtype='float32',
                                               padding='post', value=pad_value)
-        time_dim = max([seq.shape[0] for seq in test_seqs])
         test_seqs = pad_sequences([seq.tolist() for seq in test_seqs],
                                   maxlen=time_dim, dtype='float32',
                                   padding='post', value=pad_value)
@@ -191,7 +190,6 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
 
     # pre-processing
 
-    time_dim = max(train_validation_seqs.shape[1], test_seqs.shape[1])
     feat_dim = seqs[0].shape[1]
     input_shape = (time_dim, feat_dim)
 
