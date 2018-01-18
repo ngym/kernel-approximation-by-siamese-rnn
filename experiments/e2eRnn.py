@@ -229,6 +229,7 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
 
     main_end = os.times()
 
+    model.load_weights(modelfile_hdf5)
     roc_auc = roc_auc_score(y_true=Y_test, y_score=test_preds)
     test_preds_ = np.array([[1 if prob == max(probs) else 0 for prob in probs] for probs in test_preds])
     f1 = f1_score(Y_test, test_preds_, average='weighted')
