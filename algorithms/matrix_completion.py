@@ -10,7 +10,7 @@ from pathos.multiprocessing import ProcessingPool
 
 from algorithms import gak
 from algorithms import siamese_rnn
-
+from algorithms import siamese_rnn_branch
 
 # TODO almost the same as in gak
 def gak_matrix_completion(gram_drop, seqs, indices, sigma=None, triangular=None):
@@ -330,4 +330,113 @@ def rnn_matrix_completion(gram_drop, seqs,
 
     return gram_completed, time_train_start, time_train_end,\
            time_pred_start, time_pred_end
+
+def rapid_rnn_matrix_completion(gram_drop, seqs,
+                          rnn,
+                          rnn_units,
+                          dense_units,
+                          dropout,
+                          implementation,
+                          bidirectional,
+                          batchnormalization,
+                          loss_function,
+                          siamese_arms_activation,
+                          trained_modelfile_hdf5=None):
+    """Fill in Gram matrix with dropped elements with Keras Siamese RNN.
+    Trains the network on given part of Gram matrix and the corresponding sequences
+    Fills in missing elements by network prediction
+
+    :param gram_drop: Gram matrix with dropped elements
+    :param seqs: List of time series
+    :param epochs: Number of passes over data set
+    :param patience: Early Stopping parameter
+    :param logfile_loss: Log file name for results
+    :param modelfile_hdf5: Log file name for network structure and weights in HDF5 format
+    :param rnn_units: Recurrent layer sizes
+    :param dense_units: Dense layer sizes
+    :param rnn: Recurrent Layer type (Vanilla, LSTM or GRU)
+    :param dropout: Dropout probability
+    :param implementation: RNN implementation (0: CPU, 2: GPU, 1: any)
+    :param bidirectional: Flag to switch between Forward and Bidirectional RNN
+    :param batchnormalization: Flag to switch Batch Normalization on/off
+    :param gram_drop: Keras Siamese RNN to be tested
+    :param test_indices: Testing 2-tuples of time series index pairs
+    :param gram_drop: Gram matrix with dropped elements
+    :param seqs: List of time series
+    :param load_pretrained: Flag to switch training from training set/use pretrained weights in HDF5 format
+    :type gram_drop: np.ndarrays
+    :type seqs: list of np.ndarrays
+    :type epochs: int
+    :type patience: int
+    :type logfile_loss: str
+    :type modelfile_hdf5: str
+    :type rnn: str
+    :type rnn_units: list of int
+    :type dense_units: list of int
+    :type rnn: str
+    :type dropout: float
+    :type implementation: int
+    :type bidirectional: bool
+    :type batchnormalization: bool
+    :type load_pretrained: bool
+    :returns: Filled in Gram matrix, training and prediction start and end times
+    :rtype: np.ndarray, float, float, float, float
+    """
+    # pre-processing
+    num_seqs = len(seqs)
+    time_dim = max([seq.shape[0] for seq in seqs])
+    pad_value = -4444
+    seqs = pad_sequences([seq.tolist() for seq in seqs],
+                         maxlen=time_dim, dtype='float32',
+                         padding='post', value=pad_value)
+    feat_dim = seqs[0].shape[1]
+    input_shape = (time_dim, feat_dim)
+
+    K.clear_session()
+
+    # build network
+    model = siamese_rnn_branch.SiameseRnnBranch(input_shape, pad_value,
+                                                rnn_units,
+                                                dense_units,
+                                                rnn,
+                                                dropout,
+                                                implementation,
+                                                bidirectional,
+                                                batchnormalization,
+                                                loss_function,
+                                                siamese_joint_method,
+                                                trained_modelfile_hdf5,
+                                                siamese_arms_activation=siamese_arms_activation)
+    
+    test_indices = [i
+                    for i in range(num_seqs)
+                    if np.isnan(gram_drop[i][0])]
+    train_indices = np.delete(np.arange(len(seqs)), test_indices)
+    
+    train_seqs = seqs[train_indices]
+    test_seqs = seqs[test_indices]
+    
+    train_features = model.predict(train_seqs)
+
+    time_pred_start = os.times()
+    test_features = model.predict(test_seqs)
+
+    # fill in
+    gram_completed = copy.deepcopy(gram_drop)
+    for i, test_feature in zip(test_indices, test_features):
+        for j, train_feature in zip(train_indices, train_features):
+            prediction = np.inner(test_feature, train_feature)
+            assert np.isnan(gram_completed[i][j])
+            gram_completed[i][j] = prediction
+            gram_completed[j][i] = prediction
+            assert not np.isnan(gram_completed[i][j])
+    time_pred_end = os.times()
+    
+    assert not np.any(np.isnan(np.array(gram_completed)))
+    assert not np.any(np.isinf(np.array(gram_completed)))
+
+    return gram_completed, time_pred_start, time_pred_end
+
+
+
 

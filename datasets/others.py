@@ -24,11 +24,14 @@ def is_valid_dataset_type(dataset_type):
 def get_sample_name(dataset_type, sample_file):
     return GET_SAMPLE_NAME[dataset_type](sample_file)
 
-def filter_samples(order_dict, sample_names):
-    od = OrderedDict()
-    for sn in sample_names:
-        od[sn] = order_dict[sn]
-    return od
+def filter_samples(list_, sample_names, loaded_sample_names):
+    assert len(list_) == len(sample_names)
+    assert len(sample_names) >= len(loaded_sample_names)
+    list__ = []
+    for l, sn in zip(list_, sample_names):
+        if sn in loaded_sample_names:
+            list__.append(l)
+    return list__
 
 
 

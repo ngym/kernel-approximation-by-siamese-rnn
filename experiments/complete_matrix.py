@@ -181,22 +181,13 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         indices_to_drop = folds[fold_to_drop - 1]
         gram_drop, dropped_elements = make_matrix_incomplete.gram_drop_samples(gram, indices_to_drop)
 
-    seqs, key_to_str, _ = read_sequences(dataset_type, dataset_location)
-    seqs = filter_samples(seqs, sample_names)
-    key_to_str = filter_samples(key_to_str, sample_names)
+    seqs, sample_names, labels_str, _ = read_sequences(dataset_type, dataset_location)
     
-    if data_augmentation_size > 1:
-        augmentation_magnification = 1.2
-        seqs, key_to_str, flag_augmented = augment_data(seqs, key_to_str,
-                                                        augmentation_magnification,
-                                                        rand_uniform=True,
-                                                        num_normaldist_ave=data_augmentation_size - 2)
-
     train_start = None
     train_end = None
     if algorithm == "gak":
         gram_completed, time_completion_start, time_completion_end \
-            = matrix_completion.gak_matrix_completion(gram_drop, list(seqs.values()), indices_to_drop,
+            = matrix_completion.gak_matrix_completion(gram_drop, seqs, indices_to_drop,
                                                       sigma=params['sigma'], triangular=params['triangular'])
         action = "GAK sigma: " + str(params['sigma']) + " triangular: " + str(params['triangular'])
         output_filename_format = output_filename_format.replace("${sigma}", str(params['sigma']))\
@@ -232,7 +223,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         print(np.count_nonzero(drop_flag_matrix))
         gram_completed, time_completion_start, time_completion_end \
             = func(gram_drop,
-                   list(seqs.values()),
+                   seqs,
                    sigma=params['sigma'],
                    triangular=params['triangular'],
                    num_process=params['num_process'],
@@ -242,7 +233,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
         gram_completed, time_train_start, time_train_end, time_completion_start, time_completion_end \
             = matrix_completion.rnn_matrix_completion(gram_drop,
-                                                      list(seqs.values()),
+                                                      seqs,
                                                       params['epochs'],
                                                       params['patience'],
                                                       params['epoch_start_from'],
@@ -258,11 +249,27 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                                                       params['mode'],
                                                       params['loss_function'],
                                                       params['loss_weight_ratio'],
-                                                      list(key_to_str.values()),
+                                                      labels_str,
                                                       params['siamese_joint_method'],
                                                       params['siamese_arms_activation'],
                                                       trained_modelfile_hdf5=params['trained_modelfile_hdf5'])
         action = "SiameseRNN"
+    elif algorithm == "rapid_rnn":
+        modelfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
+        logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
+        gram_completed, time_completion_start, time_completion_end \
+            = matrix_completion.rapid_rnn_matrix_completion(gram_drop,
+                                                            seqs,
+                                                            params['rnn'],
+                                                            params['rnn_units'],
+                                                            params['dense_units'],
+                                                            params['dropout'],
+                                                            params['implementation'],
+                                                            params['bidirectional'],
+                                                            params['batchnormalization'],
+                                                            params['loss_function'],
+                                                            params['siamese_arms_activation'],
+                                                            trained_modelfile_hdf5=params['trained_modelfile_hdf5'])
     else:
         assert False
 
