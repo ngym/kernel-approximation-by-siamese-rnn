@@ -164,9 +164,9 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
 
     dataset_type = loaded_data['dataset_type']
     if dataset_type == 'UCIauslan':
-        sample_names = loaded_data['sample_names']
+        loaded_sample_names = loaded_data['sample_names']
     else:
-        sample_names = [s.split('/')[-1].split('.')[0] for s in loaded_data['sample_names']]
+        loaded_sample_names = [s.split('/')[-1].split('.')[0] for s in loaded_data['sample_names']]
     gram_matrices = loaded_data['gram_matrices']
     if len(gram_matrices) == 1:
         gram = gram_matrices[0]['original']
@@ -177,11 +177,13 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     if fold_count == 0:        
         gram_drop = gram
     else:
-        folds = k_fold_cross_validation.get_kfolds(dataset_type, sample_names, fold_count)
+        folds = k_fold_cross_validation.get_kfolds(dataset_type, loaded_sample_names, fold_count)
         indices_to_drop = folds[fold_to_drop - 1]
         gram_drop, dropped_elements = make_matrix_incomplete.gram_drop_samples(gram, indices_to_drop)
 
     seqs, sample_names, labels_str, _ = read_sequences(dataset_type, dataset_location)
+    seqs = filter_samples(seqs, sample_names, loaded_sample_names)
+    labels_str = filter_samples(labels_str, sample_names, loaded_sample_names)
     
     train_start = None
     train_end = None
