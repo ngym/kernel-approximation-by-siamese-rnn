@@ -411,7 +411,7 @@ def rapid_rnn_matrix_completion(gram_drop, seqs,
     
     test_indices = [i
                     for i in range(num_seqs)
-                    if np.isnan(gram_drop[i][0])]
+                    if all(np.isnan(gram_drop[i]))]
     train_indices = np.delete(np.arange(len(seqs)), test_indices)
     
     train_seqs = seqs[train_indices]
