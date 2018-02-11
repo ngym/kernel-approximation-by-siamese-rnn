@@ -431,6 +431,12 @@ def rapid_rnn_matrix_completion(gram_drop, seqs,
             gram_completed[i][j] = prediction
             gram_completed[j][i] = prediction
             assert not np.isnan(gram_completed[i][j])
+        for j, test_feature_ in zip(test_indices, test_features):
+            prediction = np.inner(test_feature, test_feature_)
+            assert np.isnan(gram_completed[i][j])
+            gram_completed[i][j] = prediction
+            gram_completed[j][i] = prediction
+            assert not np.isnan(gram_completed[i][j])
     time_pred_end = os.times()
     
     assert not np.any(np.isnan(np.array(gram_completed)))
