@@ -269,6 +269,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                                                             params['batchnormalization'],
                                                             params['loss_function'],
                                                             params['siamese_arms_activation'],
+                                                            params['siamese_joint_method'],
                                                             trained_modelfile_hdf5=params['trained_modelfile_hdf5'])
     else:
         assert False
