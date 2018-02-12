@@ -70,7 +70,7 @@ def main():
                    rnn_svm['classification']['each_seq']['virtual_classification_duration_per_calculated_sequence'] + rnn_svm[
                        'prediction']['each_seq']['virtual_completion_npsd_duration_per_calculated_sequence'],
                    # as matrix completion tool
-                   rnn_svm['prediction']['basics']['mean_absolute_error'],
+                   rnn_svm['prediction']['basics']['mean_absolute_error_of_dropped_elements'],
                    rnn_svm['prediction']['each_elem']['virtual_completion_npsd_duration_per_calculated_element'],
                    rnn_svm['prediction']['each_elem']['elapsed_completion_npsd_duration_per_calculated_element'],
                    #
@@ -102,7 +102,7 @@ def main():
                    baseline['classification']['each_seq']['virtual_classification_duration_per_calculated_sequence'] + baseline[
                        'prediction']['each_seq']['virtual_completion_npsd_duration_per_calculated_sequence'],
                    # as matrix completion tool
-                   baseline['prediction']['basics']['mean_absolute_error'],
+                   baseline['prediction']['basics']['mean_absolute_error_of_dropped_elements'],
                    baseline['prediction']['each_elem']['virtual_completion_npsd_duration_per_calculated_element'],
                    baseline['prediction']['each_elem']['elapsed_completion_npsd_duration_per_calculated_element']
         )
