@@ -16,7 +16,7 @@ def main():
     gram2 = loaded_data2['gram_matrices'][-1]['completed_npsd']
     
     errs = calculate_errors(gram1, gram2, dropped_elements)
-    print("mse:%f, mse_dropped:%f, mae:%f, mae_dropped:%f, re:%f, re_dropped:%f" % errs)
+    print("mse:%.10f, mse_dropped:%.10f, mae:%.10f, mae_dropped:%.10f, re:%.10f, re_dropped:%.10f" % errs)
     
 
 if __name__ == "__main__":
