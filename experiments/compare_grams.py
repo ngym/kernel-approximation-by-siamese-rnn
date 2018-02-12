@@ -1,6 +1,7 @@
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from experiments.complete_matrix import calculate_errors
 from utils import file_utils
-import sys
 
 def main():
     file1 = sys.argv[1]
