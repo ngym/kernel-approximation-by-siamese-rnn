@@ -1,4 +1,5 @@
-from .complete_matrix import calculate_errors
+import experiments
+from experiments.complete_matrix import calculate_errors
 from utils import file_utils
 import sys
 
