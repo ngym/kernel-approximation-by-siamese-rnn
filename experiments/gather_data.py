@@ -4,6 +4,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from utils.file_utils import save_json
 
 model_dirs =[
+    ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/100/100,100/0.3/mse/10.0/dot_product/"),
     ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/30/30,30/0.3/mse/10.0/dot_product/"),
     ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/20/20,20/0.3/mse/10.0/dot_product/"),
     ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/10/10,10/0.3/mse/10.0/dot_product/"),
