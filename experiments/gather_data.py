@@ -5,7 +5,6 @@ from utils.file_utils import save_json
 
 model_dirs =[
     ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/100/100,100/0.3/mse/10.0/dot_product/"),
-    ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/100/100,100/0.3/mse/10.0/dot_product/rapid_rnn/"),
     ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/30/30,30/0.3/mse/10.0/dot_product/"),
     ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/20/20,20/0.3/mse/10.0/dot_product/"),
     ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/10/10,10/0.3/mse/10.0/dot_product/"),
@@ -14,14 +13,17 @@ model_dirs =[
     ("6DMG", "results/linear_on_branch/tanh_in_Vanilla/6DMG/20/t1-t3/100,100/100,100/0.3/mse/10.0/dot_product"),
     ("6DMG", "results/linear_on_branch/tanh_in_Vanilla/6DMG/20/t1-t3/100/100,100/0.3/mse/10.0/dot_product"),
     ("UCIcharacter", "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/20/20,20/0.3/mse/10.0/dot_product/"),
-    ("UCIcharacter", "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/20/20,20/0.3/mse/10.0/dot_product/rapid_rnn/"),
     ("UCIcharacter", "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/10/10,10/0.3/mse/10.0/dot_product/"),
     ("UCIcharacter", "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/5/5,5/0.3/mse/10.0/dot_product/"),
     ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/100/100,100/0.3/mse/10.0/dot_product/"),
-    ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/100/100,100/0.3/mse/10.0/dot_product/rapid_rnn/"),
     ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/10/10,10/0.3/mse/10.0/dot_product/"),
     ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/5/5,5/0.3/mse/10.0/dot_product/"),
     ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/30/30,30/0.3/mse/10.0/dot_product/")]
+
+rapid_model_dirs =[
+    ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/100/100,100/0.3/mse/10.0/dot_product/rapid_rnn/"),
+    ("UCIcharacter", "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/20/20,20/0.3/mse/10.0/dot_product/rapid_rnn/"),
+    ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/100/100,100/0.3/mse/10.0/dot_product/rapid_rnn/")]
 
 baseline_dirs =[
     ("UCIcharacter", "si", "results/UCIcharacter/20/noaugmentation_softimpute/0.1/"),
@@ -89,6 +91,28 @@ def main():
         )
 
         print("%s %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f" % display)
+
+    for dataset, rapid_model_dir in rapid_model_dirs:
+        fp = open(os.path.join(rapid_model_dir, rnn_svm_output_file))
+        rnn_svm = json.load(fp)
+        fp.close()
+
+        display = (rapid_model_dir,
+                   # Siamese RNN and SVM
+                   # as classification tool
+                   rnn_svm['classification']['basics']['roc_auc'],
+                   rnn_svm['classification']['basics']['f1'],
+                   rnn_svm['classification']['each_seq']['virtual_classification_duration_per_calculated_sequence'],
+                   rnn_svm['prediction']['each_seq']['virtual_completion_npsd_duration_per_calculated_sequence'],
+                   rnn_svm['classification']['each_seq']['virtual_classification_duration_per_calculated_sequence'] + rnn_svm[
+                       'prediction']['each_seq']['virtual_completion_npsd_duration_per_calculated_sequence'],
+                   # as matrix completion tool
+                   rnn_svm['prediction']['basics']['mean_absolute_error_of_dropped_elements'],
+                   rnn_svm['prediction']['each_elem']['virtual_completion_npsd_duration_per_calculated_element'],
+                   rnn_svm['prediction']['each_elem']['elapsed_completion_npsd_duration_per_calculated_element'],
+        )
+
+        print("%s %.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f" % display)
 
     for dataset, alg, baseline_dir in baseline_dirs:
         output_file = output_file_[alg]
