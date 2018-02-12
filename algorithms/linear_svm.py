@@ -63,7 +63,7 @@ def linear_svm(cost, train_features, train_labels,
     clf.fit(train_features, train_labels)
 
     time_classification_start = os.times()
-    predicted_labels = clf.predict_on_batch(validation_test_features)
+    predicted_labels = clf.predict(validation_test_features)
     time_classification_end = os.times()
 
     
