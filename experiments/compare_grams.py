@@ -17,7 +17,7 @@ def main():
     
     errs = calculate_errors(gram1, gram2, dropped_elements)
     print("mse:%.10f, mse_dropped:%.10f, mae:%.10f, mae_dropped:%.10f, re:%.10f, re_dropped:%.10f" % errs)
-    
+    return
 
 if __name__ == "__main__":
     main()
