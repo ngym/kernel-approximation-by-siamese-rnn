@@ -5,6 +5,7 @@ from utils.file_utils import save_json
 
 model_dirs =[
     ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/100/100,100/0.3/mse/10.0/dot_product/"),
+    ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/100/100,100/0.3/mse/10.0/dot_product/rapid_rnn/"),
     ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/30/30,30/0.3/mse/10.0/dot_product/"),
     ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/20/20,20/0.3/mse/10.0/dot_product/"),
     ("6DMG", "results/linear_on_branch/tanh_in_LSTM/6DMG/20/t1-t3/10/10,10/0.3/mse/10.0/dot_product/"),
@@ -13,9 +14,11 @@ model_dirs =[
     ("6DMG", "results/linear_on_branch/tanh_in_Vanilla/6DMG/20/t1-t3/100,100/100,100/0.3/mse/10.0/dot_product"),
     ("6DMG", "results/linear_on_branch/tanh_in_Vanilla/6DMG/20/t1-t3/100/100,100/0.3/mse/10.0/dot_product"),
     ("UCIcharacter", "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/20/20,20/0.3/mse/10.0/dot_product/"),
+    ("UCIcharacter", "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/20/20,20/0.3/mse/10.0/dot_product/rapid_rnn/"),
     ("UCIcharacter", "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/10/10,10/0.3/mse/10.0/dot_product/"),
     ("UCIcharacter", "results/linear_on_branch/tanh_in_LSTM/UCIcharacter/20/t1-t3/5/5,5/0.3/mse/10.0/dot_product/"),
     ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/100/100,100/0.3/mse/10.0/dot_product/"),
+    ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/100/100,100/0.3/mse/10.0/dot_product/rapid_rnn/"),
     ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/10/10,10/0.3/mse/10.0/dot_product/"),
     ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/5/5,5/0.3/mse/10.0/dot_product/"),
     ("UCIauslan", "results/linear_on_branch/tanh_in_LSTM/UCIauslan/10/30/30,30/0.3/mse/10.0/dot_product/")]
