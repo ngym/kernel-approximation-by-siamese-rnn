@@ -1,7 +1,7 @@
 
 
 -----
-# How to use.
+# Siamese Recurrent Neural Network Acceleration for the Triangular Global Alignment Kernel
 
 ## Global Alignment Kernel
 1. Copy compute_gram_matrix.json_sample to any name what you want.
@@ -16,7 +16,8 @@
 3. Run the experiment
         $python3 compute_gram_matrix.py with (new_json_file_name)
 
-## Matrix completion
+## GRAM Matrix-based approach
+### Matrix completion
 1. Copy complete_matrix_(algorithm).json_sample to any name what you want.
         $cd experiments
         $cp compute_gram_matrix.json_sample (new_json_file_name)
@@ -24,7 +25,13 @@
 3. Run the experiment
         $python3 complete_matrix.py with (new_json_file_name)
 
-## Classification error
+### Classification error
 1. Run the experiment
         $python3 compute_classification_errors.py with (parameter)=(new_value)
+        
+## Feature-based approach
+### Feature mapping approximation
+
+### Linear SVM
+
 

@@ -1,5 +1,4 @@
 import sys, os, shutil, time
-from collections import OrderedDict
 
 import numpy as np
 
@@ -13,14 +12,12 @@ from utils import errors
 from utils import file_utils
 from utils import nearest_positive_semidefinite
 from utils import make_matrix_incomplete
-from algorithms import KSS_unsupervised_alpha_prediction
 
-from datasets.read_sequences import read_sequences, pick_labels
-from datasets.data_augmentation import augment_data, create_drop_flag_matrix
+from datasets.read_sequences import read_sequences
+from datasets.data_augmentation import augment_data
 from datasets.others import filter_samples
 
 ex = Experiment('complete_matrix')
-
 
 @ex.config
 def cfg():
@@ -73,13 +70,14 @@ def rnn():
         # RNN implementation (0: CPU, 2: GPU, 1: any)
         implementation=1,
         # Mode to run (train, load_pretrained, continue_train)
-        mode="train", 
+        mode="train",
+        # The loss function
         loss_function='mse',
         # The weight of in-domain kernel approximation in loss function
         loss_weight_ratio=10.0,
         # Implementation of the head of the Siamese network
         # (dense, dot_product, weighted_dot_product)
-        siamese_joint_method="weighted_dot_product",
+        siamese_joint_method="dot_product",
         # Activation of the top of each branch of the Siemese network
         siamese_arms_activation="linear",
         # Already trained model file
@@ -87,7 +85,7 @@ def rnn():
 
 @ex.capture
 def check_algorithm(algorithm):
-    assert algorithm in {"gak", "softimpute", "knn", "iterativesvd", "rnn", "rapid_rnn"}
+    assert algorithm in {"gak", "softimpute", "knn", "iterativesvd", "rnn", "fast_rnn"}
 
 
 @ex.capture
@@ -256,11 +254,11 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                                                       params['siamese_arms_activation'],
                                                       trained_modelfile_hdf5=params['trained_modelfile_hdf5'])
         action = "SiameseRNN"
-    elif algorithm == "rapid_rnn":
+    elif algorithm == "fast_rnn":
         modelfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
         logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
         gram_completed, time_completion_start, time_completion_end \
-            = matrix_completion.rapid_rnn_matrix_completion(gram_drop,
+            = matrix_completion.fast_rnn_matrix_completion(gram_drop,
                                                             seqs,
                                                             params['rnn'],
                                                             params['rnn_units'],
@@ -273,7 +271,7 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                                                             params['siamese_arms_activation'],
                                                             params['siamese_joint_method'],
                                                             trained_modelfile_hdf5=params['trained_modelfile_hdf5'])
-        action = "RapidSiameseRNN"
+        action = "FastSiameseRNN"
     else:
         assert False
 

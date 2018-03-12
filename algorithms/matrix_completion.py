@@ -331,18 +331,18 @@ def rnn_matrix_completion(gram_drop, seqs,
     return gram_completed, time_train_start, time_train_end,\
            time_pred_start, time_pred_end
 
-def rapid_rnn_matrix_completion(gram_drop, seqs,
-                                rnn,
-                                rnn_units,
-                                dense_units,
-                                dropout,
-                                implementation,
-                                bidirectional,
-                                batchnormalization,
-                                loss_function,
-                                siamese_arms_activation,
-                                siamese_joint_method,
-                                trained_modelfile_hdf5=None):
+def fast_rnn_matrix_completion(gram_drop, seqs,
+                               rnn,
+                               rnn_units,
+                               dense_units,
+                               dropout,
+                               implementation,
+                               bidirectional,
+                               batchnormalization,
+                               loss_function,
+                               siamese_arms_activation,
+                               siamese_joint_method,
+                               trained_modelfile_hdf5=None):
     """Fill in Gram matrix with dropped elements with Keras Siamese RNN.
     Trains the network on given part of Gram matrix and the corresponding sequences
     Fills in missing elements by network prediction
