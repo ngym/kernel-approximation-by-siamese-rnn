@@ -91,7 +91,5 @@ class Rnn:
                 seq.add(Activation(self.top_activation, name='base_output'))
         return seq
 
-    def load_weights(self, logfile_hdf5):
-        self.model.load_weights(logfile_hdf5)
 
         

@@ -1,6 +1,5 @@
 import sys, os, shutil
 import time
-from collections import OrderedDict
 
 import numpy as np
 
@@ -25,7 +24,7 @@ from keras.layers import Dense, Dropout, Input, SimpleRNN, LSTM, GRU, Masking, A
 from keras.optimizers import RMSprop
 
 from datasets.read_sequences import read_sequences, pick_labels
-from datasets.data_augmentation import augment_data, create_drop_flag_matrix
+from datasets.data_augmentation import augment_data
 from datasets.others import filter_samples
 
 from sklearn.svm import LinearSVC
@@ -100,9 +99,13 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 
     return mse, msede, mae, maede, re, rede
 
-def main(dataset_type, dataset_location, fold_count, fold_to_drop,
+@ex.automain
+def run(dataset_type, dataset_location, fold_count, fold_to_drop,
         params, output_dir, output_filename_format, output_file,
         data_augmentation_size):
+    ########
+    # Create output directory and backup the configuration file to the directory
+    ########
     os.makedirs(output_dir, exist_ok=True)
     try:
         shutil.copy(os.path.abspath(sys.argv[2]), os.path.join(output_dir, os.path.basename(sys.argv[2])))
@@ -115,11 +118,16 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
 
     main_start = os.times()
 
+    ########
+    # Prepare time-series data
+    ########
     seqs, sample_names, labels_str, _ = read_sequences(dataset_type, dataset_location)
 
     print("%d samples." % len(seqs))
     
     if data_augmentation_size != 1:
+        # Augment only train and validation data.
+        # Test data is not augmented.
         folds = k_fold_cross_validation.get_kfolds(dataset_type, sample_names, fold_count)
 
         test_indices = folds[fold_to_drop - 1]
@@ -205,19 +213,6 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
                     params['implementation'],
                     params['bidirectional'],
                     params['batchnormalization'])
-    input_ = Input(shape=input_shape)
-    base_network = rnn_.create_RNN_base_network()
-    hidden = base_network(input_)
-    output_ = Dense(len(set(labels_str)), activation='softmax')(hidden)
-    model = Model(input_, output_)
-    optimizer = RMSprop(clipnorm=1.)
-    model.compile(loss='categorical_crossentropy', optimizer=optimizer)
-
-    callbacks = [
-        ModelCheckpoint(modelfile_hdf5, verbose=1, save_best_only=True),
-        EarlyStopping(monitor='val_loss', min_delta=0, patience=params['patience'],
-                      verbose=0, mode='auto')
-    ]
     model.fit(train_validation_seqs, Y_tr_val,
               validation_split=0.1, shuffle=True,
               nb_epoch=params['epochs'], batch_size=512,
@@ -276,14 +271,6 @@ def main(dataset_type, dataset_location, fold_count, fold_to_drop,
     out_path = os.path.join(output_dir, output_file)
     file_utils.save_json(out_path, dic)
 
-    
-@ex.automain
-def run(dataset_type, dataset_location, fold_count, fold_to_drop,
-        params, output_dir, output_filename_format, output_file,
-        data_augmentation_size):
-    main(dataset_type, dataset_location, fold_count, fold_to_drop,
-         params, output_dir, output_filename_format, output_file,
-         data_augmentation_size)
     
 
     

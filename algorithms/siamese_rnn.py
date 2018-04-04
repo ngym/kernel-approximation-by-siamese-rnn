@@ -63,7 +63,9 @@ class SiameseRnn(Rnn):
     def __create_RNN_siamese_network(self, loss_function, siamese_joint_method):
         """
         :param loss_function: Name of loss function
+        :param siamese_joint_method: Layer of the joint of the Siamese neural network
         :type loss_function: str
+        :type siamese_joint_method: str
 
         :return: Keras Deep RNN Siamese network
         :rtype: keras.models.Model
@@ -129,6 +131,7 @@ class SiameseRnn(Rnn):
         :param val_indices: Validation 2-tuples of time series index pairs
         :param gram_drop: Gram matrix with dropped elements
         :param seqs: List of time series
+        :param labels: List of labels of time series
         :param epochs: Number of passes over data set
         :param patience: Early Stopping parameter
         :param epoch_start_from: Used in continued training
@@ -140,16 +143,25 @@ class SiameseRnn(Rnn):
         :type val_indices: list of tuples
         :type gram_drop: list of lists
         :type seqs: list of np.ndarrays
+        :type labels: [str]
         :type epochs: int
         :type patience: int
-        :param epoch_start_from: int
-        :param loss_weight_ratio: float
+        :type epoch_start_from: int
+        :type loss_weight_ratio: float
         :type logfile_loss: str
         :type logfile_hdf5: str
         """
 
         def do_epoch(action, current_epoch, epoch_count,
-                     indices, gram_drop, seqs, labels, loss_weight_ratio, log_file):
+                    indices, gram_drop, seqs, labels, loss_weight_ratio, log_file):
+            """
+            :param action: "training" or "validation"
+            :param current_epoch: Epoch of this cycle
+
+            :type action: str
+            :type current_epoch: Number
+
+            """
             processed_sample_count = 0
             average_loss = 0
             if action == "training":

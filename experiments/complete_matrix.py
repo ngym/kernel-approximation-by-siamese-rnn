@@ -23,10 +23,6 @@ ex = Experiment('complete_matrix')
 def cfg():
     output_dir = "results/"
     params = None
-    # The ratio of the size of the number of sequences
-    # after data augmentation.
-    # 1 means 1 times, hence no augmentation is applied.
-    data_augmentation_size = 1
     # Split the data by fold_count
     # and treat fold_to_drop-th fold as test
     fold_count = 5
@@ -130,14 +126,28 @@ def calculate_errors(gram, gram_completed_npsd, dropped_elements):
 
     return mse, msede, mae, maede, re, rede
 
+def create_true_GAK_flag_matrix(drop_rate,
+                                flag_test):
+    num_seq = len(flag_test)
+    matrix = np.ones((num_seq, num_seq), dtype=np.float16)
+    for i in range(num_seq):
+        for j in range(i + 1):
+            if flag_test[i] or flag_test[j]:
+                if np.random.rand() < drop_rate:
+                    continue
+            matrix[i, j] = 0
+    return matrix
 
 @ex.automain
 def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
-        algorithm, params, output_dir, output_filename_format, output_file,
-        data_augmentation_size):
+        algorithm, params, output_dir, output_filename_format, output_file):
+    ########
+    # Create output directory and backup the configuration file to the directory
+    ########
     os.makedirs(output_dir, exist_ok=True)
     try:
-        shutil.copy(os.path.abspath(sys.argv[2]), os.path.join(output_dir, os.path.basename(sys.argv[2])))
+        shutil.copy(os.path.abspath(sys.argv[2]), os.path.join(output_dir,
+                                                               os.path.basename(sys.argv[2])))
     except shutil.SameFileError:
         pass
     hdf5 = pickle_or_hdf5_location[-4:] == "hdf5"
@@ -151,6 +161,9 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
     assert os.path.isdir(output_dir)
     assert os.path.exists(pickle_or_hdf5_location)
 
+    ########
+    # Load complete GRAM matrix
+    ########
     time_main_start = os.times()
 
     hdf5 = pickle_or_hdf5_location[-4:] == "hdf5"
@@ -172,27 +185,42 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
         gram = gram_matrices[-1]['completed_npsd']
 
     # drop elements
-    if fold_count == 0:        
+    if fold_count == 0:
         gram_drop = gram
     else:
         folds = k_fold_cross_validation.get_kfolds(dataset_type, loaded_sample_names, fold_count)
         indices_to_drop = folds[fold_to_drop - 1]
-        gram_drop, dropped_elements = make_matrix_incomplete.gram_drop_samples(gram, indices_to_drop)
+        gram_drop, dropped_elements = make_matrix_incomplete.gram_drop_samples(gram,
+                                                                               indices_to_drop)
 
+    ########
+    # Prepare time-series data
+    ########
     seqs, sample_names, labels_str, _ = read_sequences(dataset_type, dataset_location)
+
     seqs = filter_samples(seqs, sample_names, loaded_sample_names)
     labels_str = filter_samples(labels_str, sample_names, loaded_sample_names)
-    
+
+    ########
+    # Execute Matrix Completion
+    ########
     train_start = None
     train_end = None
     if algorithm == "gak":
+        ########
+        # Baseline GAK
+        ########
         gram_completed, time_completion_start, time_completion_end \
-            = matrix_completion.gak_matrix_completion(gram_drop, seqs, indices_to_drop,
-                                                      sigma=params['sigma'], triangular=params['triangular'])
+            = matrix_completion.gak_matrix_completion(
+                gram_drop, seqs, indices_to_drop,
+                sigma=params['sigma'], triangular=params['triangular'])
         action = "GAK sigma: " + str(params['sigma']) + " triangular: " + str(params['triangular'])
-        output_filename_format = output_filename_format.replace("${sigma}", str(params['sigma']))\
-                                                       .replace("${triangular}", str(params['triangular']))
+        output_filename_format = output_filename_format.replace(
+            "${sigma}", str(params['sigma'])).replace("${triangular}", str(params['triangular']))
     elif algorithm in {"softimpute", "knn", "iterativesvd"}:
+        ########
+        # Baseline SoftImpute, KNN, IterativeSVD
+        ########
         if algorithm == "softimpute":
             func = matrix_completion.softimpute_matrix_completion
             action = "Softimpute"
@@ -210,8 +238,8 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
             exit(-1)
         flag_test = np.zeros(len(seqs))
         flag_test[indices_to_drop] = 1
-        drop_flag_matrix = create_drop_flag_matrix(1 - params['gak_rate'],
-                                                   flag_test, condition_or=True)
+        drop_flag_matrix = create_true_GAK_flag_matrix(1 - params['gak_rate'],
+                                                       flag_test)
         for i in range(len(seqs)):
             drop_flag_matrix[i, i] = 1
             for j in range(i + 1):
@@ -229,68 +257,86 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                    num_process=params['num_process'],
                    drop_flag_matrix=drop_flag_matrix)
     elif algorithm == "rnn":
+        ########
+        # Our Scheme, Siamese Recurrent Neural Network
+        ########
         modelfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
         logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
-        gram_completed, time_train_start, time_train_end, time_completion_start, time_completion_end \
-            = matrix_completion.rnn_matrix_completion(gram_drop,
-                                                      seqs,
-                                                      params['epochs'],
-                                                      params['patience'],
-                                                      params['epoch_start_from'],
-                                                      logfile_loss,
-                                                      modelfile_hdf5,
-                                                      params['rnn'],
-                                                      params['rnn_units'],
-                                                      params['dense_units'],
-                                                      params['dropout'],
-                                                      params['implementation'],
-                                                      params['bidirectional'],
-                                                      params['batchnormalization'],
-                                                      params['mode'],
-                                                      params['loss_function'],
-                                                      params['loss_weight_ratio'],
-                                                      labels_str,
-                                                      params['siamese_joint_method'],
-                                                      params['siamese_arms_activation'],
-                                                      trained_modelfile_hdf5=params['trained_modelfile_hdf5'])
+        gram_completed, time_train_start, time_train_end, \
+            time_completion_start, time_completion_end \
+            = matrix_completion.rnn_matrix_completion(
+                gram_drop,
+                seqs,
+                params['epochs'],
+                params['patience'],
+                params['epoch_start_from'],
+                logfile_loss,
+                modelfile_hdf5,
+                params['rnn'],
+                params['rnn_units'],
+                params['dense_units'],
+                params['dropout'],
+                params['implementation'],
+                params['bidirectional'],
+                params['batchnormalization'],
+                params['mode'],
+                params['loss_function'],
+                params['loss_weight_ratio'],
+                labels_str,
+                params['siamese_joint_method'],
+                params['siamese_arms_activation'],
+                trained_modelfile_hdf5=params['trained_modelfile_hdf5'])
         action = "SiameseRNN"
     elif algorithm == "fast_rnn":
+        ########
+        # Our Scheme, Fast Siamese Recurrent Neural Network
+        ########
         modelfile_hdf5 = os.path.join(output_dir, output_filename_format + "_model.hdf5")
         logfile_loss = os.path.join(output_dir, output_filename_format + ".losses")
         gram_completed, time_completion_start, time_completion_end \
-            = matrix_completion.fast_rnn_matrix_completion(gram_drop,
-                                                            seqs,
-                                                            params['rnn'],
-                                                            params['rnn_units'],
-                                                            params['dense_units'],
-                                                            params['dropout'],
-                                                            params['implementation'],
-                                                            params['bidirectional'],
-                                                            params['batchnormalization'],
-                                                            params['loss_function'],
-                                                            params['siamese_arms_activation'],
-                                                            params['siamese_joint_method'],
-                                                            trained_modelfile_hdf5=params['trained_modelfile_hdf5'])
+            = matrix_completion.fast_rnn_matrix_completion(
+                gram_drop,
+                seqs,
+                params['rnn'],
+                params['rnn_units'],
+                params['dense_units'],
+                params['dropout'],
+                params['implementation'],
+                params['bidirectional'],
+                params['batchnormalization'],
+                params['loss_function'],
+                params['siamese_arms_activation'],
+                params['siamese_joint_method'],
+                trained_modelfile_hdf5=params['trained_modelfile_hdf5'])
         action = "FastSiameseRNN"
     else:
         assert False
 
+    ########
+    # Make the completed matrix positive semidefinite, if it is not.
+    ########
+        
     # eigenvalue check
     time_npsd_start = os.times()
-    gram_completed_npsd = nearest_positive_semidefinite.nearest_positive_semidefinite(gram_completed)
+    gram_completed_npsd = nearest_positive_semidefinite.nearest_positive_semidefinite(
+        gram_completed)
     time_npsd_end = os.times()
 
-    # save results
+    ########
+    # Save results
+    ########
     if hdf5:
         log_file = os.path.join(output_dir, output_filename_format + ".hdf5")
     else:
         log_file = os.path.join(output_dir, output_filename_format + ".pkl")
     action += " " + time.asctime(time.localtime())
-    file_utils.append_and_save_result(log_file, loaded_data, gram_drop, gram_completed, gram_completed_npsd, indices_to_drop,
+    file_utils.append_and_save_result(log_file, loaded_data, gram_drop,
+                                      gram_completed, gram_completed_npsd, indices_to_drop,
                                       action, hdf5=hdf5)
 
     # claculate errors
-    mse, mse_dropped, mae, mae_dropped, re, re_dropped = calculate_errors(gram, gram_completed_npsd, dropped_elements)
+    mse, mse_dropped, mae, mae_dropped, \
+        relative, relative_dropped = calculate_errors(gram, gram_completed_npsd, dropped_elements)
 
     time_main_end = os.times()
 
@@ -304,8 +350,9 @@ def run(pickle_or_hdf5_location, dataset_location, fold_count, fold_to_drop,
                              time_completion_start, time_completion_end,
                              time_npsd_start, time_npsd_end,
                              time_main_start, time_main_end,
-                             mse, mse_dropped, mae, mae_dropped, re, re_dropped)
+                             mse, mse_dropped, mae, mae_dropped,
+                             relative, relative_dropped)
 
 
 
-    
+
