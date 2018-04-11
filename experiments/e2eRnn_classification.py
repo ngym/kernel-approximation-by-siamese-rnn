@@ -204,7 +204,7 @@ def run(dataset_type, dataset_location, fold_count, fold_to_drop,
     K.clear_session()
 
     # build network
-    rnn_ = rnn.Rnn(input_shape, pad_value,
+    model = rnn.Rnn(input_shape, pad_value,
                     params['rnn_units'],
                     params['dense_units'],
                     'tanh',
