@@ -317,5 +317,6 @@ class SiameseRnn(Rnn):
             yield ([np.array(input_0), np.array(input_1)], np.array(y), np.array(sample_weights))
         else:
             yield ([np.array(input_0), np.array(input_1)], np.array(y))
-
+    def load_weights(self, logfile_hdf5):
+        self.model.load_weights(logfile_hdf5)
 
