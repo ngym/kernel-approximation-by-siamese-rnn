@@ -1,0 +1,28 @@
+{
+    "dataset_type": "UCIauslan",
+    "dataset_location": "/home/shota/fast-time-series-data-classification/refactored/datasources/UCI/AUSLAN/",
+    "fold_count": 5,
+    "fold_to_drop": 1,
+    "params": {
+	"epochs": 2000,
+	"patience": 5,
+        "epoch_start_from": 1,
+	"rnn": "LSTM",
+	"rnn_units": [200],
+	"dense_units": [200,200],
+	"dropout": 0.3,
+	"bidirectional": false,
+	"batchnormalization": false,
+	"implementation": 2,
+	"mode": "train",
+        "trained_modelfile_hdf5": "results/e2e_model.hdf5",
+        "loss_function": "mse",
+        "loss_weight_ratio": 10.0,
+        "siamese_joint_method": "dot_product",
+        "siamese_arms_activation": "linear"
+    },
+    "output_dir": "results",
+    "output_filename_format": "e2e_UCIauslan_sigma20_triangularNone_rnn_200_200,200_mse_10_dotproduct",
+    "data_augmentation_size": 1,
+    "output_file": "e2e_out.json"
+}

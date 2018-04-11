@@ -1,0 +1,8 @@
+{
+	"dataset_type": "UCIauslan",
+	"sigma": 12,
+	"dataset_location": "/home/shota/fast-time-series-data-classification/refactored/datasources/UCI/AUSLAN",
+	"output_dir": "results/",
+	"output_filename_format": "gram_UCIauslan_sigma${sigma}_triangular${triangular}",
+	"data_augmentation_size": 1
+}
