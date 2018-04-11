@@ -214,6 +214,7 @@ def run(dataset_type, dataset_location, fold_count, fold_to_drop,
                     params['bidirectional'],
                     params['batchnormalization'])
     model = rnn_.create_RNN_base_network()
+    model.add(Dense(units=Y_tr_val[1], activation="softmax"))
 
     callbacks = [EarlyStopping(patience=params['patience']),
                      ModelCheckpoint(filepath=modelfile_hdf5,
