@@ -20,7 +20,7 @@ import keras.backend as K
 from keras.preprocessing.sequence import pad_sequences
 
 from datasets.read_sequences import read_sequences, pick_labels
-from datasets.data_augmentation import augment_data, create_drop_flag_matrix
+from datasets.data_augmentation import augment_data
 from datasets.others import filter_samples
 
 from sklearn.svm import LinearSVC
