@@ -7,6 +7,7 @@ from keras.layers import Dense, Dropout, Input, SimpleRNN, LSTM, GRU, Masking, A
 from keras.optimizers import Adam
 from keras.layers.wrappers import Bidirectional
 from keras.layers.merge import Concatenate
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 from utils import multi_gpu
 

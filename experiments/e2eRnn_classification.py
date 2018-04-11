@@ -214,6 +214,11 @@ def run(dataset_type, dataset_location, fold_count, fold_to_drop,
                     params['bidirectional'],
                     params['batchnormalization'])
     model = rnn_.create_RNN_base_network()
+
+    callbacks = [EarlyStopping(patience=params['patience']),
+                     ModelCheckpoint(filepath=modelfile_hdf5,
+                                     save_best_only=True)]
+    
     model.fit(train_validation_seqs, Y_tr_val,
               validation_split=0.1, shuffle=True,
               nb_epoch=params['epochs'], batch_size=512,
