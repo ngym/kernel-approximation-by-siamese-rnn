@@ -1,6 +1,6 @@
 {
-	"pickle_location": "results/gram_UCIauslan_sigma20_triangularNone.pkl",
-	"dataset_location": "/home/milacski/lkopi/datasources/UCI/AUSLAN/*",
+	"pickle_or_hdf5_location": "/home/shota/fast-time-series-data-classification/refactored2/tga-srnn/results/gram_UCIauslan_sigma12_triangularNone.hdf5",
+	"dataset_location": "/home/shota/fast-time-series-data-classification/refactored/datasources/UCI/AUSLAN",
 	"fold_count": 5,
 	"fold_to_drop": 1,
 	"algorithm": "softimpute",

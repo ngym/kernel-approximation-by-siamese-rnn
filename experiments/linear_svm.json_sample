@@ -1,0 +1,28 @@
+{
+	"pickle_or_hdf5_location": "/home/shota/fast-time-series-data-classification/refactored2/tga-srnn/results/gram_UCIauslan_sigma12_triangularNone.hdf5",
+	"dataset_location": "/home/shota/fast-time-series-data-classification/refactored/datasources/UCI/AUSLAN",
+	"fold_count": 5,
+	"fold_to_drop": 1,
+	"params": {
+		"epochs": 1,
+		"patience": 1,
+                "epoch_start_from": 1,
+		"rnn": "LSTM",
+	    "rnn_units": [10],
+		"dense_units": [3],
+		"dropout": 0.3,
+		"bidirectional": false,
+		"batchnormalization": false,
+		"implementation": 1,
+		"mode": "load_pretrained",
+            "trained_modelfile_hdf5": "results/gram_UCIauslan_rnn_model.hdf5",
+                "loss_function": "mse",
+                "loss_weight_ratio": 10.0,
+	    "siamese_joint_method": "dot_product",
+                "siamese_arms_activation": "linear"
+	},
+    "output_dir": "results/",
+    "output_filename_format": "gram_UCIcharacter_linear_svm",
+    "output_file": "UCIcharacter_linear_svm",
+        "data_augmentation_size": 1
+}
