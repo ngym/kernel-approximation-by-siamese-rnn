@@ -218,6 +218,10 @@ def run(dataset_type, dataset_location, fold_count, fold_to_drop,
     callbacks = [EarlyStopping(patience=params['patience']),
                      ModelCheckpoint(filepath=modelfile_hdf5,
                                      save_best_only=True)]
+
+    loss_weights = None
+    optimizer = RMSprop(clipnorm=1.)
+    model.compile(loss=params['loss_function'], optimizer=optimizer)
     
     model.fit(train_validation_seqs, Y_tr_val,
               validation_split=0.1, shuffle=True,
