@@ -204,7 +204,7 @@ def run(dataset_type, dataset_location, fold_count, fold_to_drop,
     K.clear_session()
 
     # build network
-    model = rnn.Rnn(input_shape, pad_value,
+    rnn_ = rnn.Rnn(input_shape, pad_value,
                     params['rnn_units'],
                     params['dense_units'],
                     'tanh',
@@ -213,6 +213,7 @@ def run(dataset_type, dataset_location, fold_count, fold_to_drop,
                     params['implementation'],
                     params['bidirectional'],
                     params['batchnormalization'])
+    model = rnn_.create_RNN_base_network()
     model.fit(train_validation_seqs, Y_tr_val,
               validation_split=0.1, shuffle=True,
               nb_epoch=params['epochs'], batch_size=512,
