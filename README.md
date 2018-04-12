@@ -13,6 +13,7 @@
 - output_dir: directory to save the results
 - output_filename_format: format of the output file
 - sigma and triangular: gak variables
+- data_augmentation_size: number of times to augment
 3. Run the experiment
         $python3 compute_gram_matrix.py with (new_json_file_name)
 
@@ -31,7 +32,12 @@
         
 ## Feature-based approach
 ### Feature mapping approximation
+1. Copy linear_svm.json_sample to any name what you want.
+        $cd experiments
+        $cp linear_svm.json_sample (new_json_file_name)
+2. Modify the parameters
+3. Run the experiment
+        $python3 linear_svm.py with (new_json_file_name)
 
-### Linear SVM
 
 
