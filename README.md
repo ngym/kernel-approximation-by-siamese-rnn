@@ -1,7 +1,7 @@
 
 
 -----
-# Siamese Recurrent Neural Network Acceleration for the Triangular Global Alignment Kernel
+# Fast Siamese Recurrent Neural Network Approximation for the Triangular Global Alignment Kernel 
 
 ## Global Alignment Kernel
 1. Copy compute_gram_matrix.json_sample to any name what you want.
