@@ -23,6 +23,7 @@
         $cd experiments
         $cp compute_gram_matrix.json_sample (new_json_file_name)
 2. Modify the parameters
+        "fast_rnn" requires a pretrained model.
 3. Run the experiment
         $python3 complete_matrix.py with (new_json_file_name)
 
@@ -35,7 +36,7 @@
 1. Copy linear_svm.json_sample to any name what you want.
         $cd experiments
         $cp linear_svm.json_sample (new_json_file_name)
-2. Modify the parameters
+2. Modify the parameters This method requires a pretrained model.
 3. Run the experiment
         $python3 linear_svm.py with (new_json_file_name)
 
